@@ -5,6 +5,8 @@ type DID = `did:${string}`;
 interface StoredIdentity {
   did: DID;
   didDocument: object;
+  publicKeyJwk: object;
+  privateKeyJwk: object;
 }
 
 const boxStyle: React.CSSProperties = {

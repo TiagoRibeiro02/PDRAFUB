@@ -1,3 +1,5 @@
+// ALERTS: on server it may needs cors definition for anu qrng api.
+
 import { useEffect, useState } from "react";
 
 type DID = `did:${string}`;

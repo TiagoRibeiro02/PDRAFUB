@@ -20,6 +20,32 @@ const boxStyle: React.CSSProperties = {
 
 const STORAGE_KEY = "zeroid_wallet";
 
+async function getQuantumRandomUUID(): Promise<string> {
+  try {
+    // Fetch 16 random bytes
+    const response = await fetch(
+      "https://qrng.anu.edu.au/API/jsonI.php?length=16&type=uint8"
+    );
+    const data = await response.json();
+    
+    if (!data.success || !data.data) {
+      throw new Error("Failed to get quantum random data");
+    }
+
+    // Convert the 16 random bytes to UUID format (8-4-4-4-12)
+    const bytes = data.data;
+    const hex = bytes.map((b: number) => b.toString(16).padStart(2, "0")).join("");
+    
+    // Format as UUID: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-${(
+      (parseInt(hex.slice(16, 18), 16) & 0x3f) | 0x80
+    ).toString(16)}${hex.slice(18, 20)}-${hex.slice(20, 32)}`;
+  } catch (error) {
+    console.error("Failed to get quantum random UUID, falling back to crypto.randomUUID():", error);
+    return crypto.randomUUID();
+  }
+}
+
 async function generateDid(): Promise<any> {
   const keyPair = await crypto.subtle.generateKey(
     { name: "ECDSA", namedCurve: "P-256" },
@@ -34,8 +60,8 @@ async function generateDid(): Promise<any> {
     keyPair.privateKey
   );
 
-
-  const did = `did:zeroid:${crypto.randomUUID()}`;
+  const quantumUUID = await getQuantumRandomUUID();
+  const did = `did:zeroid:${quantumUUID}`;
 
   const didDocument = {
     "@context": "https://www.w3.org/ns/did/v1",

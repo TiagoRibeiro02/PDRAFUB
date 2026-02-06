@@ -67,9 +67,9 @@ async function generateDid(): Promise<any> {
     keyPair.privateKey
   );
 
-  // Choose your random UUID generator:
-  const quantumUUID = await getQuantumRandomUUID();  // Quantum random (requires network)
-  // const quantumUUID = getStandardRandomUUID();     // Standard crypto random (faster, no network)
+
+  const quantumUUID = await getQuantumRandomUUID();  // Quantum random (network)
+  // const quantumUUID = getStandardCRandomUUID();     // Standard crypto random (no network)
   
   const did = `did:zeroid:${quantumUUID}`;
 
@@ -94,8 +94,6 @@ async function generateDid(): Promise<any> {
     privateKeyJwk,
   };
 }
-
-//anu Qrng para true random
 
 export default function Wallet() {
   const [identity, setIdentity] = useState<StoredIdentity | null>(null);

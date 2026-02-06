@@ -22,6 +22,10 @@ const boxStyle: React.CSSProperties = {
 
 const STORAGE_KEY = "zeroid_wallet";
 
+function getStandardRandomUUID(): string {
+  return crypto.randomUUID();
+}
+
 async function getQuantumRandomUUID(): Promise<string> {
   try {
     // Fetch 16 random bytes via Vite proxy
@@ -63,7 +67,10 @@ async function generateDid(): Promise<any> {
     keyPair.privateKey
   );
 
-  const quantumUUID = await getQuantumRandomUUID();
+  // Choose your random UUID generator:
+  const quantumUUID = await getQuantumRandomUUID();  // Quantum random (requires network)
+  // const quantumUUID = getStandardRandomUUID();     // Standard crypto random (faster, no network)
+  
   const did = `did:zeroid:${quantumUUID}`;
 
   const didDocument = {

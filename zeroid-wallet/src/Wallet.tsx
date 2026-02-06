@@ -22,9 +22,9 @@ const STORAGE_KEY = "zeroid_wallet";
 
 async function getQuantumRandomUUID(): Promise<string> {
   try {
-    // Fetch 16 random bytes
+    // Fetch 16 random bytes via Vite proxy
     const response = await fetch(
-      "https://qrng.anu.edu.au/API/jsonI.php?length=16&type=uint8"
+      "/api/quantum?length=16&type=uint8"
     );
     const data = await response.json();
     
@@ -35,6 +35,7 @@ async function getQuantumRandomUUID(): Promise<string> {
     // Convert the 16 random bytes to UUID format (8-4-4-4-12)
     const bytes = data.data;
     const hex = bytes.map((b: number) => b.toString(16).padStart(2, "0")).join("");
+    //return hex;
     
     // Format as UUID: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
     return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-${(

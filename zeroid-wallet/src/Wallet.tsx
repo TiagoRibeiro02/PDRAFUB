@@ -11,7 +11,7 @@ interface StoredIdentity {
 
 const boxStyle: React.CSSProperties = {
   background: "#111",
-  color: "#0f0",
+  color: "#ffff",
   padding: "1rem",
   borderRadius: "6px",
   fontSize: "0.85rem",
@@ -58,10 +58,11 @@ async function generateDid(): Promise<any> {
   };
 }
 
+//anu Qrng para true random
+
 export default function Wallet() {
   const [identity, setIdentity] = useState<StoredIdentity | null>(null);
 
-  // 1️⃣ Carregar identidade automaticamente
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
@@ -74,7 +75,6 @@ export default function Wallet() {
     }
   }, []);
 
-  // 2️⃣ Criar nova identidade
   const createIdentity = async () => {
     const id = await generateDid();
 
@@ -95,8 +95,8 @@ export default function Wallet() {
       {!identity ? (
         <>
           <h2>ZeroID Wallet</h2>
-          <p>You don't have a digital identity yet.</p>
-          <button onClick={createIdentity}>Create Digital Identity</button>
+          <p>You don't have a DID yet.</p>
+          <button onClick={createIdentity}>Create DID</button>
         </>
       ) : (
         <div style={{ marginTop: "2rem" }}>
@@ -116,7 +116,7 @@ export default function Wallet() {
               {JSON.stringify(identity.publicKeyJwk, null, 2)}
             </pre>
 
-            <label>Private Key ⚠️</label>
+            <label>Private Key</label>
             <pre style={{ ...boxStyle, color: "#b00020" }}>
               {JSON.stringify(identity.privateKeyJwk, null, 2)}
             </pre>

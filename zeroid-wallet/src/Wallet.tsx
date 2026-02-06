@@ -23,7 +23,7 @@ const STORAGE_KEY = "zeroid_wallet";
 async function generateDid(): Promise<any> {
   const keyPair = await crypto.subtle.generateKey(
     { name: "ECDSA", namedCurve: "P-256" },
-    true,
+    true,//exportable
     ["sign", "verify"]
   );
 
@@ -33,6 +33,7 @@ async function generateDid(): Promise<any> {
     "jwk",
     keyPair.privateKey
   );
+
 
   const did = `did:zeroid:${crypto.randomUUID()}`;
 

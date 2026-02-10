@@ -13,8 +13,6 @@ async function didToBigInt(did: string): Promise<bigint> {
   return BigInt("0x" + hashHex.substring(0, 32));
 }
 
-// Placeholder for PLONK ZKP generation
-// In production, use snarkjs with compiled circom circuits
 async function generatePlonkZKP(userDid: string) {
   // Validate DID format
   if (!userDid.startsWith("did:")) {
@@ -27,7 +25,7 @@ async function generatePlonkZKP(userDid: string) {
   // Circuit inputs - convert DID string to BigInt via hashing
   const DID = await didToBigInt(userDid);
   const status = BigInt(1);
-  const r = BigInt(999888777); // Institution secret
+  const r = BigInt(999888777); // Institution secret (this will be hidden)
   
   // Calculate commitment = Poseidon(DID, status, r)
   const commitmentHash = poseidon([DID, status, r]);

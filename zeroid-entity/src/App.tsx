@@ -72,7 +72,7 @@ export default function EntityApp() {
       <h1>Entity - KYC Issuer</h1>
 
       <input
-        placeholder="User DID (e.g., did:zeroid:e6c541f2-65f2-44c8-84da-9a322e2a1d5f)"
+        placeholder="User DID"
         value={did}
         onChange={e => {
           setDid(e.target.value);

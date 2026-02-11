@@ -54,13 +54,13 @@ async function generatePlonkZKP(userDid: string) {
   return { proof, publicSignals, commitment };
 }
 
-async function hashDid(did: string): Promise<string> {
+/*async function hashDid(did: string): Promise<string> {
   const data = new TextEncoder().encode(did);
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
   return Array.from(new Uint8Array(hashBuffer))
     .map(b => b.toString(16).padStart(2, "0"))
     .join("");
-}
+}*/
 
 export default function EntityApp() {
   const [did, setDid] = useState("");

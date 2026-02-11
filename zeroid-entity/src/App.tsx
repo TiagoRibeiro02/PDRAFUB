@@ -43,6 +43,8 @@ async function generatePlonkZKP(userDid: string) {
 
   const res = await snarkjs.plonk.verify(verificationKey, publicSignals, proof);
 
+  
+
   if (res === true) {
     console.log("Verification OK");
   } else {

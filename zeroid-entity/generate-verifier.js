@@ -23,6 +23,7 @@ async function generateSolidityVerifier() {
     fs.writeFileSync("Verifier.sol", verifierCode);
     
     console.log("Solidity verifier generated successfully: Verifier.sol");
+
   } catch (error) {
     console.error("Error generating verifier:", error);
     process.exit(1);

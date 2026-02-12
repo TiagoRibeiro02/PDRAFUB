@@ -53,11 +53,28 @@ curl -X POST http://localhost/zeroid-wallet/backend/register.php \
   -d '{"username":"testuser","password":"password123"}'
 ```
 
-#### Login
+#### Login (SCRAM-SHA-256 Authentication)
+
+The login uses SCRAM-SHA-256 (Salted Challenge Response Authentication Mechanism) in two phases:
+
+**Phase 1: Client-First Message**
 ```bash
 curl -X POST http://localhost/zeroid-wallet/backend/login.php \
   -H "Content-Type: application/json" \
-  -d '{"username":"testuser","password":"password123"}'
+  -d '{"action":"client-first","username":"testuser","client_nonce":"random_nonce"}'
+```
+
+**Phase 2: Client-Final Message**
+```bash
+# Client computes: SaltedPassword = PBKDF2(password, salt, iterations)
+# ClientKey = HMAC(SaltedPassword, "Client Key")
+# StoredKey = SHA256(ClientKey)
+# ClientSignature = HMAC(StoredKey, AuthMessage)
+# ClientProof = ClientKey XOR ClientSignature
+# NO PASSWORD IS TRANSMITTED!
+curl -X POST http://localhost/zeroid-wallet/backend/login.php \
+  -H "Content-Type: application/json" \
+  -d '{"action":"client-final","username":"testuser","identifier":"12345","client_nonce":"...","server_nonce":"...","client_proof":"..."}'
 ```
 
 ## API Endpoints
@@ -83,19 +100,22 @@ Register a new user.
   "data": {
     "id": 1,
     "username": "testuser",
-    "did": "did:zeroid:..."
+    "token": 12345
   }
 }
 ```
 
 ### POST /login.php
-Authenticate a user.
+Authenticate a user using SCRAM-SHA-256 (Salted Challenge Response Authentication Mechanism).
+
+#### Phase 1: Client-First Message
 
 **Request:**
 ```json
 {
+  "action": "client-first",
   "username": "string",
-  "password": "string"
+  "client_nonce": "random_string"
 }
 ```
 
@@ -103,19 +123,68 @@ Authenticate a user.
 ```json
 {
   "success": true,
-  "message": "Login successful",
   "data": {
-    "id": 1,
-    "username": "testuser",
-    "did": "did:zeroid:...",
-    "pk": "public_key_hex"
+    "identifier": 12345,
+    "salt": "hexadecimal_string",
+    "iterations": 4096,
+    "nonce": "combined_nonce",
+    "server_nonce": "server_random_string"
   }
 }
 ```
 
+#### Phase 2: Client-Final Message
+
+The client must compute:
+1. `SaltedPassword = PBKDF2(password, salt, iterations)`
+2. `ClientKey = HMAC(SaltedPassword, "Client Key")`
+3. `StoredKey = SHA256(ClientKey)`
+4. `ClientSignature = HMAC(StoredKey, AuthMessage)`
+5. `ClientProof = ClientKey XOR ClientSignature`
+
+**Important:** The password is NEVER transmitted over the network!
+
+**Request:**
+```json
+{
+  "action": "client-final",
+  "username": "string",
+  "identifier": 12345,
+  "client_nonce": "string",
+  "server_nonce": "string",
+  "client_proof": "hexadecimal_string"
+}
+```
+
+**Response (Success - 200):**
+```json
+{
+  "success": true,
+  "message": "Authentication successful",
+  "data": {
+    "id": 1,
+    "username": "testuser",
+    "did": "did:zeroid:...",
+    "pk": "public_key_hex",
+    "token": 12346,
+    "server_signature": "hexadecimal_string"
+  }
+}
+```
+
+**Note:** 
+- After successful authentication, the user's token is incremented by 1
+- The `server_signature` allows the client to verify the server's identity (mutual authentication)
+- Client should verify server_signature = HMAC(ServerKey, AuthMessage)
+
 ## Security Notes
 
-- Passwords are hashed using SHA-256 with a random salt
+- Passwords are hashed using Argon2id for secure storage
+- SCRAM-SHA-256 authentication prevents password transmission over the network
+- Provides mutual authentication (client verifies server, server verifies client)
+- Uses PBKDF2 with 4096 iterations for key derivation
+- Random salt per user prevents rainbow table attacks
+- The token (identifier) is incremented after each successful authentication
 - CORS is enabled for development (restrict in production)
 - Use HTTPS in production
 - Consider implementing JWT tokens for session management

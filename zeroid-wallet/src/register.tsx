@@ -21,7 +21,7 @@ export default function Register() {
         }
 
         try {
-            const response = await fetch('http://localhost/zeroid-wallet/backend/register.php', {
+            const response = await fetch('http://localhost:8000/register.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -32,8 +32,10 @@ export default function Register() {
             const data = await response.json();
 
             if (data.success) {
-                // Redirect to login page
-                alert('Registration successful! Please login.');
+                // Store user data in localStorage
+                localStorage.setItem('user', JSON.stringify(data.data));
+                // Redirect to login
+                alert('Registration successful!');
                 window.location.href = '/login';
             } else {
                 setError(data.message || 'Registration failed');

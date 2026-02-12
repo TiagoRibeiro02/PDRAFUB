@@ -11,8 +11,7 @@ $data = json_decode(file_get_contents('php://input'), true);
 
 $username = trim($data['username'] ?? '');
 $password = $data['password'] ?? '';
-$did = $data['did'] ?? '';
-$pk = $data['pk'] ?? '';
+$token = random_int(10, 999999);
 
 // Validation
 if (empty($username) || empty($password)) {
@@ -27,9 +26,9 @@ if (strlen($username) < 3) {
     exit();
 }
 
-if (strlen($password) < 6) {
+if (strlen($password) < 8) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Password must be at least 6 characters']);
+    echo json_encode(['success' => false, 'message' => 'Password must be at least 8 characters']);
     exit();
 }
 
@@ -46,30 +45,36 @@ try {
         exit();
     }
     
-    // Generate salt and hash password
-    $salt = bin2hex(random_bytes(16));
-    $password_hash = hash('sha256', $salt . $password);
+    // Generate SCRAM-SHA-256 credentials
+    $scram_salt = bin2hex(random_bytes(16));
+    $scram_iterations = 4096; // Standard iteration count for SCRAM can be more
     
-    // Generate DID and PK if not provided
-    if (empty($did)) {
-        $did = 'did:zeroid:' . bin2hex(random_bytes(32));
-    }
-    if (empty($pk)) {
-        $pk = bin2hex(random_bytes(32));
-    }
+    // Compute SCRAM keys
+    // SaltedPassword = PBKDF2(password, salt, iterations)
+    $salted_password = hash_pbkdf2('sha256', $password, hex2bin($scram_salt), $scram_iterations, 32, true);
+    
+    // ClientKey = HMAC(SaltedPassword, "Client Key")
+    $client_key = hash_hmac('sha256', 'Client Key', $salted_password, true);
+    
+    // StoredKey = SHA256(ClientKey)
+    $stored_key = hash('sha256', $client_key);
+    
+    // ServerKey = HMAC(SaltedPassword, "Server Key")
+    $server_key = bin2hex(hash_hmac('sha256', 'Server Key', $salted_password, true));
     
     // Insert user
     $stmt = $conn->prepare("
-        INSERT INTO users (username, password_hash, salt, did, pk) 
-        VALUES (:username, :password_hash, :salt, :did, :pk)
+        INSERT INTO users (username, scram_salt, scram_iterations, scram_stored_key, scram_server_key, token) 
+        VALUES (:username, :scram_salt, :scram_iterations, :scram_stored_key, :scram_server_key, :token)
     ");
     
     $stmt->execute([
         'username' => $username,
-        'password_hash' => $password_hash,
-        'salt' => $salt,
-        'did' => $did,
-        'pk' => $pk
+        'scram_salt' => $scram_salt,
+        'scram_iterations' => $scram_iterations,
+        'scram_stored_key' => $stored_key,
+        'scram_server_key' => $server_key,
+        'token' => $token,
     ]);
     
     $userId = $conn->lastInsertId();
@@ -81,7 +86,7 @@ try {
         'data' => [
             'id' => $userId,
             'username' => $username,
-            'did' => $did
+            'token' => $token
         ]
     ]);
     

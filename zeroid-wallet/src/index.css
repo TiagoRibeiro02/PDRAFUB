@@ -3,6 +3,9 @@
   line-height: 1.5;
   font-weight: 400;
 
+  display: grid; 
+  place-items: center;
+
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
   background-color: #242424;
@@ -15,11 +18,11 @@
 
 a {
   font-weight: 500;
-  color: #646cff;
+  color: rgb(202, 165, 97);
   text-decoration: inherit;
 }
 a:hover {
-  color: #535bf2;
+  color: rgb(193, 156, 87);
 }
 
 body {
@@ -47,7 +50,7 @@ button {
   transition: border-color 0.25s;
 }
 button:hover {
-  border-color: #646cff;
+  border-color: rgb(202, 165, 97);
 }
 button:focus,
 button:focus-visible {
@@ -60,7 +63,7 @@ button:focus-visible {
     background-color: #ffffff;
   }
   a:hover {
-    color: #747bff;
+    color: rgb(202, 165, 97);
   }
   button {
     background-color: #f9f9f9;

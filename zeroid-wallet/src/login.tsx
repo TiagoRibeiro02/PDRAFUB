@@ -100,8 +100,8 @@ export default function Login() {
     };
 
     return (
-        <div style={{ padding: "2rem" }}>
-            <div style={{ marginTop: "2rem" }}>
+        <div style={{ padding: "10rem" }}>
+            <div style={{ paddingLeft: "50%", color: "rgb(202, 165, 97)", marginTop: "2rem" }}>
                 <h2>Login</h2>
             </div>
 
@@ -121,8 +121,7 @@ export default function Login() {
                 <label>Username</label>
                 <input 
                     type="text" 
-                    id="username" 
-                    placeholder="username" 
+                    id="username"
                     required 
                     style={{ width: "100%", marginBottom: "1rem" }} 
                     disabled={loading}
@@ -132,7 +131,6 @@ export default function Login() {
                 <input 
                     type="password" 
                     id="password" 
-                    placeholder="password" 
                     required 
                     style={{ width: "100%", marginBottom: "1rem" }} 
                     disabled={loading}

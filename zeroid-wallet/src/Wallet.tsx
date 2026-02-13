@@ -342,7 +342,7 @@ export default function Wallet() {
       ) : (
         <div style={{ marginTop: "2rem" }}>
           <h2>Decentralized Identity</h2>
-          {user && <p>User: {user.username}</p>}
+          {user && <p>Welcome {user.username}</p>}
 
           <div style={{ marginBottom: "1rem" }}>
             <strong>DID</strong>

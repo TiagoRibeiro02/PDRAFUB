@@ -48,8 +48,8 @@ export default function Register() {
     };
 
     return (
-        <div style={{ padding: "2rem" }}>
-            <div style={{ marginTop: "2rem" }}>
+        <div style={{ padding: "2rem", maxWidth: "600px", margin: "0 auto" }}>
+            <div style={{ color: "rgb(202, 165, 97)", marginTop: "2rem", textAlign:"center" }}>
                 <h2>Register</h2>
             </div>
 
@@ -69,11 +69,10 @@ export default function Register() {
                 <label>Username</label>
                 <input 
                     type="text" 
-                    id="username" 
-                    placeholder="username" 
+                    id="username"
                     required 
                     minLength={3}
-                    style={{ width: "100%", marginBottom: "1rem" }} 
+                    style={{ width: "95%", marginBottom: "1rem" }} 
                     disabled={loading}
                 />
 
@@ -81,10 +80,9 @@ export default function Register() {
                 <input 
                     type="password" 
                     id="password" 
-                    placeholder="password" 
                     required 
                     minLength={6}
-                    style={{ width: "100%", marginBottom: "1rem" }} 
+                    style={{ width: "95%", marginBottom: "1rem" }} 
                     disabled={loading}
                 />
 
@@ -92,15 +90,16 @@ export default function Register() {
                 <input 
                     type="password" 
                     id="confirm-password" 
-                    placeholder="confirm password" 
                     required 
-                    style={{ width: "100%", marginBottom: "1rem" }} 
+                    style={{ width: "95%", marginBottom: "1rem" }} 
                     disabled={loading}
                 />
 
-                <button type="submit" style={{ width: "100%" }} disabled={loading}>
-                    {loading ? 'Registering...' : 'Register'}
-                </button>
+                <div style={{ textAlign: "center" }}>
+                    <button type="submit" style={{ padding: "0.5rem 7.5rem" }} disabled={loading}>
+                        {loading ? 'Registering...' : 'Register'}
+                    </button>
+                </div>
 
                 <p style={{ marginTop: "1rem", textAlign: "center" }}>
                     Already have an account? <a href="/login">Login here</a>

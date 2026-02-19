@@ -2,6 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import NFTGallery from "./components/NFTGallery";
+
+// Import contract address and ABI
+let contractAddress: string | undefined;
+let MyNFTABI: any;
+
+try {
+  const addressData = await import('./contracts/contract-address.json');
+  const abiData = await import('./contracts/MyNFT.json');
+  contractAddress = addressData.MyNFT;
+  MyNFTABI = abiData.abi;
+} catch (error) {
+  console.warn('Contract files not found. Please copy contract files from nfts/frontend/src/contracts/');
+}
 
 type DID = `did:${string}`;
 
@@ -19,6 +33,8 @@ interface IdentityData {
   publicKeyJwk: object;
 }
 
+type TabType = 'identity' | 'nfts';
+
 const boxStyle: React.CSSProperties = {
   background: "#111",
   color: "#ffff",
@@ -27,6 +43,26 @@ const boxStyle: React.CSSProperties = {
   fontSize: "0.85rem",
   overflowX: "auto"
 };
+
+const tabContainerStyle: React.CSSProperties = {
+  display: 'flex',
+  gap: '0.5rem',
+  marginBottom: '2rem',
+  borderBottom: '2px solid #333',
+  paddingBottom: '0.5rem',
+};
+
+const tabStyle = (isActive: boolean): React.CSSProperties => ({
+  padding: '0.75rem 1.5rem',
+  background: isActive ? '#4CAF50' : '#333',
+  color: 'white',
+  border: 'none',
+  borderRadius: '6px 6px 0 0',
+  cursor: 'pointer',
+  fontSize: '1rem',
+  fontWeight: isActive ? 'bold' : 'normal',
+  transition: 'all 0.2s',
+});
 
 async function getQuantumRandomUUID(): Promise<string> {
   try {
@@ -95,6 +131,7 @@ export default function Wallet() {
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState<TabType>('identity');
 
   useEffect(() => {
     // Check if user is logged in
@@ -315,21 +352,7 @@ export default function Wallet() {
   };
 
   return (
-    <div style={{ padding: "2rem" }}>
-      {error && (
-        <div
-          style={{
-            padding: "1rem",
-            marginBottom: "1rem",
-            backgroundColor: "#fee",
-            color: "#c33",
-            borderRadius: "4px",
-          }}
-        >
-          {error}
-        </div>
-      )}
-
+    <div style={{ padding: "2rem", maxWidth: "800px", margin: "0 auto" }}>
       {!identity ? (
         <>
           <h2>ZeroID Wallet</h2>
@@ -340,51 +363,114 @@ export default function Wallet() {
           </button>
         </>
       ) : (
-        <div style={{ marginTop: "2rem" }}>
-          <h2>Decentralized Identity</h2>
-          {user && <p>Welcome {user.username}</p>}
+        <>
 
-          <div style={{ marginBottom: "1rem" }}>
-            <strong>DID</strong>
-            <pre style={boxStyle}>{identity.did}</pre>
+          <h2>ZeroID Wallet</h2>
+          {user && <p>Welcome, {user.username}!</p>}
+          
+          {/* Tab Navigation */}
+          <div style={tabContainerStyle}>
+            <button 
+              style={tabStyle(activeTab === 'identity')}
+              onClick={() => setActiveTab('identity')}
+            >
+              Identity
+            </button>
+            <button 
+              style={tabStyle(activeTab === 'nfts')}
+              onClick={() => setActiveTab('nfts')}
+            >
+              My NFTs
+            </button>
+
           </div>
 
-          <div style={{ marginBottom: "1rem" }}>
-            <strong>DID Document</strong>
-            <pre style={boxStyle}>
-              {JSON.stringify(identity.didDocument, null, 2)}
-            </pre>
-          </div>
+          {/* Tab Content */}
+          {activeTab === 'identity' && (
+            <div>
+              <h3>Decentralized Identity</h3>
 
-          <div style={{ marginBottom: "1rem" }}>
-            <strong>Public Key</strong>
-            <pre style={boxStyle}>
-              {JSON.stringify(identity.publicKeyJwk, null, 2)}
-            </pre>
-          </div>
+              <div style={{ marginBottom: "1rem" }}>
+                <strong>DID</strong>
+                <pre style={boxStyle}>{identity.did}</pre>
+              </div>
 
-          <div
-            style={{
-              marginTop: "2rem",
-              padding: "1rem",
-              backgroundColor: "#fef3cd",
-              color: "#856404",
-              borderRadius: "4px",
-            }}
-          >
-            <strong>⚠️ Important:</strong> Your private key was downloaded when you
-            created your DID. Keep it safe - it's your responsibility to store it
-            securely!
-            <strong style={{ display: "block", marginTop: "1rem" }}>Security Notice:</strong>
-            <ul style={{ marginTop: "0.5rem", marginBottom: 0 }}>
-              <li>Your private key was downloaded as a <code>.key</code> file when you created your DID</li>
-              <li>If encrypted, you need the password to use it</li>
-              <li>Store it in a secure location (password manager, hardware wallet, etc.)</li>
-              <li>Never share it with anyone</li>
-              <li>This is your only copy - we cannot recover it</li>
-            </ul>
-          </div>
-        </div>
+              <div style={{ marginBottom: "1rem" }}>
+                <strong>DID Document</strong>
+                <pre style={boxStyle}>
+                  {JSON.stringify(identity.didDocument, null, 2)}
+                </pre>
+              </div>
+
+              <div style={{ marginBottom: "1rem" }}>
+                <strong>Public Key</strong>
+                <pre style={boxStyle}>
+                  {JSON.stringify(identity.publicKeyJwk, null, 2)}
+                </pre>
+              </div>
+
+              <div
+                style={{
+                  marginTop: "2rem",
+                  padding: "1rem",
+                  backgroundColor: "#fef3cd",
+                  color: "#856404",
+                  borderRadius: "4px",
+                }}
+              >
+                <strong>⚠️ Important:</strong> Your private key was downloaded when you
+                created your DID. Keep it safe - it's your responsibility to store it
+                securely!
+                <strong style={{ display: "block", marginTop: "1rem" }}>Security Notice:</strong>
+                <ul style={{ marginTop: "0.5rem", marginBottom: 0 }}>
+                  <li>Your private key was downloaded as a <code>.key</code> file when you created your DID</li>
+                  <li>If encrypted, you need the password to use it</li>
+                  <li>Store it in a secure location (password manager, hardware wallet, etc.)</li>
+                  <li>Never share it with anyone</li>
+                  <li>This is your only copy - we cannot recover it</li>
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'nfts' && (
+            <div>
+              {!contractAddress || !MyNFTABI ? (
+                <div style={{ padding: "2rem", textAlign: "center", color: "#888" }}>
+                  <h3>NFT Contract Not Available</h3>
+                  <p style={{ fontSize: "0.9rem", marginTop: "0.5rem" }}>
+                    Contract files not found. Please ensure the MyNFT.json file is copied to:
+                  </p>
+                  <code style={{ background: '#1a1a1a', padding: '0.5rem', borderRadius: '4px', display: 'block', margin: '1rem 0' }}>
+                    zeroid-wallet/src/contracts/MyNFT.json
+                  </code>
+                </div>
+              ) : (
+                <>
+                  <div style={{
+                    background: '#e3f2fd',
+                    padding: '1rem',
+                    borderRadius: '8px',
+                    marginBottom: '1.5rem',
+                    color: '#1565c0'
+                  }}>
+                    <h3 style={{ margin: '0 0 0.5rem 0' }}>ℹ️ How to Get NFTs</h3>
+                    <p style={{ margin: 0, fontSize: '0.9rem' }}>
+                      To purchase NFTs, visit your bank and provide them with your DID. 
+                      The bank will purchase NFTs on your behalf and link them to your DID.
+                      Your NFTs will appear here automatically.
+                    </p>
+                  </div>
+                  <NFTGallery 
+                    userDid={identity.did}
+                    contractAddress={contractAddress}
+                    contractABI={MyNFTABI}
+                  />
+                </>
+              )}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

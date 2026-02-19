@@ -212,31 +212,50 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
       const signer = await provider.getSigner();
       const contract = new ethers.Contract(contractAddress, contractABI, signer);
 
-      // Get the Ethereum address linked to this DID
+      // Check if DID is already linked to an address
       console.log('Looking up Ethereum address for DID...');
-      const userEthAddress = await contract.getAddressForDID(userDID);
+      let userEthAddress = await contract.getAddressForDID(userDID);
       
+      // If not linked, ask for the address and link it (bank pays gas)
       if (userEthAddress === ethers.ZeroAddress) {
-        alert(
-          `This DID is not linked to an Ethereum address yet.\n\n` +
-          `Please ask the user to:\n` +
-          `1. Open their ZeroID Wallet\n` +
-          `2. Go to Identity tab\n` +
-          `3. Click "Link DID to Blockchain"\n\n` +
-          `Then try purchasing again.`
+        const inputAddress = prompt(
+          `This DID is not yet linked to an Ethereum address.\n\n` +
+          `Enter the user's Ethereum address:\n` +
+          `(The bank will link it on the blockchain and pay the gas fee)\n\n` +
+          `Example: 0x1234567890123456789012345678901234567890`
         );
-        setLoading(false);
-        return;
-      }
 
-      console.log(`DID is linked to: ${userEthAddress}`);
+        if (!inputAddress || !inputAddress.trim()) {
+          alert('Purchase cancelled - no Ethereum address provided');
+          setLoading(false);
+          return;
+        }
+
+        if (!inputAddress.startsWith('0x') || inputAddress.length !== 42) {
+          alert('Invalid Ethereum address format. Must be 42 characters starting with 0x');
+          setLoading(false);
+          return;
+        }
+
+        userEthAddress = inputAddress;
+
+        // Bank links the DID to the address (bank pays gas fee)
+        console.log(`Linking DID to address (bank pays gas)...`);
+        const linkTx = await contract.linkDIDToAddress(userDID, userEthAddress);
+        console.log('Link transaction sent:', linkTx.hash);
+        await linkTx.wait();
+        console.log('DID linked successfully - bank paid gas fee');
+      } else {
+        console.log(`DID already linked to: ${userEthAddress}`);
+      }
 
       const confirm = window.confirm(
         `Confirm purchase:\n\n` +
         `NFT: #${tokenId}\n` +
         `For User DID: ${userDID}\n` +
         `To Address: ${userEthAddress}\n` +
-        `Price: ${ethers.formatEther(priceWei)} ETH\n\n` +
+        `Price: ${ethers.formatEther(priceWei)} ETH\n` +
+        `Gas fees: Paid by bank\n\n` +
         `The bank will purchase and transfer this NFT to the user's wallet.`
       );
 
@@ -263,7 +282,8 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
         `NFT #${tokenId} has been:\n` +
         `1. Assigned to DID: ${userDID}\n` +
         `2. Transferred to: ${userEthAddress}\n\n` +
-        `The user now has full custody of the NFT!`
+        `The user now has full custody of the NFT!\n` +
+        `All gas fees were paid by the bank.`
       );
       
       // Reload NFTs

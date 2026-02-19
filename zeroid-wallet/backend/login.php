@@ -82,7 +82,7 @@ try {
         
         // Get user from database
         $stmt = $conn->prepare("
-            SELECT id, username, did, pk, token, scram_salt, scram_iterations, scram_stored_key, scram_server_key
+            SELECT id, username, did, pk, eth_address, token, scram_salt, scram_iterations, scram_stored_key, scram_server_key
             FROM users 
             WHERE username = :username
         ");
@@ -145,6 +145,7 @@ try {
                 'username' => $user['username'],
                 'did' => $user['did'],
                 'pk' => $user['pk'],
+                'eth_address' => $user['eth_address'],
                 'token' => $newToken,
                 'server_signature' => $server_signature
             ]

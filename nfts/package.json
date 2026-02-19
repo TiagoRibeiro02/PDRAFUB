@@ -1,0 +1,23 @@
+{
+  "name": "nft-display-example",
+  "version": "1.0.0",
+  "description": "NFT display example using Hardhat and React",
+  "scripts": {
+    "compile": "hardhat compile",
+    "deploy": "hardhat run scripts/deploy.ts --network localhost",
+    "mint": "hardhat run scripts/mint.ts --network localhost",
+    "node": "hardhat node",
+    "test": "hardhat test",
+    "dev": "cd frontend && npm run dev"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@types/node": "^20.0.0",
+    "hardhat": "^2.19.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.0"
+  }
+}

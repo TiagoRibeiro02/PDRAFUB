@@ -1,0 +1,29 @@
+node_modules/
+dist/
+cache/
+artifacts/
+coverage/
+typechain-types/
+.env
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/src/contracts/
+
+# Hardhat
+artifacts/
+cache/
+coverage/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

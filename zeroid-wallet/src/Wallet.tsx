@@ -117,11 +117,17 @@ async function generateDid(): Promise<any> {
     authentication: [`${did}#key-1`],
   };
 
+  // Generate Ethereum wallet
+  const { Wallet } = await import('ethers');
+  const ethWallet = Wallet.createRandom();
+
   return {
     did,
     didDocument,
     publicKeyJwk,
-    privateKeyRaw: keyPair.privateKey, // Keep the CryptoKey object
+    privateKeyRaw: keyPair.privateKey, // Keep the CryptoKey object for DID
+    ethAddress: ethWallet.address,
+    ethPrivateKey: ethWallet.privateKey,
   };
 }
 
@@ -291,6 +297,70 @@ export default function Wallet() {
     URL.revokeObjectURL(url);
   };
 
+  const downloadEthereumPrivateKey = async (privateKey: string, ethAddress: string, did: string) => {
+    // Ask user if they want to encrypt the key
+    const wantsEncryption = window.confirm(
+      "Do you want to encrypt your Ethereum private key with a password?\n\n" +
+      "⚠️ RECOMMENDED: Encrypting protects your key if someone gains access to the file.\n" +
+      "If you choose 'OK', you'll need this password to import to MetaMask later.\n" +
+      "If you choose 'Cancel', the key will be stored unencrypted."
+    );
+
+    let fileContent = privateKey;
+    let fileName = `${did}-ethereum.key`;
+
+    if (wantsEncryption) {
+      const password = prompt(
+        "Enter a strong password to encrypt your Ethereum private key:\n\n" +
+        "⚠️ Remember this password! You'll need it to import to MetaMask.\n" +
+        "Without it, your private key cannot be recovered."
+      );
+
+      if (!password) {
+        alert("Encryption cancelled. Ethereum key will not be downloaded.");
+        return;
+      }
+
+      if (password.length < 12) {
+        const proceed = window.confirm(
+          "⚠️ Your password is short (less than 12 characters).\n" +
+          "A longer password is more secure.\n\n" +
+          "Continue anyway?"
+        );
+        if (!proceed) return;
+      }
+
+      try {
+        fileContent = await encryptPrivateKey(privateKey, password);
+        fileName = `${did}-ethereum.key.enc`;
+      } catch (err) {
+        alert("Encryption failed. Please try again.");
+        console.error("Encryption error:", err);
+        return;
+      }
+    }
+
+    // Create file with Ethereum address info
+    const keyFileContent = 
+      `# Ethereum Wallet for DID: ${did}\n` +
+      `# Ethereum Address: ${ethAddress}\n` +
+      `# KEEP THIS SAFE - Import to MetaMask to access your NFTs\n` +
+      `#\n` +
+      (wantsEncryption ? `# This key is ENCRYPTED - you need the password to use it\n#\n` : `# WARNING: This key is UNENCRYPTED\n#\n`) +
+      `${fileContent}\n`;
+
+    // Download the key
+    const dataBlob = new Blob([keyFileContent], { type: "text/plain" });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const createIdentity = async () => {
     if (!user) return;
 
@@ -298,10 +368,10 @@ export default function Wallet() {
     setError("");
 
     try {
-      // Generate DID and keys
+      // Generate DID and keys (including Ethereum wallet)
       const id = await generateDid();
 
-      // Store DID and public key in database
+      // Store DID, public key, and Ethereum address in database
       const response = await fetch("http://localhost:8000/store-did.php", {
         method: "POST",
         headers: {
@@ -311,6 +381,7 @@ export default function Wallet() {
           user_id: user.id,
           did: id.did,
           public_key_jwk: id.publicKeyJwk,
+          eth_address: id.ethAddress,
         }),
       });
 
@@ -331,21 +402,139 @@ export default function Wallet() {
       localStorage.setItem("user", JSON.stringify(updatedUser));
       setUser(updatedUser);
 
-      // Set identity (without private key)
+      // Set identity (without private keys)
       setIdentity({
         did: id.did,
         didDocument: id.didDocument,
         publicKeyJwk: id.publicKeyJwk,
       });
 
-      // Download private key (user's responsibility to store it)
+      // Download DID private key
       downloadPrivateKey(id.privateKeyRaw, id.did);
 
+      // Download Ethereum private key
+      downloadEthereumPrivateKey(id.ethPrivateKey, id.ethAddress, id.did);
+
+      // Try to link DID to blockchain automatically
+      let linkedToBlockchain = false;
+      if (contractAddress && MyNFTABI && typeof (window as any).ethereum !== 'undefined') {
+        try {
+          const shouldLink = window.confirm(
+            "Would you like to link your DID to the blockchain now?\n\n" +
+            "This allows:\n" +
+            "• Automatic NFT transfers when the bank purchases for you\n" +
+            "• Your Ethereum wallet to be permanently associated with your DID\n\n" +
+            "You'll need to connect MetaMask and pay a small gas fee.\n\n" +
+            "You can also do this later from the Identity tab."
+          );
+
+          if (shouldLink) {
+            // Import ethers
+            const { ethers } = await import('ethers');
+            const provider = new ethers.BrowserProvider((window as any).ethereum);
+            await provider.send("eth_requestAccounts", []);
+            
+            // Use the generated Ethereum private key to sign
+            const wallet = new ethers.Wallet(id.ethPrivateKey, provider);
+            const contract = new ethers.Contract(contractAddress, MyNFTABI, wallet);
+            
+            const tx = await contract.linkDIDToAddress(id.did, id.ethAddress);
+            await tx.wait();
+            linkedToBlockchain = true;
+          }
+        } catch (err) {
+          console.error('Auto-link failed:', err);
+          // Continue anyway - user can link later
+        }
+      }
+
       alert(
-        "Your private key has been downloaded. Please store it safely! This is your only copy."
+        "Your DID and Ethereum wallet have been created!\n\n" +
+        "TWO files have been downloaded:\n" +
+        "1. DID private key (.key file)\n" +
+        "2. Ethereum private key (.eth.key file)\n\n" +
+        "Store both files safely! These are your only copies.\n\n" +
+        "Your DID is linked to address: " + id.ethAddress +
+        (linkedToBlockchain ? "\n\n✓ Successfully linked to blockchain!" : "\n\n⚠️ Not yet linked to blockchain - you can link it later from the Identity tab.")
       );
     } catch (err) {
       setError("Failed to create identity: " + (err instanceof Error ? err.message : "Unknown error"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const linkDIDToBlockchain = async () => {
+    if (!identity || !contractAddress || !MyNFTABI) {
+      alert('Please ensure you have a DID and contract is available');
+      return;
+    }
+
+    if (typeof (window as any).ethereum === 'undefined') {
+      alert(
+        'Please install MetaMask and import your Ethereum private key first!\n\n' +
+        'Your Ethereum private key was downloaded when you created your DID.\n' +
+        'Import it to MetaMask to continue.'
+      );
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Import ethers
+      const { ethers } = await import('ethers');
+
+      // Connect to MetaMask
+      const provider = new ethers.BrowserProvider((window as any).ethereum);
+      await provider.send("eth_requestAccounts", []);
+      const signer = await provider.getSigner();
+      const userAddress = await signer.getAddress();
+
+      const contract = new ethers.Contract(contractAddress, MyNFTABI, signer);
+
+      // Check if already linked
+      const currentLinkedAddress = await contract.getAddressForDID(identity.did);
+      
+      if (currentLinkedAddress !== ethers.ZeroAddress) {
+        if (currentLinkedAddress.toLowerCase() === userAddress.toLowerCase()) {
+          alert(`Your DID is already linked to this address:\n${userAddress}`);
+        } else {
+          alert(
+            `Your DID is already linked to a different address:\n${currentLinkedAddress}\n\n` +
+            `Only the contract owner can update this.`
+          );
+        }
+        setLoading(false);
+        return;
+      }
+
+      const confirm = window.confirm(
+        `Link your DID to the blockchain?\n\n` +
+        `DID: ${identity.did}\n` +
+        `Will be linked to: ${userAddress}\n\n` +
+        `This allows the bank to automatically transfer NFTs to your wallet when they purchase for you.`
+      );
+
+      if (!confirm) {
+        setLoading(false);
+        return;
+      }
+
+      console.log('Linking DID to blockchain...');
+      const tx = await contract.linkDIDToAddress(identity.did, userAddress);
+      console.log('Transaction sent:', tx.hash);
+      await tx.wait();
+      console.log('Transaction confirmed!');
+
+      alert(
+        `✓ Successfully linked!\n\n` +
+        `Your DID is now linked to:\n${userAddress}\n\n` +
+        `When the bank purchases NFTs for you, they will automatically be transferred to your wallet!`
+      );
+    } catch (err: any) {
+      console.error('Link error:', err);
+      alert(`Failed to link DID: ${err.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
@@ -430,6 +619,45 @@ export default function Wallet() {
                   <li>This is your only copy - we cannot recover it</li>
                 </ul>
               </div>
+
+              {contractAddress && MyNFTABI && (
+                <div
+                  style={{
+                    marginTop: "2rem",
+                    padding: "1rem",
+                    backgroundColor: "#d4edda",
+                    color: "#155724",
+                    borderRadius: "4px",
+                  }}
+                >
+                  <h4 style={{ margin: '0 0 0.5rem 0' }}>🔗 Link DID to Blockchain</h4>
+                  <p style={{ margin: '0 0 1rem 0', fontSize: '0.9rem' }}>
+                    Link your DID to your Ethereum address on the blockchain so NFTs can be 
+                    automatically transferred to your wallet when the bank purchases for you.
+                  </p>
+                  <ol style={{ fontSize: '0.85rem', margin: '0 0 1rem 0', paddingLeft: '1.5rem' }}>
+                    <li>Import your Ethereum private key to MetaMask (downloaded when you created your DID)</li>
+                    <li>Click the button below to link your DID on the blockchain</li>
+                    <li>NFTs purchased by the bank will automatically transfer to your wallet!</li>
+                  </ol>
+                  <button
+                    onClick={linkDIDToBlockchain}
+                    disabled={loading}
+                    style={{
+                      padding: '0.75rem 1.5rem',
+                      background: loading ? '#6c757d' : '#28a745',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      fontSize: '1rem',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    {loading ? 'Processing...' : 'Link DID to Blockchain'}
+                  </button>
+                </div>
+              )}
             </div>
           )}
 

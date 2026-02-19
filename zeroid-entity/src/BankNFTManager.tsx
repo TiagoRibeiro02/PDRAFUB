@@ -204,16 +204,6 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
       return;
     }
 
-    const confirm = window.confirm(
-      `Confirm purchase:\n\n` +
-      `NFT: #${tokenId}\n` +
-      `For User DID: ${userDID}\n` +
-      `Price: ${ethers.formatEther(priceWei)} ETH\n\n` +
-      `The bank will pay with MetaMask and assign this NFT to the user's DID.`
-    );
-
-    if (!confirm) return;
-
     try {
       setLoading(true);
       setError('');
@@ -222,27 +212,67 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
       const signer = await provider.getSigner();
       const contract = new ethers.Contract(contractAddress, contractABI, signer);
 
-      console.log(`Bank purchasing NFT #${tokenId} for DID: ${userDID}`);
+      // Get the Ethereum address linked to this DID
+      console.log('Looking up Ethereum address for DID...');
+      const userEthAddress = await contract.getAddressForDID(userDID);
       
-      const tx = await contract.purchaseNFT(tokenId, userDID, { value: priceWei });
-      console.log('Transaction sent:', tx.hash);
+      if (userEthAddress === ethers.ZeroAddress) {
+        alert(
+          `This DID is not linked to an Ethereum address yet.\n\n` +
+          `Please ask the user to:\n` +
+          `1. Open their ZeroID Wallet\n` +
+          `2. Go to Identity tab\n` +
+          `3. Click "Link DID to Blockchain"\n\n` +
+          `Then try purchasing again.`
+        );
+        setLoading(false);
+        return;
+      }
+
+      console.log(`DID is linked to: ${userEthAddress}`);
+
+      const confirm = window.confirm(
+        `Confirm purchase:\n\n` +
+        `NFT: #${tokenId}\n` +
+        `For User DID: ${userDID}\n` +
+        `To Address: ${userEthAddress}\n` +
+        `Price: ${ethers.formatEther(priceWei)} ETH\n\n` +
+        `The bank will purchase and transfer this NFT to the user's wallet.`
+      );
+
+      if (!confirm) {
+        setLoading(false);
+        return;
+      }
+
+      console.log(`Purchasing NFT #${tokenId} for DID: ${userDID}`);
+      const purchaseTx = await contract.purchaseNFT(tokenId, userDID, { value: priceWei });
+      console.log('Purchase transaction sent:', purchaseTx.hash);
+      await purchaseTx.wait();
+      console.log('Purchase confirmed!');
       
-      await tx.wait();
-      console.log('Transaction confirmed!');
+      console.log(`Transferring NFT to user's wallet...`);
+      const bankAddress = await signer.getAddress();
+      const transferTx = await contract.transferFrom(bankAddress, userEthAddress, tokenId);
+      console.log('Transfer transaction sent:', transferTx.hash);
+      await transferTx.wait();
+      console.log('Transfer confirmed!');
       
       alert(
-        `✓ Purchase successful!\n\n` +
-        `NFT #${tokenId} is now owned by:\n${userDID}\n\n` +
-        `The user can now see this NFT in their ZeroID Wallet.`
+        `✓ Purchase and transfer successful!\n\n` +
+        `NFT #${tokenId} has been:\n` +
+        `1. Assigned to DID: ${userDID}\n` +
+        `2. Transferred to: ${userEthAddress}\n\n` +
+        `The user now has full custody of the NFT!`
       );
       
       // Reload NFTs
       await loadNFTs();
     } catch (err: any) {
-      console.error('Purchase error:', err);
-      const errorMessage = err.reason || err.message || 'Purchase failed';
+      console.error('Purchase/transfer error:', err);
+      const errorMessage = err.reason || err.message || 'Operation failed';
       setError(errorMessage);
-      alert(`Purchase failed: ${errorMessage}`);
+      alert(`Operation failed: ${errorMessage}`);
     } finally {
       setLoading(false);
     }

@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
     scram_server_key VARCHAR(64) NOT NULL,
     did VARCHAR(255) UNIQUE,
     pk VARCHAR(255),
+    eth_address VARCHAR(42) UNIQUE,
     token INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

@@ -17,11 +17,15 @@ contract MyNFT is ERC721URIStorage, Ownable {
     
     // Mapping from tokenId to price (0 means not for sale)
     mapping(uint256 => uint256) private _prices;
+    
+    // Mapping from DID to Ethereum address
+    mapping(string => address) private _didToAddress;
 
     event NFTMinted(address indexed to, uint256 indexed tokenId, string tokenURI, uint256 price);
     event NFTPurchased(uint256 indexed tokenId, string indexed buyerDID, uint256 price);
     event DIDOwnershipTransferred(uint256 indexed tokenId, string previousDID, string newDID);
     event PriceUpdated(uint256 indexed tokenId, uint256 newPrice);
+    event DIDLinked(string indexed did, address indexed ethAddress);
 
     constructor() ERC721("MyNFT Collection", "MNFT") Ownable(msg.sender) {
         _tokenIdCounter = 0;
@@ -73,6 +77,33 @@ contract MyNFT is ERC721URIStorage, Ownable {
         
         emit NFTPurchased(tokenId, buyerDID, price);
         emit DIDOwnershipTransferred(tokenId, "", buyerDID);
+    }
+
+    /**
+     * @dev Link a DID to an Ethereum address
+     * @param did The DID to link (e.g., "did:zeroid:...")
+     * @param ethAddress The Ethereum address to link to this DID
+     * Can be called by anyone to link their own DID, or by owner for admin purposes
+     */
+    function linkDIDToAddress(string memory did, address ethAddress) public {
+        require(bytes(did).length > 0, "Invalid DID");
+        require(ethAddress != address(0), "Invalid address");
+        
+        // Allow linking if not yet linked, or if caller is owner (for admin updates)
+        require(_didToAddress[did] == address(0) || msg.sender == owner(), 
+                "DID already linked. Only owner can update.");
+        
+        _didToAddress[did] = ethAddress;
+        emit DIDLinked(did, ethAddress);
+    }
+
+    /**
+     * @dev Get the Ethereum address linked to a DID
+     * @param did The DID to query
+     * @return The linked Ethereum address (0x0 if not linked)
+     */
+    function getAddressForDID(string memory did) public view returns (address) {
+        return _didToAddress[did];
     }
 
     /**

@@ -72,6 +72,9 @@ Open http://localhost:5173
 cd zeroid-wallet
 npm install
 npm run dev
+
+cd backend
+php -S localhost:8000
 ```
 
 Open http://localhost:5174
@@ -97,8 +100,6 @@ Import Hardhat Account #0 (the deployer/bank owner):
 1. When you run `npx hardhat node`, copy the private key for Account #0
 2. MetaMask → Import Account → Paste private key
 3. This account owns the contract and can manage NFTs
-
-**⚠️ WARNING: Never use Hardhat test accounts on real networks!**
 
 ## Usage Guide
 
@@ -175,15 +176,6 @@ getDidOwner(uint256 tokenId) returns (string)
 tokenURI(uint256 tokenId) returns (string)
 ```
 
-## Key Features
-
-✅ **DID-Based Ownership** - NFTs owned by decentralized identities, not Ethereum addresses  
-✅ **Bank-Mediated Purchases** - Simplified UX, bank handles transactions  
-✅ **Automatic Contract Loading** - No manual configuration needed  
-✅ **Zero-Knowledge Proofs** - ZK-PLONK proofs for identity verification  
-✅ **SCRAM Authentication** - Secure user authentication without storing passwords  
-✅ **Local Development** - Full stack runs on localhost
-
 ## Technologies
 
 - **Blockchain**: Hardhat, Solidity, Ethereum
@@ -193,35 +185,6 @@ tokenURI(uint256 tokenId) returns (string)
 - **Zero-Knowledge**: snarkjs, circom, PLONK
 - **Authentication**: SCRAM-SHA-256
 - **Backend**: PHP (for wallet authentication)
-
-## Project Structure
-
-```
-PDRAFUB/
-├── nfts/                      # NFT smart contract project
-│   ├── contracts/             # Solidity contracts
-│   │   └── MyNFT.sol         # NFT with DID ownership
-│   ├── frontend/              # NFT management interface
-│   │   └── src/contracts/    # Deployed contract files (ABI, address)
-│   └── scripts/               # Deploy and mint scripts
-│
-├── zeroid-entity/             # Bank interface
-│   ├── src/
-│   │   ├── App.tsx           # Main app with tabs
-│   │   ├── BankNFTManager.tsx # NFT purchase interface
-│   │   └── contracts/        # Auto-loaded contract files
-│   └── package.json
-│
-├── zeroid-wallet/             # User wallet
-│   ├── src/
-│   │   ├── Wallet.tsx        # Main wallet interface
-│   │   ├── components/       # NFT gallery, etc.
-│   │   └── contracts/        # Auto-loaded contract files
-│   ├── backend/               # PHP authentication server
-│   └── package.json
-│
-└── hardhat-example/           # Example Hardhat setup
-```
 
 ## Troubleshooting
 

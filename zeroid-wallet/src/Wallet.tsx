@@ -119,29 +119,8 @@ async function generateDid(): Promise<any> {
   };
 
   // Generate Ethereum wallet
-  const { Wallet, JsonRpcProvider } = await import('ethers');
+  const { Wallet } = await import('ethers');
   const ethWallet = Wallet.createRandom();
-
-  // FOR DEVELOPMENT: Fund the wallet with 1000 ETH from Hardhat account
-  try {
-    const provider = new JsonRpcProvider('http://127.0.0.1:8545');
-    
-    // Get one of the pre-funded Hardhat accounts
-    // Hardhat account #0 private key (has 10,000 ETH on local node)
-    const hardhatPrivateKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
-    const hardhatWallet = new Wallet(hardhatPrivateKey, provider);
-    
-    // Send 1000 ETH to the new wallet
-    const tx = await hardhatWallet.sendTransaction({
-      to: ethWallet.address,
-      value: BigInt('1000000000000000000000') // 1000 ETH in wei
-    });
-    
-    await tx.wait();
-    console.log(`✓ Funded new wallet ${ethWallet.address} with 1000 ETH`);
-  } catch (error) {
-    console.warn('Failed to fund wallet (this is normal if not on Hardhat network):', error);
-  }
 
   return {
     did,
@@ -558,8 +537,7 @@ export default function Wallet() {
         "1. DID private key (.key file)\n" +
         "2. Ethereum private key (.eth.key file)\n\n" +
         "Store both files safely! These are your only copies.\n\n" +
-        "Your Ethereum address: " + id.ethAddress + "\n" +
-        "Funded with: 1000 ETH (development)\n\n" +
+        "Your Ethereum address: " + id.ethAddress + "\n\n" +
         "ℹ️ When the bank purchases NFTs for you, they will automatically:\n" +
         "• Link your DID to the blockchain\n" +
         "• Transfer the NFT to your wallet\n" +
@@ -728,7 +706,7 @@ export default function Wallet() {
                       fontSize: '0.9rem',
                     }}
                   >
-                    🔓 Decrypt Ethereum Key File
+                    Decrypt Ethereum Key File
                   </button>
                 </div>
               )}
@@ -742,7 +720,7 @@ export default function Wallet() {
                   borderRadius: "4px",
                 }}
               >
-                <strong>⚠️ Important:</strong> Your private key was downloaded when you
+                <strong>Important:</strong> Your private key was downloaded when you
                 created your DID. Keep it safe - it's your responsibility to store it
                 securely!
                 <strong style={{ display: "block", marginTop: "1rem" }}>Security Notice:</strong>
@@ -791,7 +769,7 @@ export default function Wallet() {
                       fontSize: '0.9rem',
                     }}
                   >
-                    {loading ? 'Processing...' : '🔗 Link Now (Optional)'}
+                    {loading ? 'Processing...' : 'Link Now (Optional)'}
                   </button>
                 </div>
               )}
@@ -819,7 +797,7 @@ export default function Wallet() {
                     marginBottom: '1.5rem',
                     color: '#1565c0'
                   }}>
-                    <h3 style={{ margin: '0 0 0.5rem 0' }}>ℹ️ How to Get NFTs</h3>
+                    <h3 style={{ margin: '0 0 0.5rem 0' }}>How to Get NFTs</h3>
                     <p style={{ margin: 0, fontSize: '0.9rem' }}>
                       To purchase NFTs, visit your bank and provide them with your DID. 
                       The bank will purchase NFTs on your behalf and link them to your DID.

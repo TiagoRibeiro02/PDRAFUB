@@ -113,9 +113,6 @@ export default function NFTGallery({ userDid, contractAddress, contractABI }: NF
     return (
       <div style={{ color: '#888', textAlign: 'center', padding: '2rem' }}>
         <p>You don't own any NFTs yet.</p>
-        <p style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>
-          Visit the marketplace to purchase NFTs!
-        </p>
       </div>
     );
   }

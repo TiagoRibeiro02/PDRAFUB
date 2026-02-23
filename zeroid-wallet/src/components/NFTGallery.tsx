@@ -13,23 +13,27 @@ interface NFTGalleryProps {
   userDid: string;
   contractAddress: string;
   contractABI: any;
+  onNFTsLoaded?: (count: number) => void;
 }
 
 const cardStyle: React.CSSProperties = {
   background: '#1a1a1a',
   borderRadius: '12px',
-  padding: '1rem',
-  marginBottom: '1rem',
-  border: '1px solid #333',
+  padding: 'clamp(1rem, 2vw, 1.5rem)',
+  border: '1px solid rgba(202, 165, 97, 0.3)',
+  transition: 'all 0.3s ease',
+  boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
 };
 
 const imageStyle: React.CSSProperties = {
   width: '100%',
-  borderRadius: '8px',
-  marginBottom: '0.5rem',
+  borderRadius: '10px',
+  marginBottom: '0.75rem',
+  aspectRatio: '1',
+  objectFit: 'cover',
 };
 
-export default function NFTGallery({ userDid, contractAddress, contractABI }: NFTGalleryProps) {
+export default function NFTGallery({ userDid, contractAddress, contractABI, onNFTsLoaded }: NFTGalleryProps) {
   const [nfts, setNfts] = useState<NFTData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -40,6 +44,7 @@ export default function NFTGallery({ userDid, contractAddress, contractABI }: NF
 
   const loadUserNFTs = async () => {
     if (!contractAddress || !contractABI || !userDid) {
+      if (onNFTsLoaded) onNFTsLoaded(0);
       setLoading(false);
       return;
     }
@@ -57,6 +62,7 @@ export default function NFTGallery({ userDid, contractAddress, contractABI }: NF
       
       if (tokenIds.length === 0) {
         setNfts([]);
+        if (onNFTsLoaded) onNFTsLoaded(0);
         setLoading(false);
         return;
       }
@@ -93,25 +99,32 @@ export default function NFTGallery({ userDid, contractAddress, contractABI }: NF
       }
 
       setNfts(nftData);
+      if (onNFTsLoaded) onNFTsLoaded(nftData.length);
     } catch (err: any) {
       console.error('Error loading NFTs:', err);
       setError(err.message || 'Failed to load NFTs');
+      if (onNFTsLoaded) onNFTsLoaded(0);
     } finally {
       setLoading(false);
     }
   };
 
   if (loading) {
-    return <div style={{ color: '#888' }}>Loading your NFTs...</div>;
+    return <div style={{ color: '#888', fontSize: 'clamp(0.95rem, 1.5vw, 1.1rem)' }}>Loading your NFTs...</div>;
   }
 
   if (error) {
-    return <div style={{ color: '#ff6b6b' }}>Error: {error}</div>;
+    return <div style={{ color: '#ff6b6b', fontSize: 'clamp(0.95rem, 1.5vw, 1.1rem)' }}>Error: {error}</div>;
   }
 
   if (nfts.length === 0) {
     return (
-      <div style={{ color: '#888', textAlign: 'center', padding: '2rem' }}>
+      <div style={{ 
+        color: '#888', 
+        textAlign: 'center', 
+        padding: 'clamp(2rem, 4vw, 3rem)',
+        fontSize: 'clamp(0.95rem, 1.5vw, 1.1rem)',
+      }}>
         <p>You don't own any NFTs yet.</p>
       </div>
     );
@@ -119,18 +132,46 @@ export default function NFTGallery({ userDid, contractAddress, contractABI }: NF
 
   return (
     <div>
-      <h3 style={{ marginBottom: '1rem' }}>Your NFT Collection ({nfts.length})</h3>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
+      <h3 style={{ 
+        marginBottom: 'clamp(1rem, 2vw, 1.5rem)',
+        fontSize: 'clamp(1.2rem, 2.2vw, 1.6rem)',
+      }}>Your Asset Collection ({nfts.length})</h3>
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))', 
+        gap: 'clamp(1rem, 2vw, 1.75rem)',
+      }}>
         {nfts.map((nft) => (
-          <div key={nft.tokenId} style={cardStyle}>
+          <div 
+            key={nft.tokenId} 
+            style={cardStyle}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-4px)';
+              e.currentTarget.style.border = '1px solid rgba(202, 165, 97, 1)';
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(202, 165, 97, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.border = '1px solid rgba(202, 165, 97, 0.3)';
+              e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
+            }}
+          >
             {nft.image && <img src={nft.image} alt={nft.name} style={imageStyle} />}
-            <h4 style={{ margin: '0 0 0.5rem 0' }}>{nft.name}</h4>
-            <p style={{ color: '#888', fontSize: '0.9rem', margin: '0 0 0.5rem 0' }}>
+            <h4 style={{ 
+              margin: '0 0 0.75rem 0',
+              fontSize: 'clamp(1rem, 1.8vw, 1.25rem)',
+            }}>{nft.name}</h4>
+            <p style={{ 
+              color: '#aaa', 
+              fontSize: 'clamp(0.85rem, 1.3vw, 0.95rem)', 
+              margin: '0 0 0.75rem 0',
+              lineHeight: '1.5',
+            }}>
               {nft.description}
             </p>
-            <div style={{ fontSize: '0.8rem', color: '#666' }}>
-              <div>Token ID: #{nft.tokenId}</div>
-              <div style={{ wordBreak: 'break-all', marginTop: '0.25rem' }}>
+            <div style={{ fontSize: 'clamp(0.75rem, 1.2vw, 0.85rem)', color: '#666' }}>
+              <div style={{ marginBottom: '0.25rem' }}>Token ID: #{nft.tokenId}</div>
+              <div style={{ wordBreak: 'break-all', marginTop: '0.25rem', lineHeight: '1.4' }}>
                 Owner: {nft.didOwner}
               </div>
             </div>

@@ -323,7 +323,7 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
   if (!account) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center' }}>
-        <h2>🏦 Bank NFT Management</h2>
+        <h2>Bank NFT Management</h2>
         <p style={{ color: '#888', marginBottom: '2rem' }}>Connect your bank wallet to manage NFTs</p>
         <button onClick={connectWallet} style={buttonStyle}>
           Connect MetaMask
@@ -354,7 +354,7 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
     <div style={{ padding: '2rem' }}>
       <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 style={{ margin: 0 }}>🏦 Bank NFT Management</h1>
+          <h1 style={{ margin: 0 }}>Bank NFT Management</h1>
           <p style={{ color: '#888', margin: '0.5rem 0' }}>
             Connected: {account.slice(0, 6)}...{account.slice(-4)}
           </p>
@@ -391,7 +391,7 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
 
       {/* Available NFTs */}
       <section style={{ marginBottom: '3rem' }}>
-        <h2>📢 Available NFTs ({available.length})</h2>
+        <h2>Available NFTs ({available.length})</h2>
         <p style={{ color: '#888', marginBottom: '1rem' }}>
           Purchase these NFTs for users by entering their DID. The bank pays with MetaMask.
         </p>
@@ -443,7 +443,7 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
 
       {/* Purchased NFTs */}
       <section>
-        <h2>✅ Purchased NFTs ({purchased.length})</h2>
+        <h2>Purchased NFTs ({purchased.length})</h2>
         <p style={{ color: '#888', marginBottom: '1rem' }}>
           NFTs that have been purchased and assigned to user DIDs.
         </p>

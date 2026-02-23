@@ -34,37 +34,6 @@ interface IdentityData {
   publicKeyJwk: object;
 }
 
-type TabType = 'identity' | 'nfts';
-
-const boxStyle: React.CSSProperties = {
-  background: "#111",
-  color: "#ffff",
-  padding: "1rem",
-  borderRadius: "6px",
-  fontSize: "0.85rem",
-  overflowX: "auto"
-};
-
-const tabContainerStyle: React.CSSProperties = {
-  display: 'flex',
-  gap: '0.5rem',
-  marginBottom: '2rem',
-  borderBottom: '2px solid #333',
-  paddingBottom: '0.5rem',
-};
-
-const tabStyle = (isActive: boolean): React.CSSProperties => ({
-  padding: '0.75rem 1.5rem',
-  background: isActive ? '#4CAF50' : '#333',
-  color: 'white',
-  border: 'none',
-  borderRadius: '6px 6px 0 0',
-  cursor: 'pointer',
-  fontSize: '1rem',
-  fontWeight: isActive ? 'bold' : 'normal',
-  transition: 'all 0.2s',
-});
-
 async function getQuantumRandomUUID(): Promise<string> {
   try {
     // Fetch 16 random bytes via Vite proxy
@@ -138,7 +107,8 @@ export default function Wallet() {
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState<TabType>('identity');
+  const [nftCount, setNftCount] = useState<number | null>(null);
+  const [showInfoTooltip, setShowInfoTooltip] = useState(false);
 
   useEffect(() => {
     // Check if user is logged in
@@ -233,125 +203,11 @@ export default function Wallet() {
     return arrayBufferToBase64(combined.buffer);
   };
 
-  const decryptPrivateKey = async (encryptedData: string, password: string): Promise<string> => {
-    const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
-    
-    // Decode base64
-    const combined = new Uint8Array(
-      atob(encryptedData)
-        .split('')
-        .map(c => c.charCodeAt(0))
-    );
-    
-    // Extract salt, iv, and encrypted data
-    const salt = combined.slice(0, 16);
-    const iv = combined.slice(16, 28);
-    const encrypted = combined.slice(28);
-    
-    // Derive decryption key from password
-    const passwordKey = await crypto.subtle.importKey(
-      'raw',
-      encoder.encode(password),
-      'PBKDF2',
-      false,
-      ['deriveKey']
-    );
-    
-    const decryptionKey = await crypto.subtle.deriveKey(
-      {
-        name: 'PBKDF2',
-        salt: salt,
-        iterations: 100000,
-        hash: 'SHA-256'
-      },
-      passwordKey,
-      { name: 'AES-GCM', length: 256 },
-      false,
-      ['decrypt']
-    );
-    
-    try {
-      const decrypted = await crypto.subtle.decrypt(
-        { name: 'AES-GCM', iv: iv },
-        decryptionKey,
-        encrypted
-      );
-      
-      return decoder.decode(decrypted);
-    } catch (err) {
-      throw new Error('Decryption failed - incorrect password or corrupted file');
-    }
-  };
-
-  const decryptEthereumKey = async () => {
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = '.key,.enc,.key.enc';
-    
-    fileInput.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file) return;
-      
-      const text = await file.text();
-      
-      // Extract the base64 encrypted data (skip comment lines)
-      const lines = text.split('\n');
-      const encryptedData = lines.find(line => !line.startsWith('#') && line.trim().length > 0);
-      
-      if (!encryptedData) {
-        alert('Could not find encrypted data in file');
-        return;
-      }
-      
-      const password = prompt('Enter the password you used to encrypt this key:');
-      if (!password) return;
-      
-      try {
-        setLoading(true);
-        const decrypted = await decryptPrivateKey(encryptedData, password);
-        
-        // Show the decrypted key
-        const showKey = window.confirm(
-          '✓ Decryption successful!\n\n' +
-          'Would you like to:\n' +
-          'OK = Download decrypted key as file\n' +
-          'Cancel = View key in alert (copy manually)'
-        );
-        
-        if (showKey) {
-          // Download decrypted key
-          const blob = new Blob([decrypted], { type: 'text/plain' });
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = file.name.replace('.enc', '') + '.decrypted.txt';
-          link.click();
-          URL.revokeObjectURL(url);
-          alert('Decrypted key downloaded! Keep it safe.');
-        } else {
-          // Show in alert
-          alert(
-            'Your decrypted Ethereum private key:\n\n' +
-            decrypted +
-            '\n\n⚠️ Copy this now - it will not be shown again!'
-          );
-        }
-      } catch (err: any) {
-        alert('Decryption failed: ' + (err.message || 'Unknown error'));
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fileInput.click();
-  };
-
   const downloadPrivateKey = async (privateKeyRaw: CryptoKey, did: string) => {
     // Ask user if they want to encrypt the key
     const wantsEncryption = window.confirm(
       "Do you want to encrypt your private key with a password?\n\n" +
-      "⚠️ RECOMMENDED: Encrypting protects your key if someone gains access to the file.\n" +
+      "RECOMMENDED: Encrypting protects your key if someone gains access to the file.\n" +
       "If you choose 'OK', you'll need this password to use the key later.\n" +
       "If you choose 'Cancel', the key will be stored unencrypted."
     );
@@ -372,7 +228,7 @@ export default function Wallet() {
     if (wantsEncryption) {
       const password = prompt(
         "Enter a strong password to encrypt your private key:\n\n" +
-        "⚠️ Remember this password! You'll need it to import your key.\n" +
+        "Remember this password! You'll need it to import your key.\n" +
         "Without it, your private key cannot be recovered."
       );
 
@@ -383,7 +239,7 @@ export default function Wallet() {
 
       if (password.length < 12) {
         const proceed = window.confirm(
-          "⚠️ Your password is short (less than 12 characters).\n" +
+          "Your password is short (less than 12 characters).\n" +
           "A longer password is more secure.\n\n" +
           "Continue anyway?"
         );
@@ -416,7 +272,7 @@ export default function Wallet() {
     // Ask user if they want to encrypt the key
     const wantsEncryption = window.confirm(
       "Do you want to encrypt your Ethereum private key with a password?\n\n" +
-      "⚠️ RECOMMENDED: Encrypting protects your key if someone gains access to the file.\n" +
+      "RECOMMENDED: Encrypting protects your key if someone gains access to the file.\n" +
       "If you choose 'OK', you'll need this password to import to MetaMask later.\n" +
       "If you choose 'Cancel', the key will be stored unencrypted."
     );
@@ -427,7 +283,7 @@ export default function Wallet() {
     if (wantsEncryption) {
       const password = prompt(
         "Enter a strong password to encrypt your Ethereum private key:\n\n" +
-        "⚠️ Remember this password! You'll need it to import to MetaMask.\n" +
+        "Remember this password! You'll need it to import to MetaMask.\n" +
         "Without it, your private key cannot be recovered."
       );
 
@@ -438,7 +294,7 @@ export default function Wallet() {
 
       if (password.length < 12) {
         const proceed = window.confirm(
-          "⚠️ Your password is short (less than 12 characters).\n" +
+          "Your password is short (less than 12 characters).\n" +
           "A longer password is more secure.\n\n" +
           "Continue anyway?"
         );
@@ -532,13 +388,13 @@ export default function Wallet() {
       downloadEthereumPrivateKey(id.ethPrivateKey, id.ethAddress, id.did);
 
       alert(
-        "✓ Your DID and Ethereum wallet have been created!\n\n" +
+        "Your DID and Ethereum wallet have been created!\n\n" +
         "TWO files have been downloaded:\n" +
         "1. DID private key (.key file)\n" +
         "2. Ethereum private key (.eth.key file)\n\n" +
         "Store both files safely! These are your only copies.\n\n" +
         "Your Ethereum address: " + id.ethAddress + "\n\n" +
-        "ℹ️ When the bank purchases NFTs for you, they will automatically:\n" +
+        "When the bank purchases NFTs for you, they will automatically:\n" +
         "• Link your DID to the blockchain\n" +
         "• Transfer the NFT to your wallet\n" +
         "• Pay all gas fees\n\n" +
@@ -551,268 +407,256 @@ export default function Wallet() {
     }
   };
 
-  const linkDIDToBlockchain = async () => {
-    if (!identity || !contractAddress || !MyNFTABI) {
-      alert('Please ensure you have a DID and contract is available');
-      return;
-    }
-
-    if (typeof (window as any).ethereum === 'undefined') {
-      alert(
-        'Please install MetaMask and import your Ethereum private key first!\n\n' +
-        'Your Ethereum private key was downloaded when you created your DID.\n' +
-        'Import it to MetaMask to continue.'
-      );
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      // Import ethers
-      const { ethers } = await import('ethers');
-
-      // Connect to MetaMask
-      const provider = new ethers.BrowserProvider((window as any).ethereum);
-      await provider.send("eth_requestAccounts", []);
-      const signer = await provider.getSigner();
-      const userAddress = await signer.getAddress();
-
-      const contract = new ethers.Contract(contractAddress, MyNFTABI, signer);
-
-      // Check if already linked
-      const currentLinkedAddress = await contract.getAddressForDID(identity.did);
-      
-      if (currentLinkedAddress !== ethers.ZeroAddress) {
-        if (currentLinkedAddress.toLowerCase() === userAddress.toLowerCase()) {
-          alert(`Your DID is already linked to this address:\n${userAddress}`);
-        } else {
-          alert(
-            `Your DID is already linked to a different address:\n${currentLinkedAddress}\n\n` +
-            `Only the contract owner can update this.`
-          );
-        }
-        setLoading(false);
-        return;
-      }
-
-      const confirm = window.confirm(
-        `Link your DID to the blockchain?\n\n` +
-        `DID: ${identity.did}\n` +
-        `Will be linked to: ${userAddress}\n\n` +
-        `This allows the bank to automatically transfer NFTs to your wallet when they purchase for you.`
-      );
-
-      if (!confirm) {
-        setLoading(false);
-        return;
-      }
-
-      console.log('Linking DID to blockchain...');
-      const tx = await contract.linkDIDToAddress(identity.did, userAddress);
-      console.log('Transaction sent:', tx.hash);
-      await tx.wait();
-      console.log('Transaction confirmed!');
-
-      alert(
-        `✓ Successfully linked!\n\n` +
-        `Your DID is now linked to:\n${userAddress}\n\n` +
-        `When the bank purchases NFTs for you, they will automatically be transferred to your wallet!`
-      );
-    } catch (err: any) {
-      console.error('Link error:', err);
-      alert(`Failed to link DID: ${err.message || 'Unknown error'}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <div style={{ padding: "2rem", maxWidth: "800px", margin: "0 auto" }}>
+    <div style={{ 
+      padding: "clamp(0.75rem, 2vw, 1.5rem)", 
+      maxWidth: "1600px", 
+      margin: "0 auto",
+      width: "100%",
+      boxSizing: "border-box",
+      minHeight: "100vh",
+    }}>
       {!identity ? (
-        <>
-          <h2>ZeroID Wallet</h2>
-          {user && <p>Welcome, {user.username}!</p>}
-          <p>You don't have a DID yet.</p>
-          <button onClick={createIdentity} disabled={loading}>
+        <div 
+          style={{
+            maxWidth: '600px',
+            margin: '0 auto',
+            padding: 'clamp(1.5rem, 3vw, 2.5rem)',
+            background: '#1a1a1a',
+            borderRadius: '12px',
+            textAlign: 'center',
+            border: '1px solid rgba(202, 165, 97, 0.3)',
+            transition: 'all 0.3s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.border = '1px solid rgba(202, 165, 97, 1)';
+            e.currentTarget.style.boxShadow = '0 4px 16px rgba(202, 165, 97, 0.3)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.border = '1px solid rgba(202, 165, 97, 0.3)';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
+        >
+          <h1 style={{ fontSize: 'clamp(1.5rem, 3vw, 2.5rem)', marginBottom: '1rem', color: "#ffffff" }}>ZeroID Wallet</h1>
+          {user && <p style={{ fontSize: 'clamp(1rem, 1.8vw, 1.2rem)', marginBottom: '1rem' }}>Welcome, {user.username}!</p>}
+          <p style={{ fontSize: 'clamp(0.95rem, 1.5vw, 1.1rem)', color: '#aaa', marginBottom: '2rem' }}>You don't have a DID yet.</p>
+          <button 
+            onClick={createIdentity} 
+            disabled={loading}
+            style={{
+              padding: 'clamp(0.75rem, 1.5vw, 1rem) clamp(1.5rem, 3vw, 2.5rem)',
+              background: 'rgb(202, 165, 97)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              fontSize: 'clamp(1rem, 1.8vw, 1.2rem)',
+              fontWeight: 'bold',
+              transition: 'all 0.3s',
+              opacity: loading ? 0.6 : 1,
+            }}
+            onMouseEnter={(e) => {if (!loading) (e.target as HTMLButtonElement).style.background = 'rgb(180, 145, 77)'}}
+            onMouseLeave={(e) => {if (!loading) (e.target as HTMLButtonElement).style.background = 'rgb(202, 165, 97)'}}
+          >
             {loading ? "Creating DID..." : "Create DID"}
           </button>
-        </>
+        </div>
       ) : (
         <>
-
-          <h2>ZeroID Wallet</h2>
-          {user && <p>Welcome, {user.username}!</p>}
+          <h1 style={{textAlign:"center", margin: "1rem 0", color: "#ffffff"}}>ZeroID Wallet</h1>
           
-          {/* Tab Navigation */}
-          <div style={tabContainerStyle}>
-            <button 
-              style={tabStyle(activeTab === 'identity')}
-              onClick={() => setActiveTab('identity')}
+          {/* Header with Welcome, DID, and Profile Button */}
+          <div 
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '2rem',
+              padding: 'clamp(1rem, 3vw, 2rem)',
+              background: '#1a1a1a',
+              borderRadius: '12px',
+              flexWrap: 'wrap',
+              gap: '1rem',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+              border: '1px solid rgba(202, 165, 97, 0.3)',
+              transition: 'all 0.3s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.border = '1px solid rgba(202, 165, 97, 1)';
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(202, 165, 97, 0.3)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.border = '1px solid rgba(202, 165, 97, 0.3)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+            }}
+          >
+            <div style={{ flex: 1, minWidth: '250px' }}>
+              {user && <p style={{ margin: 0, fontSize: 'clamp(1rem, 2vw, 1.3rem)' }}>Welcome, <strong>{user.username}</strong>!</p>}
+              <div style={{ marginTop: '0.75rem' }}>
+                <strong style={{ fontSize: 'clamp(0.85rem, 1.5vw, 1rem)', color: 'rgb(202, 165, 97)' }}>DID: </strong>
+                <span style={{ 
+                  fontSize: 'clamp(0.75rem, 1.3vw, 0.95rem)', 
+                  fontFamily: 'monospace', 
+                  color: '#fff',
+                  wordBreak: 'break-all',
+                }}>{identity.did}</span>
+              </div>
+            </div>
+            <button
+              onClick={() => navigate('/profile')}
+              style={{
+                padding: 'clamp(0.75rem, 1.5vw, 1rem) clamp(1.25rem, 2.5vw, 2rem)',
+                background: 'rgb(202, 165, 97)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: 'clamp(0.95rem, 1.5vw, 1.1rem)',
+                fontWeight: 'bold',
+                transition: 'all 0.3s',
+                whiteSpace: 'nowrap',
+              }}
+              onMouseEnter={(e) => {(e.target as HTMLButtonElement).style.background = 'rgb(180, 145, 77)'}}
+              onMouseLeave={(e) => {(e.target as HTMLButtonElement).style.background = 'rgb(202, 165, 97)'}}
             >
-              Identity
+              View Profile
             </button>
-            <button 
-              style={tabStyle(activeTab === 'nfts')}
-              onClick={() => setActiveTab('nfts')}
-            >
-              My NFTs
-            </button>
-
           </div>
 
-          {/* Tab Content */}
-          {activeTab === 'identity' && (
-            <div>
-              <h3>Decentralized Identity</h3>
-
-              <div style={{ marginBottom: "1rem" }}>
-                <strong>DID</strong>
-                <pre style={boxStyle}>{identity.did}</pre>
-              </div>
-
-              <div style={{ marginBottom: "1rem" }}>
-                <strong>DID Document</strong>
-                <pre style={boxStyle}>
-                  {JSON.stringify(identity.didDocument, null, 2)}
-                </pre>
-              </div>
-
-              <div style={{ marginBottom: "1rem" }}>
-                <strong>Public Key</strong>
-                <pre style={boxStyle}>
-                  {JSON.stringify(identity.publicKeyJwk, null, 2)}
-                </pre>
-              </div>
-
-              {user?.eth_address && (
-                <div style={{ marginBottom: "1rem" }}>
-                  <strong>Ethereum Address (Your Wallet)</strong>
-                  <pre style={boxStyle}>{user.eth_address}</pre>
-                  <p style={{ fontSize: "0.85rem", color: "#888", marginTop: "0.5rem" }}>
-                    💡 Import your Ethereum private key (.eth.key file) to MetaMask to access NFTs at this address
-                  </p>
-                  <button
-                    onClick={decryptEthereumKey}
-                    disabled={loading}
-                    style={{
-                      marginTop: '0.5rem',
-                      padding: '0.5rem 1rem',
-                      background: loading ? '#6c757d' : '#007bff',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: loading ? 'not-allowed' : 'pointer',
-                      fontSize: '0.9rem',
-                    }}
-                  >
-                    Decrypt Ethereum Key File
-                  </button>
-                </div>
-              )}
-
-              <div
-                style={{
-                  marginTop: "2rem",
-                  padding: "1rem",
-                  backgroundColor: "#fef3cd",
-                  color: "#856404",
-                  borderRadius: "4px",
+          {/* NFT Gallery Section */}
+          <div style={{ marginTop: '2rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+              <h3 style={{ margin: 0, fontSize: 'clamp(1.3rem, 2.5vw, 1.8rem)' }}>My Assets</h3>
+              <div 
+                style={{ 
+                  position: 'relative',
+                  display: 'inline-block',
                 }}
+                onMouseEnter={() => setShowInfoTooltip(true)}
+                onMouseLeave={() => setShowInfoTooltip(false)}
               >
-                <strong>Important:</strong> Your private key was downloaded when you
-                created your DID. Keep it safe - it's your responsibility to store it
-                securely!
-                <strong style={{ display: "block", marginTop: "1rem" }}>Security Notice:</strong>
-                <ul style={{ marginTop: "0.5rem", marginBottom: 0 }}>
-                  <li>Your <strong>DID private key</strong> was downloaded as a <code>.key</code> file</li>
-                  <li>Your <strong>Ethereum private key</strong> was downloaded as a <code>.eth.key</code> file</li>
-                  <li>If encrypted, you need the password to use them</li>
-                  <li>Store them in a secure location (password manager, hardware wallet, etc.)</li>
-                  <li>Never share them with anyone</li>
-                  <li>These are your only copies - we cannot recover them</li>
-                </ul>
-              </div>
-
-              {contractAddress && MyNFTABI && (
-                <div
+                <button
+                  onClick={() => setShowInfoTooltip(!showInfoTooltip)}
                   style={{
-                    marginTop: "2rem",
-                    padding: "1rem",
-                    backgroundColor: "#d4edda",
-                    color: "#155724",
-                    borderRadius: "4px",
+                    background: 'rgb(202, 165, 97)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: 'clamp(28px, 3vw, 36px)',
+                    height: 'clamp(32px, 3vw, 40px)',
+                    fontSize: 'clamp(14px, 1.5vw, 18px)',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.3s',
                   }}
+                  aria-label="Info about getting NFTs"
+                  onMouseEnter={(e) => {(e.target as HTMLButtonElement).style.background = 'rgb(180, 145, 77)'}}
+                  onMouseLeave={(e) => {(e.target as HTMLButtonElement).style.background = 'rgb(202, 165, 97)'}}
                 >
-                  <h4 style={{ margin: '0 0 0.5rem 0' }}>🔗 Blockchain Linking (Optional)</h4>
-                  <p style={{ margin: '0 0 1rem 0', fontSize: '0.9rem' }}>
-                    <strong>✓ No action required!</strong> When the bank purchases NFTs for you, they will automatically 
-                    link your DID to your Ethereum address on the blockchain and pay all gas fees.
-                  </p>
-                  <p style={{ margin: '0 0 1rem 0', fontSize: '0.85rem', color: '#666' }}>
-                    You can also link it yourself now if you want to verify the connection before purchasing:
-                  </p>
-                  <ol style={{ fontSize: '0.85rem', margin: '0 0 1rem 0', paddingLeft: '1.5rem' }}>
-                    <li>Import your Ethereum private key to MetaMask (downloaded when you created your DID)</li>
-                    <li>Click the button below to link your DID on the blockchain (you pay gas)</li>
-                  </ol>
-                  <button
-                    onClick={linkDIDToBlockchain}
-                    disabled={loading}
-                    style={{
-                      padding: '0.5rem 1rem',
-                      background: loading ? '#6c757d' : '#20a745',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: loading ? 'not-allowed' : 'pointer',
-                      fontSize: '0.9rem',
-                    }}
-                  >
-                    {loading ? 'Processing...' : 'Link Now (Optional)'}
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'nfts' && (
-            <div>
-              {!contractAddress || !MyNFTABI ? (
-                <div style={{ padding: "2rem", textAlign: "center", color: "#888" }}>
-                  <h3>NFT Contract Not Available</h3>
-                  <p style={{ fontSize: "0.9rem", marginTop: "0.5rem" }}>
-                    Contract files not found. Please ensure the MyNFT.json file is copied to:
-                  </p>
-                  <code style={{ background: '#1a1a1a', padding: '0.5rem', borderRadius: '4px', display: 'block', margin: '1rem 0' }}>
-                    zeroid-wallet/src/contracts/MyNFT.json
-                  </code>
-                </div>
-              ) : (
-                <>
+                  !
+                </button>
+                {showInfoTooltip && (
                   <div style={{
-                    background: '#e3f2fd',
-                    padding: '1rem',
-                    borderRadius: '8px',
-                    marginBottom: '1.5rem',
-                    color: '#1565c0'
+                    position: 'absolute',
+                    top: '40px',
+                    left: '0',
+                    background: '#fef3cd',
+                    color: '#856404',
+                    padding: 'clamp(0.75rem, 2vw, 1.25rem)',
+                    borderRadius: '10px',
+                    boxShadow: '0 6px 16px rgba(0,0,0,0.4)',
+                    zIndex: 1000,
+                    minWidth: '280px',
+                    maxWidth: 'min(500px, 90vw)',
                   }}>
-                    <h3 style={{ margin: '0 0 0.5rem 0' }}>How to Get NFTs</h3>
-                    <p style={{ margin: 0, fontSize: '0.9rem' }}>
-                      To purchase NFTs, visit your bank and provide them with your DID. 
-                      The bank will purchase NFTs on your behalf and link them to your DID.
-                      Your NFTs will appear here automatically.
+                    <h4 style={{ margin: '0 0 0.5rem 0', fontSize: 'clamp(0.95rem, 1.5vw, 1.1rem)' }}>How to Get Assets</h4>
+                    <p style={{ margin: 0, fontSize: 'clamp(0.85rem, 1.3vw, 0.95rem)' }}>
+                      To purchase assets, visit your bank and provide them with your DID. 
+                      The bank will purchase assets on your behalf and link them to your DID.
+                      Your assets will appear here automatically.
                     </p>
                   </div>
-                  <NFTGallery 
-                    userDid={identity.did}
-                    contractAddress={contractAddress}
-                    contractABI={MyNFTABI}
-                  />
-                </>
-              )}
+                )}
+              </div>
             </div>
-          )}
+            {!contractAddress || !MyNFTABI ? (
+              <div 
+                style={{ 
+                  padding: "clamp(1.5rem, 3vw, 2.5rem)", 
+                  textAlign: "center", 
+                  color: "#888",
+                  background: '#1a1a1a',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(202, 165, 97, 0.3)',
+                  transition: 'all 0.3s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.border = '1px solid rgba(202, 165, 97, 1)';
+                  e.currentTarget.style.boxShadow = '0 4px 16px rgba(202, 165, 97, 0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.border = '1px solid rgba(202, 165, 97, 0.3)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                <h4 style={{ fontSize: 'clamp(1.1rem, 2vw, 1.4rem)' }}>NFT Contract Not Available</h4>
+                <p style={{ fontSize: 'clamp(0.85rem, 1.3vw, 1rem)', marginTop: "0.75rem" }}>
+                  Contract files not found. Please ensure the MyNFT.json file is copied to:
+                </p>
+                <code style={{ 
+                  background: '#0a0a0a', 
+                  padding: 'clamp(0.5rem, 1.5vw, 0.75rem)', 
+                  borderRadius: '6px', 
+                  display: 'block', 
+                  margin: '1rem 0',
+                  fontSize: 'clamp(0.75rem, 1.2vw, 0.9rem)',
+                }}>
+                  zeroid-wallet/src/contracts/MyNFT.json
+                </code>
+              </div>
+            ) : (
+              <>
+                {nftCount === 0 && (
+                  <div 
+                    style={{
+                      background: '#fef3cd',
+                      padding: 'clamp(1rem, 2vw, 1.5rem)',
+                      borderRadius: '12px',
+                      marginBottom: '1.5rem',
+                      color: '#856404',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                      border: '1px solid rgb(202, 165, 97)',
+                      transition: 'all 0.3s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.border = '1px solid rgb(180, 145, 77)';
+                      e.currentTarget.style.boxShadow = '0 4px 16px rgb(202, 165, 97)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.border = '1px solid rgb(202, 165, 97)';
+                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                    }}
+                  >
+                    <h4 style={{ margin: '0 0 0.75rem 0', fontSize: 'clamp(1rem, 1.8vw, 1.2rem)' }}>How to Get Assets</h4>
+                    <p style={{ margin: 0, fontSize: 'clamp(0.85rem, 1.3vw, 0.95rem)', lineHeight: '1.6' }}>
+                      To purchase Assets, visit your bank and provide them with your DID. 
+                      The bank will purchase Assets on your behalf and link them to your DID.
+                      Your Assets will appear here automatically.
+                    </p>
+                  </div>
+                )}
+                <NFTGallery 
+                  userDid={identity.did}
+                  contractAddress={contractAddress}
+                  contractABI={MyNFTABI}
+                  onNFTsLoaded={setNftCount}
+                />
+              </>
+            )}
+          </div>
         </>
       )}
     </div>

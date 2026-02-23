@@ -97,7 +97,7 @@ export default function App() {
         borderBottom: '2px solid #333',
         marginBottom: '1rem'
       }}>
-        <h1 style={{ margin: '0 0 1rem 0' }}>🏦 Bank Entity - ZeroID System</h1>
+        <h1 style={{ margin: '0 0 1rem 0' }}>Bank Entity - ZeroID System</h1>
         
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
           <button 

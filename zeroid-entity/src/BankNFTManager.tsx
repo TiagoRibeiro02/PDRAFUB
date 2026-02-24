@@ -19,19 +19,22 @@ interface BankNFTManagerProps {
 const cardStyle: React.CSSProperties = {
   background: '#1a1a1a',
   borderRadius: '12px',
-  padding: '1rem',
-  marginBottom: '1rem',
-  border: '1px solid #333',
+  padding: 'clamp(1rem, 2vw, 1.5rem)',
+  border: '1px solid rgba(202, 165, 97, 0.3)',
+  transition: 'all 0.3s ease',
+  boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
 };
 
 const imageStyle: React.CSSProperties = {
   width: '100%',
-  borderRadius: '8px',
-  marginBottom: '0.5rem',
+  borderRadius: '10px',
+  marginBottom: '0.75rem',
+  aspectRatio: '1',
+  objectFit: 'cover',
 };
 
 const buttonStyle: React.CSSProperties = {
-  background: '#4CAF50',
+  background: 'rgb(202, 165, 97)',
   color: 'white',
   border: 'none',
   borderRadius: '6px',
@@ -278,7 +281,7 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
       console.log('Transfer confirmed!');
       
       alert(
-        `✓ Purchase and transfer successful!\n\n` +
+        `Purchase and transfer successful!\n\n` +
         `NFT #${tokenId} has been:\n` +
         `1. Assigned to DID: ${userDID}\n` +
         `2. Transferred to: ${userEthAddress}\n\n` +
@@ -322,10 +325,24 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
 
   if (!account) {
     return (
-      <div style={{ padding: '2rem', textAlign: 'center' }}>
-        <h2>Bank NFT Management</h2>
-        <p style={{ color: '#888', marginBottom: '2rem' }}>Connect your bank wallet to manage NFTs</p>
-        <button onClick={connectWallet} style={buttonStyle}>
+      <div style={{ 
+        padding: 'clamp(1.5rem, 3vw, 2rem)', 
+        textAlign: 'center',
+        maxWidth: '600px',
+        margin: '2rem auto',
+      }}>
+        <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)', marginBottom: 'clamp(0.75rem, 1.5vw, 1rem)' }}>Bank NFT Management</h2>
+        <p style={{ color: '#888', marginBottom: 'clamp(1.5rem, 3vw, 2rem)', fontSize: 'clamp(0.9rem, 1.5vw, 1rem)' }}>Connect your bank wallet to manage NFTs</p>
+        <button 
+          onClick={connectWallet} 
+          style={{
+            ...buttonStyle,
+            fontSize: 'clamp(0.95rem, 1.5vw, 1.1rem)',
+            padding: 'clamp(0.75rem, 1.5vw, 1rem) clamp(1.5rem, 3vw, 2rem)',
+          }}
+          onMouseEnter={(e) => {(e.target as HTMLButtonElement).style.background = 'rgb(180, 145, 77)'}}
+          onMouseLeave={(e) => {(e.target as HTMLButtonElement).style.background = 'rgb(202, 165, 97)'}}
+        >
           Connect MetaMask
         </button>
       </div>
@@ -334,12 +351,17 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
 
   if (!isOwner && account) {
     return (
-      <div style={{ padding: '2rem', textAlign: 'center' }}>
-        <h2>Access Denied</h2>
-        <p style={{ color: '#ff6b6b' }}>
+      <div style={{ 
+        padding: 'clamp(1.5rem, 3vw, 2rem)', 
+        textAlign: 'center',
+        maxWidth: '600px',
+        margin: '2rem auto',
+      }}>
+        <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)', marginBottom: 'clamp(0.75rem, 1.5vw, 1rem)' }}>Access Denied</h2>
+        <p style={{ color: '#ff6b6b', fontSize: 'clamp(0.9rem, 1.5vw, 1rem)', marginBottom: 'clamp(0.75rem, 1.5vw, 1rem)' }}>
           You are not the bank owner. Only the contract owner can manage NFTs.
         </p>
-        <p style={{ color: '#888', fontSize: '0.9rem', marginTop: '1rem' }}>
+        <p style={{ color: '#888', fontSize: 'clamp(0.8rem, 1.3vw, 0.9rem)', marginTop: 'clamp(0.75rem, 1.5vw, 1rem)' }}>
           Connected: {account.slice(0, 6)}...{account.slice(-4)}
         </p>
       </div>
@@ -347,19 +369,38 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
   }
 
   if (loading && available.length === 0 && purchased.length === 0) {
-    return <div style={{ padding: '2rem', color: '#888' }}>Loading NFT inventory...</div>;
+    return <div style={{ 
+      padding: 'clamp(1.5rem, 3vw, 2rem)', 
+      color: '#888',
+      fontSize: 'clamp(0.9rem, 1.5vw, 1rem)',
+      textAlign: 'center',
+    }}>Loading NFT inventory...</div>;
   }
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div style={{ 
+      padding: 'clamp(1rem, 2.5vw, 3rem)', 
+      width: '100%',
+      boxSizing: 'border-box',
+      minHeight: '100vh',
+    }}>
+      <div style={{ 
+        marginBottom: 'clamp(1.5rem, 3vw, 2rem)', 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '1rem',
+      }}>
         <div>
-          <h1 style={{ margin: 0 }}>Bank NFT Management</h1>
-          <p style={{ color: '#888', margin: '0.5rem 0' }}>
-            Connected: {account.slice(0, 6)}...{account.slice(-4)}
-          </p>
+          <h1 style={{ margin: 0, fontSize: 'clamp(1.5rem, 3vw, 2.5rem)' }}>Bank NFT Management</h1>
         </div>
-        <button onClick={loadNFTs} style={{ ...buttonStyle, width: 'auto', padding: '0.5rem 1rem' }}>
+        <button 
+          onClick={loadNFTs} 
+          style={{ ...buttonStyle, width: 'auto', padding: 'clamp(0.5rem, 1.5vw, 0.75rem) clamp(1rem, 2vw, 1.5rem)', fontSize: 'clamp(0.9rem, 1.5vw, 1rem)' }}
+          onMouseEnter={(e) => {(e.target as HTMLButtonElement).style.background = 'rgb(180, 145, 77)'}}
+          onMouseLeave={(e) => {(e.target as HTMLButtonElement).style.background = 'rgb(202, 165, 97)'}}
+        >
           Refresh
         </button>
       </div>
@@ -367,51 +408,87 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
       {error && (
         <div style={{ 
           color: '#ff6b6b', 
-          marginBottom: '1rem', 
-          padding: '1rem', 
+          marginBottom: 'clamp(1rem, 2vw, 1.5rem)', 
+          padding: 'clamp(0.75rem, 2vw, 1rem)', 
           background: '#2a1a1a', 
-          borderRadius: '6px' 
+          borderRadius: '8px',
+          fontSize: 'clamp(0.85rem, 1.3vw, 0.95rem)',
         }}>
           {error}
         </div>
       )}
 
       <div style={{
-        background: '#e3f2fd',
-        padding: '1rem',
-        borderRadius: '8px',
-        marginBottom: '2rem',
-        color: '#1565c0'
+        background: '#fef3cd',
+        padding: 'clamp(0.75rem, 2vw, 1.25rem)',
+        borderRadius: '10px',
+        marginBottom: 'clamp(1.5rem, 3vw, 2rem)',
+        color: '#856404',
+        border: '1px solid rgb(202, 165, 97)',
+        transition: 'all 0.3s ease',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.border = '1px solid rgb(180, 145, 77)';
+        e.currentTarget.style.boxShadow = '0 4px 16px rgba(202, 165, 97, 0.3)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.border = '1px solid rgb(202, 165, 97)';
+        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
       }}>
-        <h3 style={{ margin: '0 0 0.5rem 0' }}>Inventory Summary</h3>
-        <p style={{ margin: 0 }}>
+        <h3 style={{ margin: '0 0 0.5rem 0', fontSize: 'clamp(1rem, 1.8vw, 1.2rem)' }}>Inventory Summary</h3>
+        <p style={{ margin: 0, fontSize: 'clamp(0.85rem, 1.3vw, 0.95rem)' }}>
           Available for purchase: {available.length} | Already purchased: {purchased.length}
         </p>
       </div>
 
       {/* Available NFTs */}
-      <section style={{ marginBottom: '3rem' }}>
-        <h2>Available NFTs ({available.length})</h2>
-        <p style={{ color: '#888', marginBottom: '1rem' }}>
+      <section style={{ marginBottom: 'clamp(2rem, 4vw, 3rem)' }}>
+        <h2 style={{ fontSize: 'clamp(1.3rem, 2.5vw, 1.8rem)', marginBottom: 'clamp(0.75rem, 1.5vw, 1rem)' }}>Available NFTs ({available.length})</h2>
+        <p style={{ color: '#888', marginBottom: 'clamp(1rem, 2vw, 1.5rem)', fontSize: 'clamp(0.85rem, 1.3vw, 0.95rem)' }}>
           Purchase these NFTs for users by entering their DID. The bank pays with MetaMask.
         </p>
         {available.length === 0 ? (
-          <div style={{ padding: '2rem', textAlign: 'center', color: '#888', background: '#1a1a1a', borderRadius: '8px' }}>
+          <div style={{ 
+            padding: 'clamp(1.5rem, 3vw, 2.5rem)', 
+            textAlign: 'center', 
+            color: '#888', 
+            background: '#1a1a1a', 
+            borderRadius: '12px',
+            fontSize: 'clamp(0.85rem, 1.3vw, 0.95rem)',
+          }}>
             No NFTs available. Set prices on NFTs to make them available.
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))', 
+            gap: 'clamp(1rem, 2vw, 1.75rem)'
+          }}>
             {available.map(nft => (
-              <div key={nft.tokenId} style={{ ...cardStyle, border: '2px solid #4CAF50' }}>
+              <div 
+                key={nft.tokenId} 
+                style={{ ...cardStyle}}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-4px)';
+                  e.currentTarget.style.border = '1px solid rgba(202, 165, 97, 1)';
+                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(202, 165, 97, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.border = '1px solid rgba(202, 165, 97, 0.3)';
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
+                }}
+              >
                 {nft.image && <img src={nft.image} alt={nft.name} style={imageStyle} />}
-                <h4 style={{ margin: '0 0 0.5rem 0' }}>{nft.name}</h4>
-                <p style={{ color: '#888', fontSize: '0.9rem', margin: '0 0 0.5rem 0' }}>
+                <h4 style={{ margin: '0 0 0.75rem 0', fontSize: 'clamp(1rem, 1.8vw, 1.25rem)' }}>{nft.name}</h4>
+                <p style={{ color: '#aaa', fontSize: 'clamp(0.85rem, 1.3vw, 0.95rem)', margin: '0 0 0.75rem 0', lineHeight: '1.5' }}>
                   {nft.description}
                 </p>
-                <div style={{ fontSize: '0.8rem', color: '#666', marginBottom: '0.5rem' }}>
+                <div style={{ fontSize: 'clamp(0.75rem, 1.2vw, 0.85rem)', color: '#666', marginBottom: '0.75rem' }}>
                   Token ID: #{nft.tokenId}
                 </div>
-                <div style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#4CAF50', marginBottom: '0.5rem' }}>
+                <div style={{ fontSize: 'clamp(1.1rem, 2vw, 1.3rem)', fontWeight: 'bold', color: '#926f06', marginBottom: '0.75rem' }}>
                   {nft.price} ETH
                 </div>
                 <button
@@ -420,8 +497,12 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
                   style={{
                     ...buttonStyle,
                     opacity: loading ? 0.6 : 1,
-                    cursor: loading ? 'not-allowed' : 'pointer'
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    fontSize: 'clamp(0.85rem, 1.5vw, 1rem)',
+                    padding: 'clamp(0.6rem, 1.5vw, 0.75rem) clamp(0.8rem, 2vw, 1rem)',
                   }}
+                  onMouseEnter={(e) => {if (!loading) (e.target as HTMLButtonElement).style.background = 'rgb(180, 145, 77)'}}
+                  onMouseLeave={(e) => {if (!loading) (e.target as HTMLButtonElement).style.background = 'rgb(202, 165, 97)'}}
                 >
                   Purchase for User
                 </button>
@@ -430,8 +511,12 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
                   style={{
                     ...buttonStyle,
                     background: '#333',
-                    marginTop: '0.5rem'
+                    marginTop: '0.5rem',
+                    fontSize: 'clamp(0.85rem, 1.5vw, 1rem)',
+                    padding: 'clamp(0.6rem, 1.5vw, 0.75rem) clamp(0.8rem, 2vw, 1rem)',
                   }}
+                  onMouseEnter={(e) => {(e.target as HTMLButtonElement).style.background = '#555'}}
+                  onMouseLeave={(e) => {(e.target as HTMLButtonElement).style.background = '#333'}}
                 >
                   Update Price
                 </button>
@@ -443,40 +528,65 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
 
       {/* Purchased NFTs */}
       <section>
-        <h2>Purchased NFTs ({purchased.length})</h2>
-        <p style={{ color: '#888', marginBottom: '1rem' }}>
+        <h2 style={{ fontSize: 'clamp(1.3rem, 2.5vw, 1.8rem)', marginBottom: 'clamp(0.75rem, 1.5vw, 1rem)' }}>Purchased NFTs ({purchased.length})</h2>
+        <p style={{ color: '#888', marginBottom: 'clamp(1rem, 2vw, 1.5rem)', fontSize: 'clamp(0.85rem, 1.3vw, 0.95rem)' }}>
           NFTs that have been purchased and assigned to user DIDs.
         </p>
         {purchased.length === 0 ? (
-          <div style={{ padding: '2rem', textAlign: 'center', color: '#888', background: '#1a1a1a', borderRadius: '8px' }}>
+          <div style={{ 
+            padding: 'clamp(1.5rem, 3vw, 2.5rem)', 
+            textAlign: 'center', 
+            color: '#888', 
+            background: '#1a1a1a', 
+            borderRadius: '12px',
+            fontSize: 'clamp(0.85rem, 1.3vw, 0.95rem)',
+          }}>
             No NFTs have been purchased yet.
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))', 
+            gap: 'clamp(1rem, 2vw, 1.75rem)'
+          }}>
             {purchased.map(nft => (
-              <div key={nft.tokenId} style={{ ...cardStyle, border: '1px solid #666' }}>
+              <div 
+                key={nft.tokenId} 
+                style={{ ...cardStyle, border: '1px solid rgb(202, 165, 97)' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-4px)';
+                  e.currentTarget.style.border = '1px solid rgba(202, 165, 97, 1)';
+                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(202, 165, 97, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.border = '1px solid rgb(202, 165, 97)';
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
+                }}
+              >
                 {nft.image && <img src={nft.image} alt={nft.name} style={imageStyle} />}
-                <h4 style={{ margin: '0 0 0.5rem 0' }}>{nft.name}</h4>
-                <p style={{ color: '#888', fontSize: '0.9rem', margin: '0 0 0.5rem 0' }}>
+                <h4 style={{ margin: '0 0 0.75rem 0', fontSize: 'clamp(1rem, 1.8vw, 1.25rem)' }}>{nft.name}</h4>
+                <p style={{ color: '#aaa', fontSize: 'clamp(0.85rem, 1.3vw, 0.95rem)', margin: '0 0 0.75rem 0', lineHeight: '1.5' }}>
                   {nft.description}
                 </p>
-                <div style={{ fontSize: '0.8rem', color: '#666', marginBottom: '0.5rem' }}>
+                <div style={{ fontSize: 'clamp(0.75rem, 1.2vw, 0.85rem)', color: '#666', marginBottom: '0.75rem' }}>
                   Token ID: #{nft.tokenId}
                 </div>
                 <div style={{
-                  background: '#4CAF5020',
-                  padding: '0.75rem',
+                  background: 'rgba(125, 101, 55, 0.34)',
+                  padding: 'clamp(0.6rem, 1.5vw, 0.75rem)',
                   borderRadius: '6px',
                   marginTop: '0.5rem'
                 }}>
-                  <div style={{ fontSize: '0.75rem', color: '#4CAF50', fontWeight: 'bold', marginBottom: '0.25rem' }}>
+                  <div style={{ fontSize: 'clamp(0.7rem, 1.2vw, 0.75rem)', color: 'rgb(202, 165, 97)', fontWeight: 'bold', marginBottom: '0.25rem' }}>
                     OWNED BY:
                   </div>
                   <div style={{ 
-                    fontSize: '0.7rem', 
-                    color: '#4CAF50', 
+                    fontSize: 'clamp(0.65rem, 1.1vw, 0.7rem)', 
+                    color: 'rgb(202, 165, 97)', 
                     wordBreak: 'break-all',
-                    fontFamily: 'monospace'
+                    fontFamily: 'monospace',
+                    lineHeight: '1.4'
                   }}>
                     {nft.didOwner}
                   </div>

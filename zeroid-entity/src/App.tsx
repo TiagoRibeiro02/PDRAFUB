@@ -78,7 +78,7 @@ export default function App() {
 
   const tabStyle = (isActive: boolean): React.CSSProperties => ({
     padding: '0.75rem 1.5rem',
-    background: isActive ? '#4CAF50' : '#333',
+    background: isActive ? 'rgb(202, 165, 97)' : '#333',
     color: 'white',
     border: 'none',
     borderRadius: '6px 6px 0 0',
@@ -90,12 +90,13 @@ export default function App() {
   });
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0a0a0a', color: 'white' }}>
+    <div style={{ minHeight: '100vh', background: '#0a0a0a', color: 'white', borderRadius: '12px' }}>
       <div style={{ 
         background: '#1a1a1a', 
         padding: '1rem 2rem', 
         borderBottom: '2px solid #333',
-        marginBottom: '1rem'
+        marginBottom: '1rem',
+        borderRadius: '12px 12px 0 0',
       }}>
         <h1 style={{ margin: '0 0 1rem 0' }}>Bank Entity - ZeroID System</h1>
         
@@ -116,10 +117,10 @@ export default function App() {
 
         {activeTab === 'nft-bank' && (
           <div style={{
-            background: '#e3f2fd',
+            background: '#fef3cd',
             padding: '0.75rem',
             borderRadius: '6px',
-            color: '#1565c0',
+            color: '#856404',
             fontSize: '0.9rem',
             display: 'flex',
             justifyContent: 'space-between',

@@ -235,7 +235,7 @@ export default function Profile() {
           alert(
             'Your decrypted Ethereum private key:\n\n' +
             decrypted +
-            '\n\n⚠️ Copy this now - it will not be shown again!'
+            '\n\nCopy this now - it will not be shown again!'
           );
         }
       } catch (err: any) {

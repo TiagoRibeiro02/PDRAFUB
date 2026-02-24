@@ -81,15 +81,30 @@ fi
 echo "Hardhat node running (PID: $HARDHAT_PID)"
 echo ""
 
-echo "Step 3: Deploying Contract & Minting NFTs..."
+echo "Step 3: Deploying NFT Contract & Minting..."
 cd nfts
 npm run deploy
 npm run mint
 cd ..
-echo "Contract deployed and NFTs minted"
+echo "NFT contract deployed and NFTs minted"
 echo ""
 
-echo "Step 4: Copying Contract Files..."
+echo "Step 4: Deploying KYC Compliance Contracts..."
+# Copy the PlonkVerifier to nfts contracts if it exists
+if [ -f "zeroid-entity/Verifier.sol" ]; then
+    echo "Copying PlonkVerifier from zeroid-entity..."
+    cp zeroid-entity/Verifier.sol nfts/contracts/PlonkVerifier.sol
+else
+    echo "Warning: Verifier.sol not found in zeroid-entity. Using placeholder."
+fi
+
+cd nfts
+npm run deploy:kyc
+cd ..
+echo "KYC Compliance contracts deployed"
+echo ""
+
+echo "Step 5: Copying Contract Files..."
 
 # Copy to zeroid-entity
 mkdir -p zeroid-entity/src/contracts
@@ -104,7 +119,7 @@ cp nfts/frontend/src/contracts/contract-address.json zeroid-wallet/src/contracts
 echo "Contract files copied to both interfaces"
 echo ""
 
-echo "Step 5: Starting Bank Interface (zeroid-entity)...${NC}"
+echo "Step 6: Starting Bank Interface (zeroid-entity)..."
 cd zeroid-entity
 npm run dev > /tmp/zeroid-entity.log 2>&1 &
 ENTITY_PID=$!
@@ -113,7 +128,7 @@ sleep 3
 echo "Bank interface running (PID: $ENTITY_PID)"
 echo ""
 
-echo "Step 6: Starting User Wallet (zeroid-wallet)..."
+echo "Step 7: Starting User Wallet (zeroid-wallet)..."
 cd zeroid-wallet
 npm run dev > /tmp/zeroid-wallet.log 2>&1 &
 WALLET_PID=$!
@@ -121,7 +136,7 @@ cd ..
 sleep 3
 
 # Start PHP backend
-echo "Step 7: Starting PHP Backend..."
+echo "Step 8: Starting PHP Backend..."
 cd zeroid-wallet/backend
 php -S localhost:8000 > /tmp/php-backend.log 2>&1 &
 PHP_PID=$!
@@ -134,6 +149,11 @@ echo "================================================"
 echo "All services started successfully!"
 echo "================================================"
 echo ""
+echo "Deployed Contracts:"
+echo "  MyNFT Contract:         See nfts/frontend/src/contracts/contract-address.json"
+echo "  KYC Compliance System:  PlonkVerifierAdapter, KYCCompliance"
+echo "                         See zeroid-entity/src/contracts/kyc-deployment.json"
+echo ""
 echo "Access Points:"
 echo "  Bank Interface:  http://localhost:5173"
 echo "  User Wallet:     http://localhost:5174"
@@ -141,14 +161,15 @@ echo "  Blockchain RPC:  http://127.0.0.1:8545"
 echo "  PHP Backend:     http://localhost:8000"
 echo ""
 echo "Next Steps:"
-echo "  1. Open http://localhost:5173"
-echo "     - Click 'NFT Bank' tab"
-echo "     - Connect MetaMask (use Hardhat Account #0)"
+echo "  1. Open http://localhost:5173 (Bank Interface)"
+echo "     - NFT Bank tab: Connect MetaMask, manage NFTs"
+echo "     - ZK Proof Issuer tab: Generate KYC compliance proofs"
+echo "     - Submit proofs to blockchain for DID verification"
 echo ""
-echo "  2. Open http://localhost:5174"
+echo "  2. Open http://localhost:5174 (User Wallet)"
 echo "     - Register/Login"
 echo "     - Create your DID"
-echo "     - View 'My NFTs'"
+echo "     - View 'My NFTs' with KYC compliance status"
 echo ""
 echo "Logs:"
 echo "  Hardhat:      tail -f /tmp/hardhat.log"

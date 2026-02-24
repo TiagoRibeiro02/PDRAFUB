@@ -1,6 +1,19 @@
 import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 
+// Import KYC contract
+let kycContractAddress: string | undefined;
+let KYCComplianceABI: any;
+
+try {
+  const kycDeployment = await import('./contracts/kyc-deployment.json');
+  const kycAbi = await import('./contracts/KYCCompliance.json');
+  kycContractAddress = kycDeployment.KYCCompliance;
+  KYCComplianceABI = kycAbi.abi;
+} catch (error) {
+  console.warn('KYC contract files not found.');
+}
+
 interface NFTListing {
   tokenId: number;
   name: string;
@@ -9,6 +22,9 @@ interface NFTListing {
   price: string;
   priceWei: bigint;
   didOwner: string;
+  isCompliant?: boolean;
+  complianceTimestamp?: number;
+  complianceCommitment?: string;
 }
 
 interface BankNFTManagerProps {
@@ -53,6 +69,7 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
   const [error, setError] = useState('');
   const [account, setAccount] = useState('');
   const [isOwner, setIsOwner] = useState(false);
+  const [complianceStatuses, setComplianceStatuses] = useState<{[did: string]: {isCompliant: boolean, timestamp: number, commitment: string}}>();
 
   useEffect(() => {
     checkWallet();
@@ -86,6 +103,49 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
       setAccount(accounts[0]);
     } catch (err: any) {
       setError('Failed to connect wallet: ' + err.message);
+    }
+  };
+
+  const checkComplianceForDIDs = async (dids: string[], nfts: NFTListing[]) => {
+    if (!kycContractAddress || !KYCComplianceABI) return;
+
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const kycContract = new ethers.Contract(
+        kycContractAddress,
+        KYCComplianceABI,
+        provider
+      );
+
+      const complianceMap: {[did: string]: {isCompliant: boolean, timestamp: number, commitment: string}} = {};
+
+      for (const did of dids) {
+        try {
+          const [isCompliant, timestamp, commitment] = await kycContract.checkCompliance(did);
+          complianceMap[did] = {
+            isCompliant,
+            timestamp: Number(timestamp),
+            commitment
+          };
+        } catch (err) {
+          console.error(`Error checking compliance for ${did}:`, err);
+          complianceMap[did] = { isCompliant: false, timestamp: 0, commitment: '' };
+        }
+      }
+
+      setComplianceStatuses(complianceMap);
+
+      // Update NFT entries with compliance info
+      nfts.forEach(nft => {
+        const compliance = complianceMap[nft.didOwner];
+        if (compliance) {
+          nft.isCompliant = compliance.isCompliant;
+          nft.complianceTimestamp = compliance.timestamp;
+          nft.complianceCommitment = compliance.commitment;
+        }
+      });
+    } catch (err) {
+      console.error('Error checking compliance:', err);
     }
   };
 
@@ -147,6 +207,7 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
       // Get all NFTs and filter purchased ones (have DID)
       const totalSupply = await contract.totalSupply();
       const purchasedData: NFTListing[] = [];
+      const didsToCheck: string[] = [];
 
       for (let i = 0; i < totalSupply; i++) {
         try {
@@ -176,10 +237,17 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
               priceWei: price,
               didOwner
             });
+            
+            didsToCheck.push(didOwner);
           }
         } catch (err) {
           console.error(`Error loading NFT #${i}:`, err);
         }
+      }
+
+      // Check KYC compliance for all DIDs
+      if (kycContractAddress && KYCComplianceABI && didsToCheck.length > 0) {
+        await checkComplianceForDIDs(didsToCheck, purchasedData);
       }
 
       setPurchased(purchasedData);
@@ -589,6 +657,45 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
                     lineHeight: '1.4'
                   }}>
                     {nft.didOwner}
+                  </div>
+                </div>
+                
+                {/* KYC Compliance Badge */}
+                <div style={{
+                  marginTop: '0.75rem',
+                  padding: 'clamp(0.5rem, 1.5vw, 0.65rem)',
+                  borderRadius: '6px',
+                  background: nft.isCompliant ? 'rgba(76, 175, 80, 0.15)' : 'rgba(255, 107, 107, 0.15)',
+                  border: `1px solid ${nft.isCompliant ? '#4CAF50' : '#ff6b6b'}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ 
+                      fontSize: 'clamp(0.75rem, 1.3vw, 0.85rem)', 
+                      fontWeight: 'bold',
+                      color: nft.isCompliant ? '#4CAF50' : '#ff6b6b',
+                      marginBottom: '0.15rem'
+                    }}>
+                      {nft.isCompliant ? 'KYC/AML Compliant' : 'Not Verified'}
+                    </div>
+                    {nft.isCompliant && nft.complianceTimestamp && (
+                      <div style={{ 
+                        fontSize: 'clamp(0.65rem, 1.1vw, 0.7rem)', 
+                        color: '#888',
+                      }}>
+                        Verified: {new Date(nft.complianceTimestamp * 1000).toLocaleDateString()}
+                      </div>
+                    )}
+                    {!nft.isCompliant && (
+                      <div style={{ 
+                        fontSize: 'clamp(0.65rem, 1.1vw, 0.7rem)', 
+                        color: '#888',
+                      }}>
+                        Compliance proof not submitted
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

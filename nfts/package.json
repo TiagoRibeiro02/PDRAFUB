@@ -5,6 +5,7 @@
   "scripts": {
     "compile": "hardhat compile",
     "deploy": "hardhat run scripts/deploy.ts --network localhost",
+    "deploy:kyc": "hardhat run scripts/deploy-kyc.ts --network localhost",
     "mint": "hardhat run scripts/mint.ts --network localhost",
     "node": "hardhat node",
     "test": "hardhat test",

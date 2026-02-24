@@ -5,6 +5,8 @@ import "./App.css";
 // Import contract address and ABI
 let contractAddress: string | undefined;
 let MyNFTABI: any;
+let kycContractAddress: string | undefined;
+let KYCComplianceABI: any;
 
 try {
   const addressData = await import('./contracts/contract-address.json');
@@ -13,6 +15,15 @@ try {
   MyNFTABI = abiData.abi;
 } catch (error) {
   console.warn('Contract files not found. Please deploy the contract first.');
+}
+
+try {
+  const kycDeployment = await import('./contracts/kyc-deployment.json');
+  const kycAbi = await import('./contracts/KYCCompliance.json');
+  kycContractAddress = kycDeployment.KYCCompliance;
+  KYCComplianceABI = kycAbi.abi;
+} catch (error) {
+  console.warn('KYC contract files not found. Please deploy the KYC contract first.');
 }
 
 type TabType = 'nft-bank' | 'zkp-issuer';
@@ -203,6 +214,36 @@ function ZKPIssuer() {
   const [did, setDid] = useState("");
   const [zkProof, setZkProof] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [account, setAccount] = useState("");
+
+  useEffect(() => {
+    checkWallet();
+  }, []);
+
+  const checkWallet = async () => {
+    if (typeof window.ethereum === 'undefined') return;
+    try {
+      const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+      if (accounts.length > 0) setAccount(accounts[0]);
+    } catch (err) {
+      console.error('Error checking wallet:', err);
+    }
+  };
+
+  const connectWallet = async () => {
+    if (typeof window.ethereum === 'undefined') {
+      alert('Please install MetaMask!');
+      return;
+    }
+    try {
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      setAccount(accounts[0]);
+    } catch (err: any) {
+      console.error('Failed to connect wallet:', err);
+    }
+  };
 
   return (
     <div style={{ padding: "2rem" }}>
@@ -229,9 +270,41 @@ function ZKPIssuer() {
         }}
       />
 
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+        {!account ? (
+          <button
+            onClick={connectWallet}
+            style={{
+              padding: '0.75rem 1.5rem',
+              background: '#1565c0',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              fontWeight: 'bold'
+            }}
+          >
+            Connect Wallet
+          </button>
+        ) : (
+          <div style={{ 
+            padding: '0.75rem 1.5rem',
+            background: '#1a1a1a',
+            border: '1px solid #333',
+            borderRadius: '6px',
+            color: '#888'
+          }}>
+            Connected: {account.substring(0, 6)}...{account.substring(38)}
+          </div>
+        )}
+      </div>
+
       <button
         onClick={async () => {
           try {
+            setError(null);
+            setSubmitSuccess(false);
             const proof = await generatePlonkZKP(did);
             setZkProof(proof);
           } catch (err) {
@@ -247,16 +320,60 @@ function ZKPIssuer() {
           borderRadius: '6px',
           cursor: did ? 'pointer' : 'not-allowed',
           fontSize: '1rem',
-          fontWeight: 'bold'
+          fontWeight: 'bold',
+          marginRight: '1rem'
         }}
       >
         Generate PLONK ZK Proof
       </button>
 
+      {zkProof && kycContractAddress && account && (
+        <button
+          onClick={async () => {
+            try {
+              setSubmitting(true);
+              setError(null);
+              await submitProofToContract(did, zkProof);
+              setSubmitSuccess(true);
+            } catch (err) {
+              setError(err instanceof Error ? err.message : "Failed to submit proof");
+            } finally {
+              setSubmitting(false);
+            }
+          }}
+          disabled={submitting}
+          style={{
+            padding: '0.75rem 1.5rem',
+            background: submitting ? '#666' : 'rgb(202, 165, 97)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: submitting ? 'not-allowed' : 'pointer',
+            fontSize: '1rem',
+            fontWeight: 'bold'
+          }}
+        >
+          {submitting ? 'Submitting...' : 'Submit to Blockchain'}
+        </button>
+      )}
+
       {error && (
         <p style={{ color: "#ff6b6b", marginTop: "1rem", padding: '1rem', background: '#2a1a1a', borderRadius: '6px' }}>
           Error: {error}
         </p>
+      )}
+
+      {submitSuccess && (
+        <div style={{ 
+          color: "#4CAF50", 
+          marginTop: "1rem", 
+          padding: '1rem', 
+          background: '#1a2a1a', 
+          borderRadius: '6px',
+          border: '1px solid #4CAF50'
+        }}>
+          ✅ Proof successfully submitted to blockchain! The DID is now marked as KYC/AML compliant.
+        </div>
       )}
 
       {zkProof && (
@@ -348,4 +465,58 @@ async function generatePlonkZKP(userDid: string) {
   }
 
   return { proof, publicSignals, commitment };
+}
+
+async function submitProofToContract(userDid: string, zkProof: any) {
+  if (!kycContractAddress || !KYCComplianceABI) {
+    throw new Error("KYC contract not deployed. Please deploy it first.");
+  }
+
+  const { ethers } = await import("ethers");
+  const provider = new ethers.BrowserProvider(window.ethereum);
+  const signer = await provider.getSigner();
+  
+  const kycContract = new ethers.Contract(
+    kycContractAddress,
+    KYCComplianceABI,
+    signer
+  );
+
+  // Convert proof to bytes
+  // The proof structure from snarkjs needs to be flattened
+  const proofArray = [
+    zkProof.proof.A[0], zkProof.proof.A[1],
+    zkProof.proof.B[0], zkProof.proof.B[1],
+    zkProof.proof.C[0], zkProof.proof.C[1],
+    zkProof.proof.Z[0], zkProof.proof.Z[1],
+    zkProof.proof.T1[0], zkProof.proof.T1[1],
+    zkProof.proof.T2[0], zkProof.proof.T2[1],
+    zkProof.proof.T3[0], zkProof.proof.T3[1],
+    zkProof.proof.Wxi[0], zkProof.proof.Wxi[1],
+    zkProof.proof.Wxiw[0], zkProof.proof.Wxiw[1],
+    zkProof.proof.eval_a,
+    zkProof.proof.eval_b,
+    zkProof.proof.eval_c,
+    zkProof.proof.eval_s1,
+    zkProof.proof.eval_s2,
+    zkProof.proof.eval_zw
+  ];
+
+  // Encode as bytes
+  const proofBytes = ethers.AbiCoder.defaultAbiCoder().encode(
+    ["uint256[24]"],
+    [proofArray]
+  );
+
+  // Submit to contract
+  const tx = await kycContract.submitComplianceProof(
+    userDid,
+    zkProof.commitment,
+    proofBytes,
+    zkProof.publicSignals
+  );
+
+  console.log("Transaction sent:", tx.hash);
+  await tx.wait();
+  console.log("Proof submitted successfully!");
 }

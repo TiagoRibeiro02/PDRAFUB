@@ -1,16 +1,58 @@
 # PDRAFUB - Decentralized Identity & NFT System
 
-A blockchain-based platform for physical asset traceability using Decentralized Identifiers (DIDs) and NFTs, with a bank-intermediated purchase model.
+A blockchain-based platform for physical asset traceability using Decentralized Identifiers (DIDs) and NFTs, with a bank-intermediated purchase model and **zero-knowledge proof KYC/AML compliance verification**.
+
+## 🌟 Highlights
+
+- **Privacy-First Compliance** - Prove KYC/AML compliance without revealing personal data
+- **Zero-Knowledge Proofs** - PLONK proofs verified on-chain using snarkjs and circom
+- **DID-Based Ownership** - Decentralized identifiers link users to their NFTs
+- **Bank-Intermediated Model** - Banks purchase NFTs on behalf of users, simplifying UX
+- **Public Verification** - Anyone can verify if a DID is compliant (but not see personal data)
+- **On-Chain Transparency** - All compliance proofs permanently stored on blockchain
 
 
 ## Components
 
-- **zeroid-entity** - Bank interface for purchasing NFTs on behalf of users
-- **zeroid-wallet** - User wallet for viewing DID-owned NFTs
-- **nfts** - NFT smart contract with DID ownership tracking
+- **zeroid-entity** - Bank interface for purchasing NFTs on behalf of users and issuing KYC compliance proofs
+- **zeroid-wallet** - User wallet for viewing DID-owned NFTs with compliance status
+- **nfts** - NFT smart contract with DID ownership tracking and KYC compliance verification
 - **hardhat-example** - Example Hardhat project
 
+## Features
+
+- 🏦 **Bank-Intermediated NFT Purchases** - Banks purchase NFTs on behalf of users
+- 🆔 **Decentralized Identity (DID)** - User ownership tracked via DIDs
+- ✅ **KYC/AML Compliance** - Zero-knowledge proof verification of compliance
+- 🔐 **Privacy-Preserving** - ZK proofs verify compliance without revealing personal data
+- 📜 **On-Chain Verification** - All compliance proofs verified on blockchain
+- 🔍 **Public Transparency** - Anyone can verify if a DID is KYC compliant
+
 ## Quick Start Guide
+
+### Automated Setup (Recommended)
+
+The easiest way to get started:
+
+```bash
+./start-all.sh
+```
+
+This script will:
+1. Install all dependencies
+2. Start Hardhat blockchain node
+3. Deploy NFT contracts and mint NFTs
+4. Deploy KYC Compliance contracts
+5. Copy contract files to all interfaces
+6. Start Bank Interface (http://localhost:5173)
+7. Start User Wallet (http://localhost:5174)
+8. Start PHP Backend (http://localhost:8000)
+
+Press `Ctrl+C` to stop all services, or run `./stop-all.sh`
+
+### Manual Setup
+
+If you prefer to run each step manually:
 
 ### Prerequisites
 
@@ -26,16 +68,19 @@ npm install
 npx hardhat node  # Keep this running in Terminal 1
 ```
 
-### 2. Deploy Contract & Mint NFTs
+### 2. Deploy Contracts & Mint NFTs
 
 In a new terminal:
 ```bash
 cd nfts
-npm run deploy
-npm run mint
+npm run deploy      # Deploy NFT contract
+npm run mint        # Mint initial NFTs
+npm run deploy:kyc  # Deploy KYC Compliance contracts
 ```
 
-The contract address and ABI are saved to `nfts/frontend/src/contracts/`.
+The contract addresses and ABIs are saved to:
+- NFT: `nfts/frontend/src/contracts/`
+- KYC: `nfts/artifacts/kyc-deployment.json` (auto-copied to zeroid-entity)
 
 ### 3. Copy Contract Files
 
@@ -133,7 +178,37 @@ Import Hardhat Account #0 (the deployer/bank owner):
 **My NFTs Tab:**
 - Automatically displays NFTs owned by your DID
 - Shows NFT image, name, description, and token ID
+- **✅ KYC/AML Compliance Badge** - Shows if the DID is verified
 - Refreshes automatically when new NFTs are purchased
+
+### KYC Compliance System (ZeroID Entity)
+
+1. Open bank interface at http://localhost:5173
+2. Click "ZK Proof Issuer" tab
+3. Generate and submit compliance proofs:
+
+**Generate Zero-Knowledge Proof:**
+- Enter user's DID (e.g., `did:zeroid:12345...`)
+- Click "Generate PLONK ZK Proof"
+- Proof is created showing compliance without revealing personal data
+
+**Submit to Blockchain:**
+- Click "Submit to Blockchain"
+- Proof is verified on-chain via PLONK verifier
+- If valid, DID is marked as KYC/AML compliant
+- Timestamp and commitment are stored permanently
+
+**View Compliance Status:**
+- Go to "NFT Bank" tab → "Purchased NFTs"
+- Each NFT shows compliance badge:
+  - ✅ Green = KYC/AML Compliant (with verification date)
+  - ⚠️ Warning = Not Verified
+
+**Key Features:**
+- **Privacy-Preserving**: No personal data revealed, only compliance status
+- **Cryptographically Verified**: Zero-knowledge proofs proven on-chain
+- **Publicly Auditable**: Anyone can check if a DID is compliant
+- **Issuer-Controlled**: Only authorized entities can submit proofs
 
 ## How It Works
 
@@ -162,18 +237,31 @@ NFTs where DID Owner == user's DID
 
 ### Smart Contract Functions
 
-**Bank Functions:**
+**NFT Contract - Bank Functions:**
 ```solidity
 purchaseNFT(uint256 tokenId, string memory buyerDID) payable
 setPrice(uint256 tokenId, uint256 newPrice)
 getAvailableNFTs() returns (uint256[], uint256[])
 ```
 
-**User/Wallet Functions:**
+**NFT Contract - User/Wallet Functions:**
 ```solidity
 tokensOfDID(string memory did) returns (uint256[])
 getDidOwner(uint256 tokenId) returns (string)
 tokenURI(uint256 tokenId) returns (string)
+```
+
+**KYC Compliance Contract:**
+```solidity
+// Submit zero-knowledge proof (issuer only)
+submitComplianceProof(string did, string commitment, bytes proof, uint[] publicSignals)
+
+// Check compliance status (public)
+checkCompliance(string did) returns (bool isCompliant, uint256 timestamp, string commitment)
+isCompliant(string did) returns (bool)
+
+// Revoke compliance (issuer only)
+revokeCompliance(string did)
 ```
 
 ## Technologies
@@ -211,6 +299,19 @@ If you redeploy the contract, update `contract-address.json` in:
 - `zeroid-entity/src/contracts/`
 - `zeroid-wallet/src/contracts/`
 
+And update `kyc-deployment.json` in:
+- `zeroid-entity/src/contracts/`
+
+### "KYC contract not deployed" error
+→ Run `npm run deploy:kyc` from the nfts directory  
+→ Ensure Hardhat node is running  
+→ Check that `kyc-deployment.json` exists in `zeroid-entity/src/contracts/`
+
+### Compliance badge not showing
+→ Ensure KYC contracts are deployed  
+→ Generate and submit a proof for the DID in "ZK Proof Issuer" tab  
+→ Check browser console for errors
+
 ## Security Considerations
 
 ### Current Model (Development)
@@ -227,6 +328,8 @@ If you redeploy the contract, update `contract-address.json` in:
 
 ## Next Steps
 
+- [x] Zero-knowledge proof KYC/AML compliance verification
+- [x] Privacy-preserving compliance status display
 - [ ] Deploy to Ethereum testnet (Sepolia, Goerli)
 - [ ] Add DID signature verification to prove ownership
 - [ ] Implement QR code scanning for DID input
@@ -235,6 +338,9 @@ If you redeploy the contract, update `contract-address.json` in:
 - [ ] Integrate real IPFS for NFT metadata
 - [ ] Implement event-based wallet auto-refresh
 - [ ] Add multi-language support
+- [ ] Support for multiple issuer entities
+- [ ] Compliance expiration dates
+- [ ] Different compliance levels (basic, enhanced, etc.)
 
 ## License
 

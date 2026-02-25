@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import BankNFTManager from "./BankNFTManager";
+import { QRCodeSVG } from "qrcode.react";
 import "./App.css";
 
 // Import contract address and ABI
@@ -217,10 +218,43 @@ function ZKPIssuer() {
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [account, setAccount] = useState("");
+  const [showQRRequest, setShowQRRequest] = useState(false);
+  const [qrSessionId, setQrSessionId] = useState<string>("");
 
   useEffect(() => {
     checkWallet();
   }, []);
+
+  // Poll relay server for response
+  useEffect(() => {
+    if (!qrSessionId) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`http://localhost:8000/qr-relay.php?sessionId=${qrSessionId}`);
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+          setDid(result.data.did);
+          if (result.data.ethAddress) {
+            console.log('Received eth address:', result.data.ethAddress);
+          }
+          setShowQRRequest(false);
+          setQrSessionId("");
+        }
+      } catch (err) {
+        console.error('Error polling for response:', err);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [qrSessionId]);
+
+  const generateQRRequest = () => {
+    const sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    setQrSessionId(sessionId);
+    setShowQRRequest(true);
+  };
 
   const checkWallet = async () => {
     if (typeof window.ethereum === 'undefined') return;
@@ -252,23 +286,40 @@ function ZKPIssuer() {
         Generate zero-knowledge proofs for user DIDs
       </p>
 
-      <input
-        placeholder="User DID (e.g., did:zeroid:...)"
-        value={did}
-        onChange={e => {
-          setDid(e.target.value);
-          setError(null);
-        }}
-        style={{ 
-          width: "100%", 
-          marginBottom: "1rem",
-          padding: '0.75rem',
-          background: '#1a1a1a',
-          border: '1px solid #333',
-          color: 'white',
-          borderRadius: '6px'
-        }}
-      />
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+        <input
+          placeholder="User DID (e.g., did:zeroid:...)"
+          value={did}
+          onChange={e => {
+            setDid(e.target.value);
+            setError(null);
+          }}
+          style={{ 
+            flex: '1',
+            padding: '0.75rem',
+            background: '#1a1a1a',
+            border: '1px solid #333',
+            color: 'white',
+            borderRadius: '6px'
+          }}
+        />
+        <button
+          onClick={generateQRRequest}
+          style={{
+            padding: '0.75rem 1.5rem',
+            background: '#1565c0',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '1rem',
+            fontWeight: 'bold',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          📱 Request via QR
+        </button>
+      </div>
 
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
         {!account ? (
@@ -373,6 +424,68 @@ function ZKPIssuer() {
           border: '1px solid #4CAF50'
         }}>
           ✅ Proof successfully submitted to blockchain! The DID is now marked as KYC/AML compliant.
+        </div>
+      )}
+
+      {/* QR Code Request Modal */}
+      {showQRRequest && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: '#1a1a1a',
+            padding: '2rem',
+            borderRadius: '12px',
+            maxWidth: '500px',
+            position: 'relative',
+            border: '2px solid #333'
+          }}>
+            <button
+              onClick={() => {
+                setShowQRRequest(false);
+                setQrSessionId("");
+              }}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: 'transparent',
+                border: 'none',
+                color: '#888',
+                fontSize: '1.5rem',
+                cursor: 'pointer'
+              }}
+            >
+              ✕
+            </button>
+            <h3 style={{ marginTop: 0 }}>Scan with Wallet</h3>
+            <p style={{ color: '#888', marginBottom: '1.5rem' }}>
+              Open your ZeroID Wallet and scan this QR code to share your DID
+            </p>
+            <div style={{
+              background: 'white',
+              padding: '1rem',
+              borderRadius: '8px',
+              display: 'inline-block'
+            }}>
+              <QRCodeSVG 
+                value={JSON.stringify({ type: 'did-request', sessionId: qrSessionId })}
+                size={256}
+              />
+            </div>
+            <p style={{ color: '#4CAF50', marginTop: '1rem', fontSize: '0.9rem', fontWeight: 'bold' }}>
+              ⏳ Waiting for wallet response...
+            </p>
+          </div>
         </div>
       )}
 

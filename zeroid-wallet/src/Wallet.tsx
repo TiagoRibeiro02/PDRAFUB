@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Html5QrcodeScanner } from "html5-qrcode";
 import NFTGallery from "./components/NFTGallery";
 
 // Import contract address and ABI
@@ -109,6 +110,10 @@ export default function Wallet() {
   const [error, setError] = useState("");
   const [nftCount, setNftCount] = useState<number | null>(null);
   const [showInfoTooltip, setShowInfoTooltip] = useState(false);
+  const [showQRScanner, setShowQRScanner] = useState(false);
+  const [scannedData, setScannedData] = useState<any>(null);
+  const [showShareConfirm, setShowShareConfirm] = useState(false);
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     // Check if user is logged in
@@ -149,6 +154,40 @@ export default function Wallet() {
       navigate("/login");
     }
   }, [navigate]);
+
+  // QR Scanner setup
+  useEffect(() => {
+    if (!showQRScanner) return;
+
+    const scanner = new Html5QrcodeScanner(
+      "qr-reader",
+      { fps: 10, qrbox: 250 },
+      false
+    );
+
+    scanner.render(
+      (decodedText) => {
+        try {
+          const data = JSON.parse(decodedText);
+          if (data.type === 'did-request') {
+            setScannedData(data);
+            setShowShareConfirm(true);
+            scanner.clear();
+            setShowQRScanner(false);
+          }
+        } catch (err) {
+          console.error('Invalid QR code:', err);
+        }
+      },
+      (_error) => {
+        // Ignore errors (continuous scanning)
+      }
+    );
+
+    return () => {
+      scanner.clear().catch(console.error);
+    };
+  }, [showQRScanner]);
 
   const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
     const bytes = new Uint8Array(buffer);
@@ -266,6 +305,43 @@ export default function Wallet() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  const handleShareConfirm = async () => {
+    if (!scannedData || !identity || !user) return;
+
+    try {
+      setSending(true);
+      const response = await fetch('http://localhost:8000/qr-relay.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          sessionId: scannedData.sessionId,
+          did: identity.did,
+          ethAddress: user.eth_address
+        })
+      });
+
+      if (response.ok) {
+        setShowShareConfirm(false);
+        setScannedData(null);
+        alert('Information shared successfully!');
+      } else {
+        alert('Failed to share information. Please try again.');
+      }
+    } catch (err) {
+      console.error('Error sharing:', err);
+      alert('Failed to share information. Make sure the backend server is running.');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleShareCancel = () => {
+    setShowShareConfirm(false);
+    setScannedData(null);
   };
 
   const downloadEthereumPrivateKey = async (privateKey: string, ethAddress: string, did: string) => {
@@ -502,25 +578,46 @@ export default function Wallet() {
                 }}>{identity.did}</span>
               </div>
             </div>
-            <button
-              onClick={() => navigate('/profile')}
-              style={{
-                padding: 'clamp(0.75rem, 1.5vw, 1rem) clamp(1.25rem, 2.5vw, 2rem)',
-                background: 'rgb(202, 165, 97)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: 'clamp(0.95rem, 1.5vw, 1.1rem)',
-                fontWeight: 'bold',
-                transition: 'all 0.3s',
-                whiteSpace: 'nowrap',
-              }}
-              onMouseEnter={(e) => {(e.target as HTMLButtonElement).style.background = 'rgb(180, 145, 77)'}}
-              onMouseLeave={(e) => {(e.target as HTMLButtonElement).style.background = 'rgb(202, 165, 97)'}}
-            >
-              View Profile
-            </button>
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => navigate('/profile')}
+                style={{
+                  padding: 'clamp(0.75rem, 1.5vw, 1rem) clamp(1.25rem, 2.5vw, 2rem)',
+                  background: 'rgb(202, 165, 97)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: 'clamp(0.95rem, 1.5vw, 1.1rem)',
+                  fontWeight: 'bold',
+                  transition: 'all 0.3s',
+                  whiteSpace: 'nowrap',
+                }}
+                onMouseEnter={(e) => {(e.target as HTMLButtonElement).style.background = 'rgb(180, 145, 77)'}}
+                onMouseLeave={(e) => {(e.target as HTMLButtonElement).style.background = 'rgb(202, 165, 97)'}}
+              >
+                View Profile
+              </button>
+              <button
+                onClick={() => setShowQRScanner(true)}
+                style={{
+                  padding: 'clamp(0.75rem, 1.5vw, 1rem) clamp(1.25rem, 2.5vw, 2rem)',
+                  background: 'rgb(202, 165, 97)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: 'clamp(0.95rem, 1.5vw, 1.1rem)',
+                  fontWeight: 'bold',
+                  transition: 'all 0.3s',
+                  whiteSpace: 'nowrap',
+                }}
+                onMouseEnter={(e) => {(e.target as HTMLButtonElement).style.background = 'rgb(180, 145, 77)'}}
+                onMouseLeave={(e) => {(e.target as HTMLButtonElement).style.background = 'rgb(202, 165, 97)'}}
+              >
+                Share via QR
+              </button>
+            </div>
           </div>
 
           {/* NFT Gallery Section */}
@@ -658,6 +755,132 @@ export default function Wallet() {
             )}
           </div>
         </>
+      )}
+
+      {/* QR Scanner Modal */}
+      {showQRScanner && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: '#1a1a1a',
+            padding: '2rem',
+            borderRadius: '12px',
+            maxWidth: '600px',
+            width: '90%',
+            position: 'relative',
+            border: '2px solid #333'
+          }}>
+            <button
+              onClick={() => setShowQRScanner(false)}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: 'transparent',
+                border: 'none',
+                color: '#888',
+                fontSize: '1.5rem',
+                cursor: 'pointer'
+              }}
+            >
+              ✕
+            </button>
+            <h3 style={{ marginTop: 0 }}>Scan QR Code</h3>
+            <p style={{ color: '#888', marginBottom: '1.5rem' }}>
+              Scan a QR code from an entity requesting your DID
+            </p>
+            <div id="qr-reader" style={{ width: '100%' }}></div>
+          </div>
+        </div>
+      )}
+
+      {/* Share Confirmation Dialog */}
+      {showShareConfirm && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1001
+        }}>
+          <div style={{
+            background: '#1a1a1a',
+            padding: '2rem',
+            borderRadius: '12px',
+            maxWidth: '500px',
+            width: '90%',
+            border: '2px solid rgb(202, 165, 97)'
+          }}>
+            <h3 style={{ marginTop: 0, color: 'rgb(202, 165, 97)' }}>Share Your Information?</h3>
+            <p style={{ color: '#ccc', marginBottom: '1.5rem' }}>
+              An entity is requesting your information. Do you want to share:
+            </p>
+            <div style={{
+              background: '#0a0a0a',
+              padding: '1rem',
+              borderRadius: '8px',
+              marginBottom: '1.5rem',
+              border: '1px solid #333'
+            }}>
+              <p style={{ margin: '0.5rem 0', color: '#fff' }}>
+                <strong>DID:</strong> {identity?.did}
+              </p>
+              <p style={{ margin: '0.5rem 0', color: '#fff' }}>
+                <strong>Ethereum Address:</strong> {user?.eth_address || 'Not available'}
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+              <button
+                onClick={handleShareCancel}
+                disabled={sending}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  background: '#333',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: sending ? 'not-allowed' : 'pointer',
+                  fontSize: '1rem',
+                  fontWeight: 'bold',
+                  opacity: sending ? 0.5 : 1
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleShareConfirm}
+                disabled={sending}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  background: sending ? '#666' : 'rgb(202, 165, 97)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: sending ? 'not-allowed' : 'pointer',
+                  fontSize: '1rem',
+                  fontWeight: 'bold'
+                }}
+              >
+                {sending ? 'Sharing...' : 'Share'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -290,7 +290,7 @@ export default function Profile() {
         
         // Show the decrypted key
         const showKey = window.confirm(
-          '✓ Decryption successful!\n\n' +
+          'Decryption successful!\n\n' +
           'Would you like to:\n' +
           'OK = Download decrypted key as file\n' +
           'Cancel = View key in alert (copy manually)'
@@ -388,7 +388,7 @@ export default function Profile() {
       console.log('Transaction confirmed!');
 
       alert(
-        `✓ Successfully linked!\n\n` +
+        `Successfully linked!\n\n` +
         `Your DID is now linked to:\n${userAddress}\n\n` +
         `When the bank purchases NFTs for you, they will automatically be transferred to your wallet!`
       );
@@ -522,7 +522,7 @@ export default function Profile() {
               onClick={() => setShowQRScanner(true)}
               style={{
                 padding: 'clamp(0.4rem, 0.8vw, 0.6rem) clamp(0.75rem, 1.2vw, 1rem)',
-                background: '#1565c0',
+                background: 'rgb(202, 165, 97)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '6px',
@@ -531,10 +531,10 @@ export default function Profile() {
                 transition: 'all 0.3s',
                 fontWeight: 'bold'
               }}
-              onMouseEnter={(e) => {(e.target as HTMLButtonElement).style.background = '#0d47a1'}}
-              onMouseLeave={(e) => {(e.target as HTMLButtonElement).style.background = '#1565c0'}}
+              onMouseEnter={(e) => {(e.target as HTMLButtonElement).style.background = 'rgb(180, 145, 77)'}}
+              onMouseLeave={(e) => {(e.target as HTMLButtonElement).style.background = 'rgb(202, 165, 97)'}}
             >
-              📱 Share via QR
+              Share via QR
             </button>
           </div>
           <pre style={boxStyle}>{identity.did}</pre>

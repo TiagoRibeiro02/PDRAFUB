@@ -307,7 +307,7 @@ function ZKPIssuer() {
           onClick={generateQRRequest}
           style={{
             padding: '0.75rem 1.5rem',
-            background: '#1565c0',
+            background: 'rgb(202, 165, 97)',
             color: 'white',
             border: 'none',
             borderRadius: '6px',
@@ -317,7 +317,7 @@ function ZKPIssuer() {
             whiteSpace: 'nowrap'
           }}
         >
-          📱 Request via QR
+          Request via QR
         </button>
       </div>
 
@@ -327,7 +327,7 @@ function ZKPIssuer() {
             onClick={connectWallet}
             style={{
               padding: '0.75rem 1.5rem',
-              background: '#1565c0',
+              background: 'rgb(202, 165, 97)',
               color: 'white',
               border: 'none',
               borderRadius: '6px',
@@ -365,7 +365,7 @@ function ZKPIssuer() {
         disabled={!did}
         style={{
           padding: '0.75rem 1.5rem',
-          background: did ? '#4CAF50' : '#333',
+          background: did ? 'rgb(202, 165, 97)' : '#333',
           color: 'white',
           border: 'none',
           borderRadius: '6px',
@@ -423,7 +423,7 @@ function ZKPIssuer() {
           borderRadius: '6px',
           border: '1px solid #4CAF50'
         }}>
-          ✅ Proof successfully submitted to blockchain! The DID is now marked as KYC/AML compliant.
+          Proof successfully submitted to blockchain! The DID is now marked as KYC/AML compliant.
         </div>
       )}
 
@@ -482,8 +482,8 @@ function ZKPIssuer() {
                 size={256}
               />
             </div>
-            <p style={{ color: '#4CAF50', marginTop: '1rem', fontSize: '0.9rem', fontWeight: 'bold' }}>
-              ⏳ Waiting for wallet response...
+            <p style={{ color: 'rgb(202, 165, 97)', marginTop: '1rem', fontSize: '0.9rem', fontWeight: 'bold' }}>
+              Waiting for wallet response...
             </p>
           </div>
         </div>

@@ -38,12 +38,8 @@ const DetailPanel: React.FC<DetailPanelProps> = ({ nft, onClose }) => {
           <div className="detail-value">{nft.name}</div>
         </div>
         <div className="detail-field">
-          <div className="detail-label">DID</div>
+          <div className="detail-label">Owner DID</div>
           <div className="detail-value">{nft.did}</div>
-        </div>
-        <div className="detail-field">
-          <div className="detail-label">Nationality</div>
-          <div className="detail-value">{nft.nationality}</div>
         </div>
       </div>
 

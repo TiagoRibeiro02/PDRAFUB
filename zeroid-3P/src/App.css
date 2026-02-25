@@ -5,16 +5,18 @@
 }
 
 .header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #1a1a1a;
+  border-bottom: 3px solid rgb(202, 165, 97);
   color: white;
   padding: 1.5rem 2rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .header h1 {
   margin: 0;
   font-size: 1.8rem;
   font-weight: 600;
+  color: rgb(202, 165, 97);
 }
 
 .header p {
@@ -40,13 +42,13 @@
   padding: 0.8rem 1.2rem;
   font-size: 1rem;
   border-radius: 25px;
-  border: 2px solid #ddd;
+  border: 1px solid #ddd;
   transition: all 0.3s ease;
 }
 
 .search-bar:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: rgb(202, 165, 97);
+  box-shadow: 0 0 0 3px rgba(202, 165, 97, 0.1);
 }
 
 .main-content {
@@ -88,19 +90,19 @@
 }
 
 .nft-card.selected {
-  border-color: #667eea;
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+  border-color: rgb(202, 165, 97);
+  box-shadow: 0 4px 16px rgba(202, 165, 97, 0.3);
 }
 
 .nft-card-image {
   width: 100%;
   height: 200px;
   object-fit: cover;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #3a3a3a 0%, #2a2a2a 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: rgb(202, 165, 97);
   font-size: 3rem;
 }
 
@@ -187,7 +189,7 @@
 .detail-section h3 {
   font-size: 1rem;
   font-weight: 600;
-  color: #667eea;
+  color: rgb(202, 165, 97);
   margin-bottom: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -232,7 +234,7 @@
 .loading {
   text-align: center;
   padding: 4rem 2rem;
-  color: #667eea;
+  color: rgb(202, 165, 97);
   font-size: 1.2rem;
 }
 

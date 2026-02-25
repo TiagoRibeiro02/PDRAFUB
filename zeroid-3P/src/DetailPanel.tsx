@@ -14,7 +14,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({ nft, onClose }) => {
     <div className="detail-panel">
       <div className="detail-panel-header">
         <h2 className="detail-panel-title">NFT Details</h2>
-        <button className="close-button" onClick={onClose}>×</button>
+        <button className="close-button" onClick={onClose}>x</button>
       </div>
 
       {imageUrl && (
@@ -76,7 +76,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({ nft, onClose }) => {
         <div className="detail-field">
           <div className="detail-label">KYC/AML Compliance Status</div>
           <div className="detail-value">
-            {nft.isActive ? '✅ Verified and Compliant' : '⚠️ Not Verified'}
+            {nft.isActive ? 'Verified and Compliant' : 'Not Verified'}
           </div>
         </div>
         {complianceTimestamp && complianceTimestamp > 0 && (

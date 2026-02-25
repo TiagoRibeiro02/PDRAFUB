@@ -36,18 +36,21 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: rgb(202, 165, 97);
+  color: white;
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: all 0.25s;
 }
 
 button:hover {
-  border-color: #646cff;
+  background-color: rgb(182, 145, 77);
+  border-color: rgb(202, 165, 97);
 }
 
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 2px solid rgb(202, 165, 97);
+  outline-offset: 2px;
 }
 
 input {
@@ -62,7 +65,7 @@ input {
 
 input:focus {
   outline: none;
-  border-color: #646cff;
+  border-color: rgb(202, 165, 97);
 }
 
 @media (prefers-color-scheme: light) {

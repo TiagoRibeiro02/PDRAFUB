@@ -103,7 +103,7 @@ function App() {
   return (
     <div className="app">
       <header className="header">
-        <h1>🔐 ZeroID Third Party Viewer</h1>
+        <h1>ZeroID Third Party Viewer</h1>
         <p>View and search identity NFTs - {nfts.length} NFTs total</p>
       </header>
 
@@ -116,7 +116,7 @@ function App() {
           onChange={handleSearchChange}
         />
         <button onClick={loadNFTs} style={{ marginLeft: '1rem' }}>
-          🔄 Refresh
+          Refresh
         </button>
       </div>
 
@@ -124,7 +124,7 @@ function App() {
         <div className={`nft-list-container ${selectedNFT ? 'with-detail' : ''}`}>
           {error ? (
             <div className="empty-state">
-              <div className="empty-state-icon">⚠️</div>
+              <div className="empty-state-icon"></div>
               <div className="empty-state-text">{error}</div>
               <button onClick={loadNFTs} style={{ marginTop: '1rem' }}>
                 Try Again
@@ -134,7 +134,6 @@ function App() {
             <div className="loading">Loading NFTs from blockchain...</div>
           ) : filteredNfts.length === 0 ? (
             <div className="empty-state">
-              <div className="empty-state-icon">🔍</div>
               <div className="empty-state-text">
                 {searchTerm ? 'No NFTs found matching your search' : 'No purchased NFTs found'}
               </div>

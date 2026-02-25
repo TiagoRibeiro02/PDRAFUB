@@ -16,6 +16,7 @@ A blockchain-based platform for physical asset traceability using Decentralized 
 
 - **zeroid-entity** - Bank interface for purchasing NFTs on behalf of users and issuing KYC compliance proofs
 - **zeroid-wallet** - User wallet for viewing DID-owned NFTs with compliance status
+- **zeroid-3P** - Third party viewer for searching and viewing all NFTs in the system
 - **nfts** - NFT smart contract with DID ownership tracking and KYC compliance verification
 - **hardhat-example** - Example Hardhat project
 
@@ -47,6 +48,7 @@ This script will:
 6. Start Bank Interface (http://localhost:5173)
 7. Start User Wallet (http://localhost:5174)
 8. Start PHP Backend (http://localhost:8000)
+9. Start Third Party Viewer (http://localhost:5175)
 
 Press `Ctrl+C` to stop all services, or run `./stop-all.sh`
 
@@ -126,6 +128,19 @@ Open http://localhost:5174
 - Register/Login
 - Create your DID
 - Go to "My NFTs" tab
+
+### 6. Start Third Party Viewer (Optional)
+
+```bash
+cd zeroid-3P
+npm install
+npm run dev
+```
+
+Open http://localhost:5175
+- View all NFTs in the system
+- Search by DID or other identifiers
+- Click on NFTs to see details
 
 ## MetaMask Configuration
 
@@ -311,7 +326,27 @@ And update `kyc-deployment.json` in:
 → Ensure KYC contracts are deployed  
 → Generate and submit a proof for the DID in "ZK Proof Issuer" tab  
 → Check browser console for errors
+## Third Party Viewer (zeroid-3P)
 
+The Third Party Viewer at http://localhost:5175 provides a public interface for viewing all NFTs:
+
+### Features
+- **View All NFTs**: Grid display of all minted NFTs in the system
+- **Search Functionality**: Search by DID, name, token ID, or wallet address
+- **Detail Panel**: Click any NFT to see complete information including:
+  - Identity information (name, DID, nationality)
+  - Document details (type, number, issuer)
+  - NFT details (token ID, owner address, status)
+  - Issue and expiration dates
+  - KYC compliance status
+- **Responsive Design**: Works on desktop and mobile devices
+- **Dark/Light Mode**: Automatically adapts to system preferences
+
+### Use Cases
+- **Regulatory Compliance**: Government agencies can search and verify NFTs
+- **Audit Trail**: Third parties can view all issued NFTs
+- **Verification**: Businesses can verify customer DIDs and compliance status
+- **Transparency**: Public can see all NFTs without needing MetaMask
 ## Security Considerations
 
 ### Current Model (Development)

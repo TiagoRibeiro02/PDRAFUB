@@ -25,6 +25,7 @@ cleanup() {
     lsof -ti:8545 | xargs -r kill -9 2>/dev/null || true
     lsof -ti:5173 | xargs -r kill -9 2>/dev/null || true
     lsof -ti:5174 | xargs -r kill -9 2>/dev/null || true
+    lsof -ti:5175 | xargs -r kill -9 2>/dev/null || true
     lsof -ti:8000 | xargs -r kill -9 2>/dev/null || true
     
     echo "All services stopped"
@@ -56,6 +57,14 @@ fi
 if [ ! -d "zeroid-wallet/node_modules" ]; then
     echo "Installing zeroid-wallet dependencies..."
     cd zeroid-wallet
+    npm install
+    cd ..
+fi
+
+# Install zeroid-3P dependencies if needed
+if [ ! -d "zeroid-3P/node_modules" ]; then
+    echo "Installing zeroid-3P dependencies..."
+    cd zeroid-3P
     npm install
     cd ..
 fi
@@ -116,7 +125,12 @@ mkdir -p zeroid-wallet/src/contracts
 cp nfts/frontend/src/contracts/MyNFT.json zeroid-wallet/src/contracts/
 cp nfts/frontend/src/contracts/contract-address.json zeroid-wallet/src/contracts/
 
-echo "Contract files copied to both interfaces"
+# Copy to zeroid-3P
+mkdir -p zeroid-3P/src/contracts
+cp nfts/frontend/src/contracts/MyNFT.json zeroid-3P/src/contracts/
+cp nfts/frontend/src/contracts/contract-address.json zeroid-3P/src/contracts/
+
+echo "Contract files copied to all interfaces"
 echo ""
 
 echo "Step 6: Starting Bank Interface (zeroid-entity)..."
@@ -145,6 +159,15 @@ sleep 2
 echo "PHP backend running (PID: $PHP_PID)"
 echo ""
 
+echo "Step 9: Starting Third Party Viewer (zeroid-3P)..."
+cd zeroid-3P
+npm run dev > /tmp/zeroid-3p.log 2>&1 &
+THIRDPARTY_PID=$!
+cd ..
+sleep 3
+echo "Third Party Viewer running (PID: $THIRDPARTY_PID)"
+echo ""
+
 echo "================================================"
 echo "All services started successfully!"
 echo "================================================"
@@ -155,10 +178,11 @@ echo "  KYC Compliance System:  PlonkVerifierAdapter, KYCCompliance"
 echo "                         See zeroid-entity/src/contracts/kyc-deployment.json"
 echo ""
 echo "Access Points:"
-echo "  Bank Interface:  http://localhost:5173"
-echo "  User Wallet:     http://localhost:5174"
-echo "  Blockchain RPC:  http://127.0.0.1:8545"
-echo "  PHP Backend:     http://localhost:8000"
+echo "  Bank Interface:      http://localhost:5173"
+echo "  User Wallet:         http://localhost:5174"
+echo "  Third Party Viewer:  http://localhost:5175"
+echo "  Blockchain RPC:      http://127.0.0.1:8545"
+echo "  PHP Backend:         http://localhost:8000"
 echo ""
 echo "Next Steps:"
 echo "  1. Open http://localhost:5173 (Bank Interface)"
@@ -171,11 +195,17 @@ echo "     - Register/Login"
 echo "     - Create your DID"
 echo "     - View 'My NFTs' with KYC compliance status"
 echo ""
+echo "  3. Open http://localhost:5175 (Third Party Viewer)"
+echo "     - View all NFTs in the system"
+echo "     - Search by DID or other identifiers"
+echo "     - Click NFTs to view detailed information"
+echo ""
 echo "Logs:"
-echo "  Hardhat:      tail -f /tmp/hardhat.log"
-echo "  Bank:         tail -f /tmp/zeroid-entity.log"
-echo "  Wallet:       tail -f /tmp/zeroid-wallet.log"
-echo "  PHP Backend:  tail -f /tmp/php-backend.log"
+echo "  Hardhat:        tail -f /tmp/hardhat.log"
+echo "  Bank:           tail -f /tmp/zeroid-entity.log"
+echo "  Wallet:         tail -f /tmp/zeroid-wallet.log"
+echo "  Third Party:    tail -f /tmp/zeroid-3p.log"
+echo "  PHP Backend:    tail -f /tmp/php-backend.log"
 echo ""
 echo "To stop all services:"
 echo "  Press Ctrl+C or run: ./stop-all.sh"
@@ -205,6 +235,11 @@ while true; do
     
     if ! kill -0 $PHP_PID 2>/dev/null; then
         echo "X PHP backend stopped unexpectedly"
+        cleanup
+    fi
+    
+    if ! kill -0 $THIRDPARTY_PID 2>/dev/null; then
+        echo "X Third Party Viewer stopped unexpectedly"
         cleanup
     fi
 done

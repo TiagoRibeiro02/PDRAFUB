@@ -7,15 +7,15 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function main() {
-  console.log('🚀 Deploying KYC Compliance Contracts...\n');
+  console.log('Deploying KYC Compliance Contracts...\n');
 
   // Connect to local Hardhat network
   const provider = new ethers.JsonRpcProvider('http://127.0.0.1:8545');
   
   // Get the deployer account (first account from Hardhat)
   const deployer = await provider.getSigner(0);
-  console.log('📝 Deploying with account:', await deployer.getAddress());
-  console.log('💰 Account balance:', ethers.formatEther(await provider.getBalance(await deployer.getAddress())), 'ETH\n');
+  console.log('Deploying with account:', await deployer.getAddress());
+  console.log('Account balance:', ethers.formatEther(await provider.getBalance(await deployer.getAddress())), 'ETH\n');
 
   // Read contract sources
   const verifierSource = fs.readFileSync(
@@ -35,7 +35,7 @@ async function main() {
 
   // Note: In practice, you would compile these contracts using a compiler like solc
   // For this example, we assume the ABIs and bytecode are available
-  console.log('⚠️  Note: This script requires compiled contract artifacts.');
+  console.log('Note: This script requires compiled contract artifacts.');
   console.log('   Please compile the contracts first using Hardhat or a similar tool.\n');
   
   // Deployment would continue here with the compiled artifacts

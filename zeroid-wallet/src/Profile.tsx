@@ -411,7 +411,6 @@ export default function Profile() {
           fontSize: 'clamp(1.2rem, 2vw, 1.6rem)'
         }}>User Information</h3>
         <p style={{ fontSize: 'clamp(0.95rem, 1.5vw, 1.1rem)' }}><strong>Username:</strong> {user.username}</p>
-        <p style={{ fontSize: 'clamp(0.95rem, 1.5vw, 1.1rem)' }}><strong>User ID:</strong> {user.id}</p>
       </div>
 
       {/* Identity Details */}

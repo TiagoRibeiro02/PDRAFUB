@@ -47,7 +47,7 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft, isSelected, onClick }) => {
           Issued: {new Date(nft.dateIssued).toLocaleDateString()}
         </div>
         <div className="nft-card-date">
-          Status: {nft.isActive ? 'Active' : 'Not Verified'}
+          KYC Status: {nft.isActive ? 'Verified' : 'Not Verified'}
         </div>
       </div>
     </div>

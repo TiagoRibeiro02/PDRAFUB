@@ -5,7 +5,7 @@
 
 set -e  # Exit on error
 
-echo "PDRAFUB Quick Start - Starting All Services"
+echo "Quick Start - Starting All Services"
 echo "================================================"
 echo ""
 
@@ -34,7 +34,7 @@ cleanup() {
 
 trap cleanup SIGINT SIGTERM
 
-echo "Step 1: Installing dependencies..."
+echo "1: Installing dependencies..."
 echo ""
 
 # Install nfts dependencies if needed
@@ -47,7 +47,7 @@ fi
 
 # Install zeroid-entity dependencies if needed
 if [ ! -d "zeroid-entity/node_modules" ]; then
-    echo "Installing zeroid-entity dependencies..."
+    echo "Installing Entity dependencies..."
     cd zeroid-entity
     npm install
     cd ..
@@ -55,7 +55,7 @@ fi
 
 # Install zeroid-wallet dependencies if needed
 if [ ! -d "zeroid-wallet/node_modules" ]; then
-    echo "Installing zeroid-wallet dependencies..."
+    echo "Installing Wallet dependencies..."
     cd zeroid-wallet
     npm install
     cd ..
@@ -63,7 +63,7 @@ fi
 
 # Install zeroid-3P dependencies if needed
 if [ ! -d "zeroid-3P/node_modules" ]; then
-    echo "Installing zeroid-3P dependencies..."
+    echo "Installing 3Party dependencies..."
     cd zeroid-3P
     npm install
     cd ..
@@ -72,7 +72,7 @@ fi
 echo "Dependencies installed"
 echo ""
 
-echo "Step 2: Starting Hardhat Node..."
+echo "2: Starting Hardhat Node..."
 cd nfts
 npx hardhat node > /tmp/hardhat.log 2>&1 &
 HARDHAT_PID=$!
@@ -90,7 +90,7 @@ fi
 echo "Hardhat node running (PID: $HARDHAT_PID)"
 echo ""
 
-echo "Step 3: Deploying NFT Contract & Minting..."
+echo "3: Deploying NFT Contract & Minting..."
 cd nfts
 npm run deploy
 npm run mint
@@ -98,7 +98,7 @@ cd ..
 echo "NFT contract deployed and NFTs minted"
 echo ""
 
-echo "Step 4: Deploying KYC Compliance Contracts..."
+echo "4: Deploying KYC Compliance Contracts..."
 # Copy the PlonkVerifier to nfts contracts if it exists
 if [ -f "zeroid-entity/Verifier.sol" ]; then
     echo "Copying PlonkVerifier from zeroid-entity..."
@@ -113,7 +113,7 @@ cd ..
 echo "KYC Compliance contracts deployed"
 echo ""
 
-echo "Step 5: Copying Contract Files..."
+echo "5: Copying Contract Files..."
 
 # Copy to zeroid-entity
 mkdir -p zeroid-entity/src/contracts
@@ -135,13 +135,12 @@ if [ -f "zeroid-entity/src/contracts/kyc-deployment.json" ]; then
     cp zeroid-entity/src/contracts/kyc-deployment.json zeroid-3P/src/contracts/
     cp zeroid-entity/src/contracts/KYCCompliance.json zeroid-3P/src/contracts/
     cp zeroid-entity/src/contracts/PlonkVerifierAdapter.json zeroid-3P/src/contracts/
-    echo "KYC contract files copied to zeroid-3P"
 fi
 
 echo "Contract files copied to all interfaces"
 echo ""
 
-echo "Step 6: Starting Bank Interface (zeroid-entity)..."
+echo "6: Starting Bank Interface..."
 cd zeroid-entity
 npm run dev > /tmp/zeroid-entity.log 2>&1 &
 ENTITY_PID=$!
@@ -150,7 +149,7 @@ sleep 3
 echo "Bank interface running (PID: $ENTITY_PID)"
 echo ""
 
-echo "Step 7: Starting User Wallet (zeroid-wallet)..."
+echo "7: Starting User Wallet..."
 cd zeroid-wallet
 npm run dev > /tmp/zeroid-wallet.log 2>&1 &
 WALLET_PID=$!
@@ -158,7 +157,7 @@ cd ..
 sleep 3
 
 # Start PHP backend
-echo "Step 8: Starting PHP Backend..."
+echo "8: Starting PHP Backend..."
 cd zeroid-wallet/backend
 php -S localhost:8000 > /tmp/php-backend.log 2>&1 &
 PHP_PID=$!
@@ -167,7 +166,7 @@ sleep 2
 echo "PHP backend running (PID: $PHP_PID)"
 echo ""
 
-echo "Step 9: Starting Third Party Viewer (zeroid-3P)..."
+echo "9: Starting Third Party Viewer..."
 cd zeroid-3P
 npm run dev > /tmp/zeroid-3p.log 2>&1 &
 THIRDPARTY_PID=$!
@@ -183,7 +182,7 @@ echo ""
 echo "Deployed Contracts:"
 echo "  MyNFT Contract:         See nfts/frontend/src/contracts/contract-address.json"
 echo "  KYC Compliance System:  PlonkVerifierAdapter, KYCCompliance"
-echo "                         See zeroid-entity/src/contracts/kyc-deployment.json"
+echo "                          See zeroid-entity/src/contracts/kyc-deployment.json"
 echo ""
 echo "Access Points:"
 echo "  Bank Interface:      http://localhost:5173"
@@ -192,31 +191,12 @@ echo "  Third Party Viewer:  http://localhost:5175"
 echo "  Blockchain RPC:      http://127.0.0.1:8545"
 echo "  PHP Backend:         http://localhost:8000"
 echo ""
-echo "Next Steps:"
-echo "  1. Open http://localhost:5173 (Bank Interface)"
-echo "     - NFT Bank tab: Connect MetaMask, manage NFTs"
-echo "     - ZK Proof Issuer tab: Generate KYC compliance proofs"
-echo "     - Submit proofs to blockchain for DID verification"
-echo ""
-echo "  2. Open http://localhost:5174 (User Wallet)"
-echo "     - Register/Login"
-echo "     - Create your DID"
-echo "     - View 'My NFTs' with KYC compliance status"
-echo ""
-echo "  3. Open http://localhost:5175 (Third Party Viewer)"
-echo "     - View all NFTs in the system"
-echo "     - Search by DID or other identifiers"
-echo "     - Click NFTs to view detailed information"
-echo ""
 echo "Logs:"
 echo "  Hardhat:        tail -f /tmp/hardhat.log"
 echo "  Bank:           tail -f /tmp/zeroid-entity.log"
 echo "  Wallet:         tail -f /tmp/zeroid-wallet.log"
 echo "  Third Party:    tail -f /tmp/zeroid-3p.log"
 echo "  PHP Backend:    tail -f /tmp/php-backend.log"
-echo ""
-echo "To stop all services:"
-echo "  Press Ctrl+C or run: ./stop-all.sh"
 echo ""
 echo "Press Ctrl+C to stop all services..."
 echo ""

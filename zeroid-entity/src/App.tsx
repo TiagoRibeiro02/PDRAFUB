@@ -213,6 +213,11 @@ export default function App() {
 // Original ZKP Issuer component
 function ZKPIssuer() {
   const [did, setDid] = useState("");
+  const [kycExpiryDate, setKycExpiryDate] = useState<string>(() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() + 1);
+    return d.toISOString().split('T')[0];
+  });
   const [zkProof, setZkProof] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -303,6 +308,21 @@ function ZKPIssuer() {
             borderRadius: '6px'
           }}
         />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          <label style={{ fontSize: '0.75rem', color: '#888' }}>KYC Expiry Date</label>
+          <input
+            type="date"
+            value={kycExpiryDate}
+            onChange={e => setKycExpiryDate(e.target.value)}
+            style={{ 
+              padding: '0.75rem',
+              background: '#1a1a1a',
+              border: '1px solid #333',
+              color: 'white',
+              borderRadius: '6px'
+            }}
+          />
+        </div>
         <button
           onClick={generateQRRequest}
           style={{
@@ -384,7 +404,7 @@ function ZKPIssuer() {
             try {
               setSubmitting(true);
               setError(null);
-              await submitProofToContract(did, zkProof);
+              await submitProofToContract(did, zkProof, new Date(kycExpiryDate).getTime() / 1000);
               setSubmitSuccess(true);
             } catch (err) {
               setError(err instanceof Error ? err.message : "Failed to submit proof");
@@ -580,7 +600,7 @@ async function generatePlonkZKP(userDid: string) {
   return { proof, publicSignals, commitment };
 }
 
-async function submitProofToContract(userDid: string, zkProof: any) {
+async function submitProofToContract(userDid: string, zkProof: any, expiryTimestamp: number) {
   if (!kycContractAddress || !KYCComplianceABI) {
     throw new Error("KYC contract not deployed. Please deploy it first.");
   }
@@ -625,6 +645,7 @@ async function submitProofToContract(userDid: string, zkProof: any) {
   const tx = await kycContract.submitComplianceProof(
     userDid,
     zkProof.commitment,
+    Math.floor(expiryTimestamp),
     proofBytes,
     zkProof.publicSignals
   );

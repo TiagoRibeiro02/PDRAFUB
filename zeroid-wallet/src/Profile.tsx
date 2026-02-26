@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Html5QrcodeScanner } from "html5-qrcode";
 
-// Import contract address and ABI
+// contract address and ABI
 let contractAddress: string | undefined;
 let MyNFTABI: any;
 

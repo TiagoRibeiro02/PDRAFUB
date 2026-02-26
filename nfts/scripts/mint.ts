@@ -6,31 +6,61 @@ const nftMetadata = [
     name: "Cool Cat #1",
     description: "A very cool cat NFT",
     image: "https://placehold.co/400x400/orange/white?text=Cool+Cat+1",
-    price: "0.01" // ETH
+    price: "0.01", // ETH
+    attributes: [
+      { trait_type: "Nationality", value: "United States" },
+      { trait_type: "Document Type", value: "Identity Card" },
+      { trait_type: "Document Number", value: "CAT123456789" },
+      { trait_type: "Issuer", value: "Cool Cats Authority" }
+    ]
   },
   {
     name: "Cool Dog #1",
     description: "A very cool dog NFT",
     image: "https://placehold.co/400x400/blue/white?text=Cool+Dog+1",
-    price: "0.02"
+    price: "0.02",
+    attributes: [
+      { trait_type: "Nationality", value: "Canada" },
+      { trait_type: "Document Type", value: "Passport" },
+      { trait_type: "Document Number", value: "DOG987654321" },
+      { trait_type: "Issuer", value: "Canine Registry" }
+    ]
   },
   {
     name: "Cool Bird #1",
     description: "A very cool bird NFT",
     image: "https://placehold.co/400x400/green/white?text=Cool+Bird+1",
-    price: "0.015"
+    price: "0.015",
+    attributes: [
+      { trait_type: "Nationality", value: "United Kingdom" },
+      { trait_type: "Document Type", value: "Travel Document" },
+      { trait_type: "Document Number", value: "BRD555444333" },
+      { trait_type: "Issuer", value: "Avian Federation" }
+    ]
   },
   {
     name: "Cool Fish #1",
     description: "A very cool fish NFT",
     image: "https://placehold.co/400x400/purple/white?text=Cool+Fish+1",
-    price: "0.025"
+    price: "0.025",
+    attributes: [
+      { trait_type: "Nationality", value: "Australia" },
+      { trait_type: "Document Type", value: "Residence Permit" },
+      { trait_type: "Document Number", value: "FSH111222333" },
+      { trait_type: "Issuer", value: "Marine Registry" }
+    ]
   },
   {
     name: "Cool Monkey #1",
     description: "A very cool monkey NFT",
     image: "https://placehold.co/400x400/red/white?text=Cool+Monkey+1",
-    price: "0.05"
+    price: "0.05",
+    attributes: [
+      { trait_type: "Nationality", value: "Brazil" },
+      { trait_type: "Document Type", value: "National ID" },
+      { trait_type: "Document Number", value: "MNK777888999" },
+      { trait_type: "Issuer", value: "Primate Authority" }
+    ]
   }
 ];
 

@@ -123,6 +123,44 @@ contract MyNFT is ERC721URIStorage, Ownable {
     }
 
     /**
+     * @dev Purchase an NFT and transfer it to the user in a single transaction
+     * @param tokenId The ID of the NFT to purchase
+     * @param buyerDID The DID of the buyer (e.g., "did:zeroid:...")
+     * @param recipientAddress The Ethereum address to transfer the NFT to
+     * Links the DID to the address if not already linked (bank pays gas)
+     */
+    function purchaseAndTransferNFT(uint256 tokenId, string memory buyerDID, address recipientAddress) public payable onlyOwner {
+        require(_ownerOf(tokenId) == owner(), "NFT not available from bank");
+        require(_prices[tokenId] > 0, "NFT not for sale");
+        require(msg.value >= _prices[tokenId], "Insufficient payment");
+        require(bytes(buyerDID).length > 0, "Invalid DID");
+        require(recipientAddress != address(0), "Invalid recipient address");
+
+        uint256 price = _prices[tokenId];
+
+        // Refund excess payment
+        if (msg.value > price) {
+            payable(msg.sender).transfer(msg.value - price);
+        }
+
+        // Record DID ownership
+        _didOwners[tokenId] = buyerDID;
+        _prices[tokenId] = 0; // Mark as not for sale
+
+        emit NFTPurchased(tokenId, buyerDID, price);
+        emit DIDOwnershipTransferred(tokenId, "", buyerDID);
+
+        // Link DID to address if not already linked
+        if (_didToAddress[buyerDID] == address(0)) {
+            _didToAddress[buyerDID] = recipientAddress;
+            emit DIDLinked(buyerDID, recipientAddress);
+        }
+
+        // Transfer NFT directly to recipient
+        _transfer(owner(), recipientAddress, tokenId);
+    }
+
+    /**
      * @dev Update the price of an NFT (only owner can do this)
      * @param tokenId The ID of the NFT
      * @param newPrice The new price in wei

@@ -48,13 +48,15 @@ export async function fetchAllNFTs(
           let isCompliant = false;
           let complianceTimestamp = 0;
           let complianceCommitment = '';
+          let kycExpiryTimestamp = 0;
 
           if (kycContractAddress && kycABI) {
             try {
               const kycContract = new ethers.Contract(kycContractAddress, kycABI, provider);
-              const [isComp, timestamp, commitment] = await kycContract.checkCompliance(didOwner);
+              const [isComp, timestamp, expiryDate, commitment] = await kycContract.checkCompliance(didOwner);
               isCompliant = isComp;
               complianceTimestamp = Number(timestamp);
+              kycExpiryTimestamp = Number(expiryDate);
               complianceCommitment = commitment;
             } catch (err) {
               console.warn(`Could not check KYC for DID ${didOwner}:`, err);
@@ -74,17 +76,18 @@ export async function fetchAllNFTs(
             did: didOwner,
             owner: owner,
             name: metadata.name || `NFT #${i}`,
-            dateIssued: getAttribute('Date Issued') || new Date().toISOString(),
-            expirationDate: getAttribute('Expiration Date') || new Date(Date.now() + 5 * 365 * 24 * 60 * 60 * 1000).toISOString(),
-            nationality: getAttribute('Nationality') || 'Unknown',
-            documentType: getAttribute('Document Type') || 'Identity Document',
-            documentNumber: getAttribute('Document Number') || `DOC${i}`,
-            issuer: getAttribute('Issuer') || 'Issuing Authority',
+            dateIssued: '',
+            expirationDate: '',
+            nationality: getAttribute('Nationality') || '',
+            documentType: getAttribute('Document Type') || '',
+            documentNumber: getAttribute('Document Number') || '',
+            issuer: getAttribute('Issuer') || '',
             isActive: isCompliant,
             metadata: {
               description: metadata.description,
               image: metadata.image,
               complianceTimestamp: complianceTimestamp > 0 ? complianceTimestamp : undefined,
+              kycExpiryTimestamp: kycExpiryTimestamp > 0 ? kycExpiryTimestamp : undefined,
               complianceCommitment: complianceCommitment || undefined,
             }
           });

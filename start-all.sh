@@ -125,6 +125,12 @@ mkdir -p zeroid-wallet/src/contracts
 cp nfts/frontend/src/contracts/MyNFT.json zeroid-wallet/src/contracts/
 cp nfts/frontend/src/contracts/contract-address.json zeroid-wallet/src/contracts/
 
+# Copy KYC contracts to zeroid-wallet
+if [ -f "zeroid-entity/src/contracts/kyc-deployment.json" ]; then
+    cp zeroid-entity/src/contracts/kyc-deployment.json zeroid-wallet/src/contracts/
+    cp zeroid-entity/src/contracts/KYCCompliance.json zeroid-wallet/src/contracts/
+fi
+
 # Copy to zeroid-3P
 mkdir -p zeroid-3P/src/contracts
 cp nfts/frontend/src/contracts/MyNFT.json zeroid-3P/src/contracts/

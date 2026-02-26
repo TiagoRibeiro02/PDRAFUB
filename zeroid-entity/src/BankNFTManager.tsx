@@ -156,19 +156,20 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
         provider
       );
 
-      const complianceMap: {[did: string]: {isCompliant: boolean, timestamp: number, commitment: string}} = {};
+      const complianceMap: {[did: string]: {isCompliant: boolean, timestamp: number, expiryDate: number, commitment: string}} = {};
 
       for (const did of dids) {
         try {
-          const [isCompliant, timestamp, commitment] = await kycContract.checkCompliance(did);
+          const [isCompliant, timestamp, expiryDate, commitment] = await kycContract.checkCompliance(did);
           complianceMap[did] = {
             isCompliant,
             timestamp: Number(timestamp),
+            expiryDate: Number(expiryDate),
             commitment
           };
         } catch (err) {
           console.error(`Error checking compliance for ${did}:`, err);
-          complianceMap[did] = { isCompliant: false, timestamp: 0, commitment: '' };
+          complianceMap[did] = { isCompliant: false, timestamp: 0, expiryDate: 0, commitment: '' };
         }
       }
 
@@ -364,33 +365,6 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
       const signer = await provider.getSigner();
       const contract = new ethers.Contract(contractAddress, contractABI, signer);
 
-      // Check if DID is already linked to an address
-      console.log('Looking up Ethereum address for DID...');
-      let linkedAddress = await contract.getAddressForDID(userDID);
-      
-      // If not linked, link it (bank pays gas)
-      if (linkedAddress === ethers.ZeroAddress) {
-        console.log(`Linking DID to address (bank pays gas)...`);
-        const linkTx = await contract.linkDIDToAddress(userDID, userEthAddress);
-        console.log('Link transaction sent:', linkTx.hash);
-        await linkTx.wait();
-        console.log('DID linked successfully - bank paid gas fee');
-        linkedAddress = userEthAddress;
-      } else {
-        console.log(`DID already linked to: ${linkedAddress}`);
-        // Verify linked address matches the one from wallet
-        if (linkedAddress.toLowerCase() !== userEthAddress.toLowerCase()) {
-          alert(
-            `Warning: DID is linked to a different address!\n\n` +
-            `DID: ${userDID}\n` +
-            `Linked to: ${linkedAddress}\n` +
-            `Wallet sent: ${userEthAddress}\n\n` +
-            `Using the blockchain-linked address.`
-          );
-          userEthAddress = linkedAddress;
-        }
-      }
-
       const confirm = window.confirm(
         `Confirm purchase:\n\n` +
         `NFT: #${tokenId}\n` +
@@ -398,7 +372,7 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
         `To Address: ${userEthAddress}\n` +
         `Price: ${ethers.formatEther(priceWei)} ETH\n` +
         `Gas fees: Paid by bank\n\n` +
-        `The bank will purchase and transfer this NFT to the user's wallet.`
+        `The bank will purchase and transfer this NFT to the user's wallet in a single transaction.`
       );
 
       if (!confirm) {
@@ -406,26 +380,19 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
         return;
       }
 
-      console.log(`Purchasing NFT #${tokenId} for DID: ${userDID}`);
-      const purchaseTx = await contract.purchaseNFT(tokenId, userDID, { value: priceWei });
-      console.log('Purchase transaction sent:', purchaseTx.hash);
-      await purchaseTx.wait();
-      console.log('Purchase confirmed!');
-      
-      console.log(`Transferring NFT to user's wallet...`);
-      const bankAddress = await signer.getAddress();
-      const transferTx = await contract.transferFrom(bankAddress, userEthAddress, tokenId);
-      console.log('Transfer transaction sent:', transferTx.hash);
-      await transferTx.wait();
-      console.log('Transfer confirmed!');
-      
+      console.log(`Purchasing and transferring NFT #${tokenId} to DID: ${userDID} (${userEthAddress})`);
+      const tx = await contract.purchaseAndTransferNFT(tokenId, userDID, userEthAddress, { value: priceWei });
+      console.log('Transaction sent:', tx.hash);
+      await tx.wait();
+      console.log('Transaction confirmed!');
+
       alert(
         `Purchase and transfer successful!\n\n` +
         `NFT #${tokenId} has been:\n` +
         `1. Assigned to DID: ${userDID}\n` +
         `2. Transferred to: ${userEthAddress}\n\n` +
         `The user now has full custody of the NFT!\n` +
-        `All gas fees were paid by the bank.`
+        `All completed in a single transaction. Gas fees were paid by the bank.`
       );
       
       // Reload NFTs

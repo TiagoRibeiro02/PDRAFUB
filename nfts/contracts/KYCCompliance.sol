@@ -16,6 +16,7 @@ contract KYCCompliance {
     struct ComplianceStatus {
         bool isCompliant;
         uint256 timestamp;
+        uint256 expiryDate;
         string commitment; // The zero-knowledge proof commitment
         bool exists;
     }
@@ -29,7 +30,8 @@ contract KYCCompliance {
         string did,
         bool isCompliant,
         string commitment,
-        uint256 timestamp
+        uint256 timestamp,
+        uint256 expiryDate
     );
     
     event IssuerUpdated(address indexed oldIssuer, address indexed newIssuer);
@@ -58,16 +60,19 @@ contract KYCCompliance {
      * @dev Submit a zero-knowledge proof to verify KYC/AML compliance
      * @param did The user's DID (Decentralized Identifier)
      * @param commitment The commitment from the zero-knowledge proof
+     * @param expiryDate The Unix timestamp when this KYC verification expires
      * @param proof The PLONK proof data
      * @param publicSignals The public signals from the proof
      */
     function submitComplianceProof(
         string memory did,
         string memory commitment,
+        uint256 expiryDate,
         bytes memory proof,
         uint[] memory publicSignals
     ) external onlyIssuer {
         require(bytes(did).length > 0, "DID cannot be empty");
+        require(expiryDate > block.timestamp, "Expiry date must be in the future");
         
         // Verify the zero-knowledge proof
         bool isValid = verifier.verifyProof(proof, publicSignals);
@@ -80,11 +85,12 @@ contract KYCCompliance {
         complianceStatuses[didHash] = ComplianceStatus({
             isCompliant: true,
             timestamp: block.timestamp,
+            expiryDate: expiryDate,
             commitment: commitment,
             exists: true
         });
         
-        emit ComplianceVerified(didHash, did, true, commitment, block.timestamp);
+        emit ComplianceVerified(didHash, did, true, commitment, block.timestamp, expiryDate);
     }
     
     /**
@@ -92,21 +98,22 @@ contract KYCCompliance {
      * @param did The DID to check
      * @return isCompliant Whether the DID is compliant
      * @return timestamp When the compliance was verified
+     * @return expiryDate When the compliance expires
      * @return commitment The proof commitment
      */
     function checkCompliance(string memory did) 
         external 
         view 
-        returns (bool isCompliant, uint256 timestamp, string memory commitment) 
+        returns (bool isCompliant, uint256 timestamp, uint256 expiryDate, string memory commitment) 
     {
         bytes32 didHash = keccak256(abi.encodePacked(did));
         ComplianceStatus memory status = complianceStatuses[didHash];
         
         if (!status.exists) {
-            return (false, 0, "");
+            return (false, 0, 0, "");
         }
         
-        return (status.isCompliant, status.timestamp, status.commitment);
+        return (status.isCompliant, status.timestamp, status.expiryDate, status.commitment);
     }
     
     /**
@@ -128,6 +135,6 @@ contract KYCCompliance {
         
         delete complianceStatuses[didHash];
         
-        emit ComplianceVerified(didHash, did, false, "", block.timestamp);
+        emit ComplianceVerified(didHash, did, false, "", block.timestamp, 0);
     }
 }

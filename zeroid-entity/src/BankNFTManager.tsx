@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
+import { QRCodeSVG } from 'qrcode.react';
 
 // Import KYC contract
 let kycContractAddress: string | undefined;
@@ -70,6 +71,12 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
   const [account, setAccount] = useState('');
   const [isOwner, setIsOwner] = useState(false);
   const [complianceStatuses, setComplianceStatuses] = useState<{[did: string]: {isCompliant: boolean, timestamp: number, commitment: string}}>();
+  const [showQRRequest, setShowQRRequest] = useState(false);
+  const [qrSessionId, setQrSessionId] = useState<string>("");
+  const [purchasingTokenId, setPurchasingTokenId] = useState<number | null>(null);
+  const [purchasingPrice, setPurchasingPrice] = useState<bigint | null>(null);
+  const [manualDID, setManualDID] = useState('');
+  const [manualEthAddress, setManualEthAddress] = useState('');
 
   useEffect(() => {
     checkWallet();
@@ -80,6 +87,38 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
       loadNFTs();
     }
   }, [account, contractAddress, contractABI]);
+
+  // Poll relay server for QR code response
+  useEffect(() => {
+    if (!qrSessionId || purchasingTokenId === null || purchasingPrice === null) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`http://localhost:8000/qr-relay.php?sessionId=${qrSessionId}`);
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+          const userDID = result.data.did;
+          const userEthAddress = result.data.ethAddress;
+          
+          // Close QR modal
+          setShowQRRequest(false);
+          setQrSessionId("");
+          
+          // Proceed with purchase automatically
+          await executePurchase(purchasingTokenId, purchasingPrice, userDID, userEthAddress);
+          
+          // Reset purchasing state
+          setPurchasingTokenId(null);
+          setPurchasingPrice(null);
+        }
+      } catch (err) {
+        console.error('Error polling for response:', err);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [qrSessionId, purchasingTokenId, purchasingPrice]);
 
   const checkWallet = async () => {
     if (typeof window.ethereum === 'undefined') {
@@ -260,11 +299,48 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
   };
 
   const purchaseForUser = async (tokenId: number, priceWei: bigint) => {
-    const userDID = prompt(
-      `Enter the user's DID to purchase NFT #${tokenId}:\n\n` +
-      `Example: did:zeroid:12345678-1234-1234-1234-123456789abc`
-    );
+    // Open QR code modal
+    const sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    setPurchasingTokenId(tokenId);
+    setPurchasingPrice(priceWei);
+    setQrSessionId(sessionId);
+    setManualDID('');
+    setManualEthAddress('');
+    setShowQRRequest(true);
+  };
 
+  const handleManualSubmit = async () => {
+    if (!manualDID.trim()) {
+      alert('Please enter a DID');
+      return;
+    }
+    
+    if (!manualDID.startsWith('did:')) {
+      alert('Invalid DID format. Must start with "did:"');
+      return;
+    }
+
+    if (manualDID.trim() && !manualEthAddress.trim()) {
+      alert('Please enter an Ethereum address');
+      return;
+    }
+
+    if (!manualEthAddress.startsWith('0x') || manualEthAddress.length !== 42) {
+      alert('Invalid Ethereum address format. Must be 42 characters starting with 0x');
+      return;
+    }
+
+    if (purchasingTokenId !== null && purchasingPrice !== null) {
+      setShowQRRequest(false);
+      await executePurchase(purchasingTokenId, purchasingPrice, manualDID, manualEthAddress);
+      setPurchasingTokenId(null);
+      setPurchasingPrice(null);
+      setManualDID('');
+      setManualEthAddress('');
+    }
+  };
+
+  const executePurchase = async (tokenId: number, priceWei: bigint, userDID: string, userEthAddress: string) => {
     if (!userDID || !userDID.trim()) {
       alert('Purchase cancelled - no DID provided');
       return;
@@ -272,6 +348,11 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
 
     if (!userDID.startsWith('did:')) {
       alert('Invalid DID format. Must start with "did:"');
+      return;
+    }
+
+    if (!userEthAddress || !userEthAddress.startsWith('0x') || userEthAddress.length !== 42) {
+      alert('Invalid Ethereum address received from wallet');
       return;
     }
 
@@ -285,39 +366,29 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
 
       // Check if DID is already linked to an address
       console.log('Looking up Ethereum address for DID...');
-      let userEthAddress = await contract.getAddressForDID(userDID);
+      let linkedAddress = await contract.getAddressForDID(userDID);
       
-      // If not linked, ask for the address and link it (bank pays gas)
-      if (userEthAddress === ethers.ZeroAddress) {
-        const inputAddress = prompt(
-          `This DID is not yet linked to an Ethereum address.\n\n` +
-          `Enter the user's Ethereum address:\n` +
-          `(The bank will link it on the blockchain and pay the gas fee)\n\n` +
-          `Example: 0x1234567890123456789012345678901234567890`
-        );
-
-        if (!inputAddress || !inputAddress.trim()) {
-          alert('Purchase cancelled - no Ethereum address provided');
-          setLoading(false);
-          return;
-        }
-
-        if (!inputAddress.startsWith('0x') || inputAddress.length !== 42) {
-          alert('Invalid Ethereum address format. Must be 42 characters starting with 0x');
-          setLoading(false);
-          return;
-        }
-
-        userEthAddress = inputAddress;
-
-        // Bank links the DID to the address (bank pays gas fee)
+      // If not linked, link it (bank pays gas)
+      if (linkedAddress === ethers.ZeroAddress) {
         console.log(`Linking DID to address (bank pays gas)...`);
         const linkTx = await contract.linkDIDToAddress(userDID, userEthAddress);
         console.log('Link transaction sent:', linkTx.hash);
         await linkTx.wait();
         console.log('DID linked successfully - bank paid gas fee');
+        linkedAddress = userEthAddress;
       } else {
-        console.log(`DID already linked to: ${userEthAddress}`);
+        console.log(`DID already linked to: ${linkedAddress}`);
+        // Verify linked address matches the one from wallet
+        if (linkedAddress.toLowerCase() !== userEthAddress.toLowerCase()) {
+          alert(
+            `Warning: DID is linked to a different address!\n\n` +
+            `DID: ${userDID}\n` +
+            `Linked to: ${linkedAddress}\n` +
+            `Wallet sent: ${userEthAddress}\n\n` +
+            `Using the blockchain-linked address.`
+          );
+          userEthAddress = linkedAddress;
+        }
       }
 
       const confirm = window.confirm(
@@ -703,6 +774,156 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
           </div>
         )}
       </section>
+
+      {/* QR Code Request Modal */}
+      {showQRRequest && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: '#1a1a1a',
+            padding: '2rem',
+            borderRadius: '12px',
+            maxWidth: '500px',
+            position: 'relative',
+            border: '2px solid rgb(202, 165, 97)'
+          }}>
+            <button
+              onClick={() => {
+                setShowQRRequest(false);
+                setQrSessionId("");
+                setPurchasingTokenId(null);
+                setPurchasingPrice(null);
+                setManualDID('');
+                setManualEthAddress('');
+              }}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: 'transparent',
+                border: 'none',
+                color: '#888',
+                fontSize: '1.5rem',
+                cursor: 'pointer'
+              }}
+            >
+              ✕
+            </button>
+            <h3 style={{ marginTop: 0, color: 'rgb(202, 165, 97)' }}>Purchase NFT for User</h3>
+            <p style={{ color: '#888', marginBottom: '1.5rem' }}>
+              Scan with wallet or enter details manually
+            </p>
+            {purchasingTokenId !== null && (
+              <p style={{ 
+                color: 'rgb(202, 165, 97)', 
+                marginBottom: '1rem',
+                padding: '0.75rem',
+                background: 'rgba(202, 165, 97, 0.1)',
+                borderRadius: '6px',
+                border: '1px solid rgba(202, 165, 97, 0.3)'
+              }}>
+                Purchasing NFT #{purchasingTokenId}
+                {purchasingPrice && ` for ${ethers.formatEther(purchasingPrice)} ETH`}
+              </p>
+            )}
+            <div style={{
+              background: 'white',
+              padding: '1rem',
+              borderRadius: '8px',
+              display: 'inline-block',
+              marginBottom: '1.5rem'
+            }}>
+              <QRCodeSVG 
+                value={JSON.stringify({ type: 'did-request', sessionId: qrSessionId })}
+                size={200}
+              />
+            </div>
+            <p style={{ color: 'rgb(202, 165, 97)', marginBottom: '1.5rem', fontSize: '0.9rem', fontWeight: 'bold' }}>
+              Waiting for wallet response...
+            </p>
+            
+            <div style={{
+              borderTop: '1px solid #333',
+              paddingTop: '1.5rem',
+              marginTop: '1.5rem'
+            }}>
+              <h4 style={{ color: '#888', fontSize: '0.95rem', marginBottom: '1rem' }}>Or enter manually:</h4>
+              
+              <input
+                type="text"
+                placeholder="User DID (e.g., did:zeroid:...)" 
+                value={manualDID}
+                onChange={(e) => setManualDID(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  background: '#0a0a0a',
+                  border: '1px solid #333',
+                  borderRadius: '6px',
+                  color: 'white',
+                  fontSize: '0.9rem',
+                  marginBottom: '0.75rem',
+                  boxSizing: 'border-box'
+                }}
+              />
+              
+              {manualDID.trim() && (
+                <input
+                  type="text"
+                  placeholder="Ethereum Address (0x...)" 
+                  value={manualEthAddress}
+                  onChange={(e) => setManualEthAddress(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    background: '#0a0a0a',
+                    border: '1px solid #333',
+                    borderRadius: '6px',
+                    color: 'white',
+                    fontSize: '0.9rem',
+                    marginBottom: '0.75rem',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              )}
+              
+              <button
+                onClick={handleManualSubmit}
+                disabled={!manualDID.trim() || !manualEthAddress.trim()}
+                style={{
+                  ...buttonStyle,
+                  opacity: (!manualDID.trim() || !manualEthAddress.trim()) ? 0.5 : 1,
+                  cursor: (!manualDID.trim() || !manualEthAddress.trim()) ? 'not-allowed' : 'pointer',
+                  marginTop: '0.5rem',
+                  fontSize: '0.9rem'
+                }}
+                onMouseEnter={(e) => {
+                  if (manualDID.trim() && manualEthAddress.trim()) {
+                    (e.target as HTMLButtonElement).style.background = 'rgb(180, 145, 77)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (manualDID.trim() && manualEthAddress.trim()) {
+                    (e.target as HTMLButtonElement).style.background = 'rgb(202, 165, 97)';
+                  }
+                }}
+              >
+                Submit Manual Entry
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

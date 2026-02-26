@@ -120,7 +120,7 @@ contract KYCCompliance {
      * @dev Check if a DID is compliant (simple boolean)
      * @param did The DID to check
      */
-    function isCompliant(string memory did) external view returns (bool) {
+    function compliant(string memory did) external view returns (bool) {
         bytes32 didHash = keccak256(abi.encodePacked(did));
         return complianceStatuses[didHash].exists && complianceStatuses[didHash].isCompliant;
     }

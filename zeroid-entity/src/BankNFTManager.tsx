@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { QRCodeSVG } from 'qrcode.react';
+import { generateEntityQRSession, registerEntitySession, verifyWalletResponse, type EntityQRSession } from './utils/qrAuth';
 
 // Import KYC contract
 let kycContractAddress: string | undefined;
@@ -72,7 +73,7 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
   const [isOwner, setIsOwner] = useState(false);
   const [complianceStatuses, setComplianceStatuses] = useState<{[did: string]: {isCompliant: boolean, timestamp: number, commitment: string}}>();
   const [showQRRequest, setShowQRRequest] = useState(false);
-  const [qrSessionId, setQrSessionId] = useState<string>("");
+  const [entitySession, setEntitySession] = useState<EntityQRSession | null>(null);
   const [purchasingTokenId, setPurchasingTokenId] = useState<number | null>(null);
   const [purchasingPrice, setPurchasingPrice] = useState<bigint | null>(null);
   const [manualDID, setManualDID] = useState('');
@@ -90,27 +91,29 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
 
   // Poll relay server for QR code response
   useEffect(() => {
-    if (!qrSessionId || purchasingTokenId === null || purchasingPrice === null) return;
+    if (!entitySession || purchasingTokenId === null || purchasingPrice === null) return;
+    const { sessionId, challenge, entitySignature } = entitySession.qrPayload;
 
     const interval = setInterval(async () => {
       try {
-        const response = await fetch(`http://localhost:8000/qr-relay.php?sessionId=${qrSessionId}`);
-        const result = await response.json();
-        
+        const response = await fetch(`http://localhost:8000/qr-relay.php?sessionId=${sessionId}`);
+        const result   = await response.json();
+
         if (result.success && result.data) {
-          const userDID = result.data.did;
-          const userEthAddress = result.data.ethAddress;
-          
-          // Close QR modal
-          setShowQRRequest(false);
-          setQrSessionId("");
-          
-          // Proceed with purchase automatically
-          await executePurchase(purchasingTokenId, purchasingPrice, userDID, userEthAddress);
-          
-          // Reset purchasing state
-          setPurchasingTokenId(null);
-          setPurchasingPrice(null);
+          try {
+            const { did, ethAddress } = await verifyWalletResponse(
+              result.data, sessionId, challenge, entitySignature
+            );
+
+            setShowQRRequest(false);
+            setEntitySession(null);
+            await executePurchase(purchasingTokenId, purchasingPrice, did, ethAddress);
+            setPurchasingTokenId(null);
+            setPurchasingPrice(null);
+          } catch (verifyErr: any) {
+            console.error('QR mutual-auth verification failed:', verifyErr);
+            alert(`Security error: ${verifyErr.message}\n\nPossible man-in-the-middle attack — request rejected.`);
+          }
         }
       } catch (err) {
         console.error('Error polling for response:', err);
@@ -118,7 +121,7 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [qrSessionId, purchasingTokenId, purchasingPrice]);
+  }, [entitySession, purchasingTokenId, purchasingPrice]);
 
   const checkWallet = async () => {
     if (typeof window.ethereum === 'undefined') {
@@ -300,14 +303,18 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
   };
 
   const purchaseForUser = async (tokenId: number, priceWei: bigint) => {
-    // Open QR code modal
-    const sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    setPurchasingTokenId(tokenId);
-    setPurchasingPrice(priceWei);
-    setQrSessionId(sessionId);
-    setManualDID('');
-    setManualEthAddress('');
-    setShowQRRequest(true);
+    try {
+      const session = await generateEntityQRSession();
+      await registerEntitySession(session.relayRegistration);
+      setPurchasingTokenId(tokenId);
+      setPurchasingPrice(priceWei);
+      setEntitySession(session);
+      setManualDID('');
+      setManualEthAddress('');
+      setShowQRRequest(true);
+    } catch (err: any) {
+      alert('Failed to create QR session: ' + (err?.message ?? err));
+    }
   };
 
   const handleManualSubmit = async () => {
@@ -767,7 +774,7 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
             <button
               onClick={() => {
                 setShowQRRequest(false);
-                setQrSessionId("");
+                setEntitySession(null);
                 setPurchasingTokenId(null);
                 setPurchasingPrice(null);
                 setManualDID('');
@@ -811,7 +818,7 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
               marginBottom: '1.5rem'
             }}>
               <QRCodeSVG 
-                value={JSON.stringify({ type: 'did-request', sessionId: qrSessionId })}
+                value={entitySession ? JSON.stringify(entitySession.qrPayload) : ''}
                 size={200}
               />
             </div>

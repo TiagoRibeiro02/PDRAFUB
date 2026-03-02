@@ -123,6 +123,16 @@
     cursor: not-allowed;
 }
 
+.submitManual {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.submitManual:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 
 
 /* ===================== */
@@ -206,6 +216,47 @@
     color: #888;
     font-size: 1.5rem;
     cursor: pointer;
+}
+
+.scantext {
+    color: #888;
+    margin-bottom: 1.5rem;
+}
+
+.purchasenftgold {
+    color: rgb(202, 165, 97);
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: rgba(202, 165, 97, 0.1);
+    border-radius: 6px;
+    border: 1px solid rgba(202, 165, 97, 0.3);
+}
+
+.qrdiv{
+    background: white;
+    padding: 1rem;
+    border-radius: 8px;
+    display: inline-block;
+    margin-bottom: 1.5rem;
+}
+
+.waitingscan {
+    color: rgb(202, 165, 97);
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.inputdiv {
+    border-top: 1px solid #333;
+    padding-top: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.texth4 {
+    color: #888;
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
 }
 
 /* ===================== */
@@ -300,11 +351,6 @@
 .titleStyle2smaller {
     font-size: clamp(1.3rem, 2.5vw, 1.8rem);
     margin-bottom: clamp(0.75rem, 1.5vw, 1rem);
-}
-
-.scantext {
-    color: #888;
-    margin-bottom: 1.5rem;
 }
 
 .noAcountStyle {

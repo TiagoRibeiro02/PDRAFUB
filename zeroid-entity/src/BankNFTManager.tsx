@@ -539,40 +539,23 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
               Scan with wallet or enter details manually
             </p>
             {purchasingTokenId !== null && (
-              <p style={{ 
-                color: 'rgb(202, 165, 97)', 
-                marginBottom: '1rem',
-                padding: '0.75rem',
-                background: 'rgba(202, 165, 97, 0.1)',
-                borderRadius: '6px',
-                border: '1px solid rgba(202, 165, 97, 0.3)'
-              }}>
+              <p className='purchasenftgold'>
                 Purchasing NFT #{purchasingTokenId}
                 {purchasingPrice && ` for ${ethers.formatEther(purchasingPrice)} ETH`}
               </p>
             )}
-            <div style={{
-              background: 'white',
-              padding: '1rem',
-              borderRadius: '8px',
-              display: 'inline-block',
-              marginBottom: '1.5rem'
-            }}>
+            <div className='qrdiv'>
               <QRCodeSVG 
                 value={JSON.stringify({ type: 'did-request', sessionId: qrSessionId })}
                 size={200}
               />
             </div>
-            <p style={{ color: 'rgb(202, 165, 97)', marginBottom: '1.5rem', fontSize: '0.9rem', fontWeight: 'bold' }}>
+            <p className='waitingscan'>
               Waiting for wallet response...
             </p>
             
-            <div style={{
-              borderTop: '1px solid #333',
-              paddingTop: '1.5rem',
-              marginTop: '1.5rem'
-            }}>
-              <h4 style={{ color: '#888', fontSize: '0.95rem', marginBottom: '1rem' }}>Or enter manually:</h4>
+            <div className='inputdiv'>
+              <h4 className='texth4'>Or enter manually:</h4>
               
               <input
                 type="text"
@@ -595,14 +578,7 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
               <button
                 onClick={handleManualSubmit}
                 disabled={!manualDID.trim() || !manualEthAddress.trim()}
-                className="buttonStyle"
-                style={{
-                  opacity: (!manualDID.trim() || !manualEthAddress.trim()) ? 0.5 : 1,
-                  cursor: (!manualDID.trim() || !manualEthAddress.trim()) ? 'not-allowed' : 'pointer',
-                  marginTop: '0.5rem',
-                  fontSize: '0.9rem'
-                }}
-
+                className="buttonStyle submitManual"
               >
                 Submit Manual Entry
               </button>

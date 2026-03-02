@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
-import { QRCodeSVG } from 'qrcode.react';
 import './BankNFTManager.css';
+import AvailableNFTCard from './components/AvailableNFTCard';
+import PurchasedNFTCard from './components/PurchasedNFTCard';
+import QRModal from './components/QRModal';
 
 // Import KYC contract
 let kycContractAddress: string | undefined;
@@ -22,7 +24,7 @@ try {
   console.warn('KYC contract files not found.');
 }
 
-interface NFTListing {
+export interface NFTListing {
   tokenId: number;
   name: string;
   description: string;
@@ -451,20 +453,12 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
         ) : (
           <div className='purchaseDiv'>
             {available.map(nft => (
-              <div key={nft.tokenId} className="cardStyle">
-                {nft.image && <img src={nft.image} alt={nft.name} className="imageStyle" />}
-                <h4 className='nftName'>{nft.name}</h4>
-                <p className='nftDescription'>{nft.description}</p>
-                <div className='nftTokenId'>Token ID: #{nft.tokenId}</div>
-                <div className='nftPrice'>{nft.price} ETH</div>
-                <button
-                  onClick={() => purchaseForUser(nft.tokenId, nft.priceWei)}
-                  disabled={loading}
-                  className="buttonStyle purchase"
-                >
-                  Purchase for User
-                </button>
-              </div>
+              <AvailableNFTCard
+                key={nft.tokenId}
+                nft={nft}
+                loading={loading}
+                onPurchase={purchaseForUser}
+              />
             ))}
           </div>
         )}
@@ -483,35 +477,7 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
         ) : (
           <div className='purchaseDiv'>
             {purchased.map(nft => (
-              <div key={nft.tokenId} className="cardStyle">
-                {nft.image && <img src={nft.image} alt={nft.name} className="imageStyle" />}
-                <h4 className='nftName'>{nft.name}</h4>
-                <p className='nftDescription'>{nft.description}</p>
-                <div className='nftTokenId'>Token ID: #{nft.tokenId}</div>
-                <div className='nftOwnedDiv'>
-                  <div className='nftOwnedBy'>OWNED BY:</div>
-                  <div className='nftdidOwner'>{nft.didOwner}</div>
-                </div>
-                
-                {/* KYC Compliance Badge */}
-                <div className={`complianceBadge ${nft.isCompliant ? 'compliant' : 'notCompliant'}`}>
-                  <div className='complianceBadgeInner'>
-                    <div className={`complianceBadgeTitle ${nft.isCompliant ? 'compliant' : 'notCompliant'}`}>
-                      {nft.isCompliant ? 'KYC/AML Compliant' : 'Not Verified'}
-                    </div>
-                    {nft.isCompliant && nft.complianceTimestamp && (
-                      <div className='verificationsubmittedtext'>
-                        Verified: {new Date(nft.complianceTimestamp * 1000).toLocaleDateString()}
-                      </div>
-                    )}
-                    {!nft.isCompliant && (
-                      <div className='verificationsubmittedtext'>
-                        Compliance proof not submitted
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <PurchasedNFTCard key={nft.tokenId} nft={nft} />
             ))}
           </div>
         )}
@@ -519,72 +485,24 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
 
       {/* QR Code Request Modal */}
       {showQRRequest && (
-        <div className='qRequestDiv'>
-          <div className='closeButtonDiv'>
-            <button
-              onClick={() => {
-                setShowQRRequest(false);
-                setQrSessionId("");
-                setPurchasingTokenId(null);
-                setPurchasingPrice(null);
-                setManualDID('');
-                setManualEthAddress('');
-              }}
-              className='closeButton'
-            >
-              ✕
-            </button>
-            <h3 className='titleStyle3Gold'>Purchase NFT for User</h3>
-            <p className='scantext'>
-              Scan with wallet or enter details manually
-            </p>
-            {purchasingTokenId !== null && (
-              <p className='purchasenftgold'>
-                Purchasing NFT #{purchasingTokenId}
-                {purchasingPrice && ` for ${ethers.formatEther(purchasingPrice)} ETH`}
-              </p>
-            )}
-            <div className='qrdiv'>
-              <QRCodeSVG 
-                value={JSON.stringify({ type: 'did-request', sessionId: qrSessionId })}
-                size={200}
-              />
-            </div>
-            <p className='waitingscan'>
-              Waiting for wallet response...
-            </p>
-            
-            <div className='inputdiv'>
-              <h4 className='texth4'>Or enter manually:</h4>
-              
-              <input
-                type="text"
-                placeholder="User DID (e.g., did:zeroid:...)" 
-                value={manualDID}
-                onChange={(e) => setManualDID(e.target.value)}
-                className='didInput'
-              />
-              
-              {manualDID.trim() && (
-                <input
-                  type="text"
-                  placeholder="Ethereum Address (0x...)" 
-                  value={manualEthAddress}
-                  onChange={(e) => setManualEthAddress(e.target.value)}
-                  className='didInput'
-                />
-              )}
-              
-              <button
-                onClick={handleManualSubmit}
-                disabled={!manualDID.trim() || !manualEthAddress.trim()}
-                className="buttonStyle submitManual"
-              >
-                Submit Manual Entry
-              </button>
-            </div>
-          </div>
-        </div>
+        <QRModal
+          sessionId={qrSessionId}
+          purchasingTokenId={purchasingTokenId}
+          purchasingPrice={purchasingPrice}
+          manualDID={manualDID}
+          manualEthAddress={manualEthAddress}
+          onClose={() => {
+            setShowQRRequest(false);
+            setQrSessionId("");
+            setPurchasingTokenId(null);
+            setPurchasingPrice(null);
+            setManualDID('');
+            setManualEthAddress('');
+          }}
+          onManualDIDChange={setManualDID}
+          onManualEthAddressChange={setManualEthAddress}
+          onManualSubmit={handleManualSubmit}
+        />
       )}
     </div>
   );

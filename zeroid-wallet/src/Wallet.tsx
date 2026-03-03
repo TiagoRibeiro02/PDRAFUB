@@ -917,7 +917,7 @@ export default function Wallet() {
             textAlign: 'center', border: '2px solid rgb(202, 165, 97)'
           }}>
             <p style={{ color: 'rgb(202, 165, 97)', fontSize: '1.1rem', margin: 0 }}>
-              🔒 Verifying entity identity…
+              Verifying entity identity…
             </p>
             <p style={{ color: '#888', fontSize: '0.9rem', marginTop: '0.5rem' }}>
               Checking signature and relay registration
@@ -1031,7 +1031,7 @@ export default function Wallet() {
               border: `1px solid ${keyFileLoaded ? 'rgb(202, 165, 97)' : '#555'}`
             }}>
               <p style={{ margin: '0 0 0.75rem', color: '#ccc', fontSize: '0.95rem' }}>
-                🔑 <strong>Load your DID private key to sign</strong>
+                <strong>Load your DID private key to sign</strong>
               </p>
               <p style={{ margin: '0 0 0.75rem', color: '#888', fontSize: '0.85rem' }}>
                 Select the <code>.key</code> or <code>.key.enc</code> file downloaded when you created your DID
@@ -1056,7 +1056,7 @@ export default function Wallet() {
               />
               {keyFileLoaded && (
                 <p style={{ margin: '0.5rem 0 0', color: 'rgb(100, 220, 100)', fontSize: '0.85rem' }}>
-                  ✓ Key file loaded{keyFileIsEncrypted ? ' (encrypted — enter password below)' : ''}
+                  Key file loaded{keyFileIsEncrypted ? ' (encrypted — enter password below)' : ''}
                 </p>
               )}
 

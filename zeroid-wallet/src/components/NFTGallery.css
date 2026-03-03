@@ -10,6 +10,7 @@
 .nft-list-container {
   flex: 1;
   overflow-y: auto;
+  padding-bottom: 2rem;
 }
 
 .nft-list-container.with-detail {
@@ -19,7 +20,6 @@
 .nft-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
 }
 
 /* ── Card ─────────────────────────────────────────────────────────────────── */
@@ -35,7 +35,7 @@
 
 .nft-card:hover {
   transform: translateY(4px);
-  box-shadow: 0 8px 24px rgba(202, 165, 97, 0.2);
+  box-shadow: 0 4px 16px rgba(202, 165, 97, 0.2);
 }
 
 .nft-card.selected {

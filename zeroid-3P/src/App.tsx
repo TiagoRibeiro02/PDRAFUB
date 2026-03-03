@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import './App.css';
-import NFTCard from './NFTCard';
-import DetailPanel from './DetailPanel';
-import { NFTData } from './types';
+import NFTCard from './components/NFTCard';
+import DetailPanel from './components/DetailPanel';
+import { NFTData } from './components/types';
 import { fetchAllNFTs } from './utils/blockchain';
 
 // Import contract address and ABI

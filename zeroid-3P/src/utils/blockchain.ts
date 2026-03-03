@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { NFTData } from '../types';
+import { NFTData } from '../components/types';
 
 export async function getProvider() {
   if (typeof window.ethereum !== 'undefined') {

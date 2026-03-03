@@ -1,5 +1,5 @@
 import React from 'react';
-import { NFTData } from './types';
+import type { NFTData } from './types';
 
 interface DetailPanelProps {
   nft: NFTData;
@@ -10,24 +10,20 @@ const DetailPanel: React.FC<DetailPanelProps> = ({ nft, onClose }) => {
   const imageUrl = nft.metadata?.image || '';
   const complianceTimestamp = nft.metadata?.complianceTimestamp as number | undefined;
   const kycExpiryTimestamp = nft.metadata?.kycExpiryTimestamp as number | undefined;
-  
+
   return (
     <div className="detail-panel">
       <div className="detail-panel-header">
         <h2 className="detail-panel-title">NFT Details</h2>
-        <button className="close-button" onClick={onClose}>x</button>
+        <button className="close-button" onClick={onClose}>✕</button>
       </div>
 
       {imageUrl && (
         <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
-          <img 
-            src={imageUrl} 
+          <img
+            src={imageUrl}
             alt={nft.name}
-            style={{ 
-              maxWidth: '100%', 
-              borderRadius: '12px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-            }}
+            className="detailimage"
           />
         </div>
       )}
@@ -86,7 +82,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({ nft, onClose }) => {
         </div>
         <div className="detail-field">
           <div className="detail-label">KYC/AML Compliance Status</div>
-          <div className="detail-value" style={{color: nft.isActive ? '#4CAF50' : '#ff6b6b',}}>
+          <div className="detail-value" style={{ color: nft.isActive ? '#4CAF50' : '#ff6b6b' }}>
             {nft.isActive ? 'Verified and Compliant' : 'Not Verified'}
           </div>
         </div>

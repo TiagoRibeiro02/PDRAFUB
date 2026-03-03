@@ -1,0 +1,395 @@
+.cardStyle {
+    background: #1a1a1a;
+    border-radius: 12px;
+    padding: clamp(1rem, 2vw, 1.5rem);
+    border: 1px solid rgba(202, 165, 97, 0.3);
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.cardStyle:hover {
+    transform: translateY(-4px);
+    border: 1px solid rgba(202, 165, 97, 1);
+    box-shadow: 0 6px 20px rgba(202, 165, 97, 0.4);
+}
+
+.imageStyle {
+    width: 100%;
+    border-radius: 10px;
+    margin-bottom: 0.75rem;
+    aspect-ratio: 1;
+    object-fit: cover;
+}
+
+.nftName {
+    margin: 0 0 0.75rem 0;
+    font-size: clamp(1rem, 1.8vw, 1.25rem);
+}
+
+.nftDescription {
+    color: #aaa;
+    font-size: clamp(0.85rem, 1.3vw, 0.95rem);
+    margin: 0 0 0.75rem 0;
+    line-height: 1.5;
+}
+
+.nftTokenId {
+    font-size: clamp(0.75rem, 1.2vw, 0.85rem);
+    color: #666;
+    margin-bottom: 0.75rem;
+}
+
+.nftPrice {
+    font-size: clamp(1.1rem, 2vw, 1.3rem);
+    font-weight: bold;
+    color: #926f06;
+    margin-bottom: 0.75rem;
+}
+
+.nftOwnedDiv {
+    background: rgba(125, 101, 55, 0.34);
+    padding: clamp(0.6rem, 1.5vw, 0.75rem);
+    border-radius: 6px;
+    margin-top: 0.5rem;
+}
+
+.nftOwnedBy {
+    font-size: clamp(0.7rem, 1.2vw, 0.75rem);
+    color: rgb(202, 165, 97);
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+.nftdidOwner {
+    font-size: clamp(0.65rem, 1.1vw, 0.7rem);
+    color: rgb(202, 165, 97);
+    word-break: break-all;
+    font-family: monospace;
+    line-height: 1.4;
+}
+
+.loadingStyle {
+    padding: clamp(1.5rem, 3vw, 2rem);
+    color: #888;
+    font-size: clamp(0.9rem, 1.5vw, 1rem);
+    text-align: center;
+}
+
+.mainDivStyle {
+    padding: clamp(1rem, 2.5vw, 3rem);
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 100vh;
+}
+
+/* ====== Buttons ====== */
+
+.buttonStyle {
+    background: rgb(202, 165, 97);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    width: 100%;
+    font-size: 1rem;
+    font-weight: bold;
+    margin-top: 0.5rem;
+    transition: background 0.2s ease;
+}
+
+.buttonStyle:not(:disabled):hover {
+    background: rgb(180, 145, 77);
+}
+
+.noacc {
+    font-size: 'clamp(0.95rem, 1.5vw, 1.1rem)';
+    padding: 'clamp(0.75rem, 1.5vw, 1rem) clamp(1.5rem, 3vw, 2rem)';
+}
+
+.refresh {
+    width: auto; 
+    padding: clamp(0.5rem, 1.5vw, 0.75rem) clamp(1rem, 2vw, 1.5rem);
+    font-size: clamp(0.9rem, 1.5vw, 1rem);
+}
+
+.purchase {
+    font-size: clamp(0.85rem, 1.5vw, 1rem);
+    padding: clamp(0.6rem, 1.5vw, 0.75rem) clamp(0.8rem, 2vw, 1rem);
+}
+
+.purchase:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.submitManual {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.submitManual:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+
+
+/* ===================== */
+
+/* = Compliance Badge == */
+
+.complianceBadge {
+    margin-top: 0.75rem;
+    padding: clamp(0.5rem, 1.5vw, 0.65rem);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.complianceBadge.compliant {
+    background: rgba(76, 175, 80, 0.15);
+    border: 1px solid #4CAF50;
+}
+
+.complianceBadge.notCompliant {
+    background: rgba(255, 107, 107, 0.15);
+    border: 1px solid #ff6b6b;
+}
+
+.complianceBadgeInner {
+    flex: 1;
+}
+
+.complianceBadgeTitle {
+    font-size: clamp(0.75rem, 1.3vw, 0.85rem);
+    font-weight: bold;
+    margin-bottom: 0.15rem;
+}
+
+.complianceBadgeTitle.compliant {
+    color: #4CAF50;
+}
+
+.complianceBadgeTitle.notCompliant {
+    color: #ff6b6b;
+}
+
+.verificationsubmittedtext {
+    font-size: clamp(0.65rem, 1.1vw, 0.7rem);
+    color: #888;
+}
+
+/* ===================== */
+
+/* ====== QR Code ====== */
+
+.qRequestDiv {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.closeButtonDiv {
+    background: #1a1a1a;
+    padding: 2rem;
+    border-radius: 12px;
+    max-width: 500px;
+    position: relative;
+    border: 2px solid rgb(202, 165, 97)
+}
+
+.closeButton {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: transparent;
+    border: none;
+    color: #888;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.scantext {
+    color: #888;
+    margin-bottom: 1.5rem;
+}
+
+.purchasenftgold {
+    color: rgb(202, 165, 97);
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: rgba(202, 165, 97, 0.1);
+    border-radius: 6px;
+    border: 1px solid rgba(202, 165, 97, 0.3);
+}
+
+.qrdiv{
+    background: white;
+    padding: 1rem;
+    border-radius: 8px;
+    display: inline-block;
+    margin-bottom: 1.5rem;
+}
+
+.waitingscan {
+    color: rgb(202, 165, 97);
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.inputdiv {
+    border-top: 1px solid #333;
+    padding-top: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.texth4 {
+    color: #888;
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+}
+
+/* ===================== */
+
+.summaryDiv {
+    background: #fef3cd;
+    padding: clamp(0.75rem, 2vw, 1.25rem);
+    border-radius: 10px;
+    margin-bottom: clamp(1.5rem, 3vw, 2rem);
+    color: #856404;
+    border: 1px solid rgb(202, 165, 97);
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.summaryDiv:hover {
+    border: 1px solid rgb(180, 145, 77);
+    box-shadow: 0 4px 16px rgba(202, 165, 97, 0.3);
+}
+
+.summaryp {
+    margin: 0;
+    font-size: clamp(0.85rem, 1.3vw, 0.95rem);
+}
+
+.notAvailableStyle {
+    padding: clamp(1.5rem, 3vw, 2.5rem);
+    text-align: center;
+    color: #888;
+    background: #1a1a1a;
+    border-radius: 12px;
+    font-size: clamp(0.85rem, 1.3vw, 0.95rem);
+}
+
+.purchaseDiv {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
+    gap: clamp(1rem, 2vw, 1.75rem);
+}
+
+.didInput {
+    width: 100%;
+    padding: clamp(0.75rem, 1.5vw, 1rem);
+    background: #0a0a0a;
+    border: 1px solid #333;
+    border-radius: 6px;
+    color: white;
+    font-size: clamp(0.9rem, 1.5vw, 1rem);
+    margin-bottom: clamp(0.75rem, 1.5vw, 1rem);
+    box-sizing: border-box;
+}
+
+.refreshDiv {
+    margin-bottom: clamp(1.5rem, 3vw, 2rem);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.nftSection {
+    margin-bottom: clamp(2rem, 4vw, 3rem);
+}
+
+.titleStyle {
+    margin: 0;
+    font-size: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.titleStyle2 {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    margin-bottom: clamp(0.75rem, 1.5vw, 1rem);
+}
+
+.titleStyle3 {
+    margin: 0 0 0.5rem 0;
+    font-size: clamp(1rem, 1.8vw, 1.2rem);
+}
+
+.titleStyle3Gold {
+    margin-top: 0;
+    color: rgb(202, 165, 97);
+}
+
+.titleStyle4 {
+    color: #888;
+    font-size: clamp(0.9rem, 1.5vw, 0.95rem);
+    margin-bottom: clamp(0.75rem, 1.5vw, 1rem);
+}
+
+.titleStyle2smaller {
+    font-size: clamp(1.3rem, 2.5vw, 1.8rem);
+    margin-bottom: clamp(0.75rem, 1.5vw, 1rem);
+}
+
+.noAcountStyle {
+    padding: clamp(1.5rem, 3vw, 2rem);
+    text-align: center;
+    max-width: 600px;
+    margin: 2rem auto;
+}
+
+.error{
+    color: #ff6b6b; 
+    margin-bottom: clamp(1rem, 2vw, 1.5rem);
+    padding: clamp(0.75rem, 2vw, 1rem);
+    background: #2a1a1a;
+    border-radius: 8px;
+    font-size: clamp(0.85rem, 1.3vw, 0.95rem);
+}
+
+
+.notOwnerStyle {
+    color: #ff6b6b;
+    font-size: clamp(0.9rem, 1.5vw, 1rem);
+    margin-bottom: clamp(0.75rem, 1.5vw, 1rem);
+}
+
+.smaller{
+    color: #888;
+    margin-top: clamp(0.75rem, 1.5vw, 1rem);
+    font-size: clamp(0.8rem, 1.3vw, 0.9rem);
+}
+
+.medium {
+    color: #888;
+    margin-bottom: clamp(1rem, 2vw, 1.5rem);
+    font-size: clamp(0.85rem, 1.3vw, 0.95rem);
+}
+
+.normal {
+    color: #888;
+    margin-bottom: clamp(1.5rem, 3vw, 2rem);
+    font-size: clamp(0.9rem, 1.5vw, 1rem);
+}

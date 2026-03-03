@@ -24,7 +24,6 @@ contract MyNFT is ERC721URIStorage, Ownable {
     event NFTMinted(address indexed to, uint256 indexed tokenId, string tokenURI, uint256 price);
     event NFTPurchased(uint256 indexed tokenId, string indexed buyerDID, uint256 price);
     event DIDOwnershipTransferred(uint256 indexed tokenId, string previousDID, string newDID);
-    event PriceUpdated(uint256 indexed tokenId, uint256 newPrice);
     event DIDLinked(string indexed did, address indexed ethAddress);
 
     constructor() ERC721("MyNFT Collection", "MNFT") Ownable(msg.sender) {
@@ -158,17 +157,6 @@ contract MyNFT is ERC721URIStorage, Ownable {
 
         // Transfer NFT directly to recipient
         _transfer(owner(), recipientAddress, tokenId);
-    }
-
-    /**
-     * @dev Update the price of an NFT (only owner can do this)
-     * @param tokenId The ID of the NFT
-     * @param newPrice The new price in wei
-     */
-    function setPrice(uint256 tokenId, uint256 newPrice) public onlyOwner {
-        require(_ownerOf(tokenId) == owner(), "Can only price NFTs in bank");
-        _prices[tokenId] = newPrice;
-        emit PriceUpdated(tokenId, newPrice);
     }
 
     /**

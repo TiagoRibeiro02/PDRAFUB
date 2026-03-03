@@ -217,6 +217,7 @@ function ZKPIssuer() {
   useEffect(() => {
     if (!entitySession) return;
     const { sessionId, challenge, entitySignature } = entitySession.qrPayload;
+    const { encryptionPrivateKey } = entitySession;
 
     const interval = setInterval(async () => {
       try {
@@ -226,7 +227,7 @@ function ZKPIssuer() {
         if (result.success && result.data) {
           try {
             const { did, ethAddress } = await verifyWalletResponse(
-              result.data, sessionId, challenge, entitySignature
+              result.data, sessionId, challenge, entitySignature, encryptionPrivateKey
             );
             setDid(did);
             if (ethAddress) console.log('Received eth address:', ethAddress);

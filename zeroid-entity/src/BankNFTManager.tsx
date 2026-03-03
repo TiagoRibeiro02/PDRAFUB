@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 
-import { QRCodeSVG } from 'qrcode.react';
 import { generateEntityQRSession, registerEntitySession, verifyWalletResponse, type EntityQRSession } from './utils/qrAuth';
 import './BankNFTManager.css';
 import AvailableNFTCard from './components/AvailableNFTCard';
@@ -84,7 +83,8 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
         if (result.success && result.data) {
           try {
             const { did, ethAddress } = await verifyWalletResponse(
-              result.data, sessionId, challenge, entitySignature
+              result.data, sessionId, challenge, entitySignature,
+              entitySession.encryptionPrivateKey
             );
 
             setShowQRRequest(false);
@@ -495,161 +495,15 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
 
       {/* QR Code Request Modal */}
       {showQRRequest && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.8)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            background: '#1a1a1a',
-            padding: '2rem',
-            borderRadius: '12px',
-            maxWidth: '500px',
-            position: 'relative',
-            border: '2px solid rgb(202, 165, 97)'
-          }}>
-            <button
-              onClick={() => {
-                setShowQRRequest(false);
-                setEntitySession(null);
-                setPurchasingTokenId(null);
-                setPurchasingPrice(null);
-                setManualDID('');
-                setManualEthAddress('');
-              }}
-              style={{
-                position: 'absolute',
-                top: '1rem',
-                right: '1rem',
-                background: 'transparent',
-                border: 'none',
-                color: '#888',
-                fontSize: '1.5rem',
-                cursor: 'pointer'
-              }}
-            >
-              ✕
-            </button>
-            <h3 style={{ marginTop: 0, color: 'rgb(202, 165, 97)' }}>Purchase NFT for User</h3>
-            <p style={{ color: '#888', marginBottom: '1.5rem' }}>
-              Scan with wallet or enter details manually
-            </p>
-            {purchasingTokenId !== null && (
-              <p style={{ 
-                color: 'rgb(202, 165, 97)', 
-                marginBottom: '1rem',
-                padding: '0.75rem',
-                background: 'rgba(202, 165, 97, 0.1)',
-                borderRadius: '6px',
-                border: '1px solid rgba(202, 165, 97, 0.3)'
-              }}>
-                Purchasing NFT #{purchasingTokenId}
-                {purchasingPrice && ` for ${ethers.formatEther(purchasingPrice)} ETH`}
-              </p>
-            )}
-            <div style={{
-              background: 'white',
-              padding: '1rem',
-              borderRadius: '8px',
-              display: 'inline-block',
-              marginBottom: '1.5rem'
-            }}>
-              <QRCodeSVG 
-                value={entitySession ? JSON.stringify(entitySession.qrPayload) : ''}
-                size={200}
-              />
-            </div>
-            <p style={{ color: 'rgb(202, 165, 97)', marginBottom: '1.5rem', fontSize: '0.9rem', fontWeight: 'bold' }}>
-              Waiting for wallet response...
-            </p>
-            
-            <div style={{
-              borderTop: '1px solid #333',
-              paddingTop: '1.5rem',
-              marginTop: '1.5rem'
-            }}>
-              <h4 style={{ color: '#888', fontSize: '0.95rem', marginBottom: '1rem' }}>Or enter manually:</h4>
-              
-              <input
-                type="text"
-                placeholder="User DID (e.g., did:zeroid:...)" 
-                value={manualDID}
-                onChange={(e) => setManualDID(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  background: '#0a0a0a',
-                  border: '1px solid #333',
-                  borderRadius: '6px',
-                  color: 'white',
-                  fontSize: '0.9rem',
-                  marginBottom: '0.75rem',
-                  boxSizing: 'border-box'
-                }}
-              />
-              
-              {manualDID.trim() && (
-                <input
-                  type="text"
-                  placeholder="Ethereum Address (0x...)" 
-                  value={manualEthAddress}
-                  onChange={(e) => setManualEthAddress(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    background: '#0a0a0a',
-                    border: '1px solid #333',
-                    borderRadius: '6px',
-                    color: 'white',
-                    fontSize: '0.9rem',
-                    marginBottom: '0.75rem',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              )}
-              
-              <button
-                onClick={handleManualSubmit}
-                disabled={!manualDID.trim() || !manualEthAddress.trim()}
-                style={{
-                  ...buttonStyle,
-                  opacity: (!manualDID.trim() || !manualEthAddress.trim()) ? 0.5 : 1,
-                  cursor: (!manualDID.trim() || !manualEthAddress.trim()) ? 'not-allowed' : 'pointer',
-                  marginTop: '0.5rem',
-                  fontSize: '0.9rem'
-                }}
-                onMouseEnter={(e) => {
-                  if (manualDID.trim() && manualEthAddress.trim()) {
-                    (e.target as HTMLButtonElement).style.background = 'rgb(180, 145, 77)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (manualDID.trim() && manualEthAddress.trim()) {
-                    (e.target as HTMLButtonElement).style.background = 'rgb(202, 165, 97)';
-                  }
-                }}
-              >
-                Submit Manual Entry
-              </button>
-            </div>
-          </div>
-        </div>
         <QRModal
-          sessionId={qrSessionId}
+          qrPayload={entitySession?.qrPayload ?? null}
           purchasingTokenId={purchasingTokenId}
           purchasingPrice={purchasingPrice}
           manualDID={manualDID}
           manualEthAddress={manualEthAddress}
           onClose={() => {
             setShowQRRequest(false);
-            setQrSessionId("");
+            setEntitySession(null);
             setPurchasingTokenId(null);
             setPurchasingPrice(null);
             setManualDID('');

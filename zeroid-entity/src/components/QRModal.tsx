@@ -1,8 +1,9 @@
 import { ethers } from 'ethers';
 import { QRCodeSVG } from 'qrcode.react';
+import type { EntityQRSession } from '../utils/qrAuth';
 
 interface QRModalProps {
-  sessionId: string;
+  qrPayload: EntityQRSession['qrPayload'] | null;
   purchasingTokenId: number | null;
   purchasingPrice: bigint | null;
   manualDID: string;
@@ -14,7 +15,7 @@ interface QRModalProps {
 }
 
 export default function QRModal({
-  sessionId,
+  qrPayload,
   purchasingTokenId,
   purchasingPrice,
   manualDID,
@@ -42,7 +43,7 @@ export default function QRModal({
         )}
         <div className='qrdiv'>
           <QRCodeSVG
-            value={JSON.stringify({ type: 'did-request', sessionId })}
+            value={qrPayload ? JSON.stringify(qrPayload) : ''}
             size={200}
           />
         </div>

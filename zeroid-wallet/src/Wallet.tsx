@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Html5QrcodeScanner } from "html5-qrcode";
 import NFTGallery from "./components/NFTGallery";
-import { verifyEntityQR, buildWalletResponse } from "./utils/qrAuth";
+import { verifyEntityQR, buildPreAuth, buildWalletResponse } from "./utils/qrAuth";
 
 // Import contract address and ABI
 let contractAddress: string | undefined;
@@ -417,19 +417,33 @@ export default function Wallet() {
         return;
       }
 
-      // Step 3: Build signed response — includes ethAddress + entitySignature to
-      // bind response to this specific entity and prevent ETH address swapping.
-      // Format: challenge:sessionId:entitySig:ethAddress:did:...:walletTimestamp
+      // Step 3a: Build pre-auth commitment — encrypts "walletChallenge:did" with the
+      // entity's ECDH public key so the entity knows the expected DID before verifying
+      // any ECDSA material (Phase 2.5 commitment binding).
+      if (!scannedData.entityEncryptionPublicKey) {
+        alert('Entity QR is missing the encryption key. Please ask the entity to update their application.');
+        setSending(false);
+        return;
+      }
+      const { walletChallenge, encryptedPreAuth } = await buildPreAuth(
+        scannedData.entityEncryptionPublicKey,
+        identity.did
+      );
+
+      // Step 3b: Build signed response — includes walletChallenge + ethAddress + entitySignature
+      // to bind both the pre-auth commitment and the entity session.
+      // Format: entityChallenge:walletChallenge:sessionId:entitySig:ethAddress:did:...:walletTimestamp
       const { signedData, signature } = await buildWalletResponse(
         scannedData.challenge,
         scannedData.sessionId,
         scannedData.entitySignature ?? '',
         identity.did,
         user.eth_address ?? '',
-        privateKey
+        privateKey,
+        walletChallenge
       );
 
-      // Step 4: Send signed identity data to relay
+      // Step 4: Send signed identity data + encrypted pre-auth to relay
       const response = await fetch('http://localhost:8000/qr-relay.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -440,6 +454,7 @@ export default function Wallet() {
           didDocument: identity.didDocument,
           signature,
           signedData,
+          encryptedPreAuth,
         })
       });
 
@@ -451,6 +466,12 @@ export default function Wallet() {
         setKeyFileIsEncrypted(false);
         setKeyPassword('');
         alert('Identity shared and cryptographically signed!');
+      } else if (response.status === 409) {
+        alert(
+          'Security warning: this session has already received a response.\n\n' +
+          'Someone may have scanned the same QR code and submitted credentials before you.\n' +
+          'Ask the entity to generate a new QR code and try again.'
+        );
       } else {
         alert('Failed to share information. Please try again.');
       }

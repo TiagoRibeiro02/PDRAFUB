@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Html5QrcodeScanner } from "html5-qrcode";
-import { verifyEntityQR, buildWalletResponse, decryptPrivateKey, importPrivateKeyFromPEM } from "./utils/qrAuth";
+import { verifyEntityQR, buildPreAuth, buildWalletResponse, decryptPrivateKey, importPrivateKeyFromPEM } from "./utils/qrAuth";
 
 // contract address and ABI
 let contractAddress: string | undefined;
@@ -187,14 +187,27 @@ export default function Profile() {
         return;
       }
 
-      // Phase 3: build signed response including ethAddress + entitySignature (mutual auth)
+      // Phase 2.5: Build pre-auth commitment — encrypts "walletChallenge:did" with the
+      // entity's ECDH public key so the entity knows the expected DID in advance.
+      if (!scannedData.entityEncryptionPublicKey) {
+        alert('Entity QR is missing the encryption key. Please ask the entity to update their application.');
+        setSending(false);
+        return;
+      }
+      const { walletChallenge, encryptedPreAuth } = await buildPreAuth(
+        scannedData.entityEncryptionPublicKey,
+        identity.did
+      );
+
+      // Phase 3: build signed response including walletChallenge + ethAddress + entitySignature (mutual auth)
       const { signedData, signature } = await buildWalletResponse(
         scannedData.challenge,
         scannedData.sessionId,
         scannedData.entitySignature ?? '',
         identity.did,
         user.eth_address ?? '',
-        privateKey
+        privateKey,
+        walletChallenge
       );
 
       const response = await fetch('http://localhost:8000/qr-relay.php', {
@@ -207,6 +220,7 @@ export default function Profile() {
           didDocument: identity.didDocument,
           signature,
           signedData,
+          encryptedPreAuth,
         })
       });
 
@@ -218,6 +232,12 @@ export default function Profile() {
         setKeyFileIsEncrypted(false);
         setKeyPassword('');
         alert('Identity shared and cryptographically signed!');
+      } else if (response.status === 409) {
+        alert(
+          'Security warning: this session has already received a response.\n\n' +
+          'Someone may have scanned the same QR code and submitted credentials before you.\n' +
+          'Ask the entity to generate a new QR code and try again.'
+        );
       } else {
         alert('Failed to share information. Please try again.');
       }

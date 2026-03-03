@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import BankNFTManager from "./BankNFTManager";
 import { QRCodeSVG } from "qrcode.react";
+import { generateEntityQRSession, registerEntitySession, verifyWalletResponse, type EntityQRSession } from "./utils/qrAuth";
 import "./App.css";
 
 // Import contract address and ABI
@@ -181,24 +182,6 @@ export default function App() {
             <p style={{ color: '#888' }}>
               Please deploy the NFT contract first.
             </p>
-            <div style={{ 
-              marginTop: '2rem', 
-              padding: '1rem', 
-              background: '#1a1a1a', 
-              borderRadius: '8px',
-              maxWidth: '600px',
-              margin: '2rem auto',
-              textAlign: 'left'
-            }}>
-              <h3>Setup Instructions:</h3>
-              <ol style={{ paddingLeft: '1.5rem' }}>
-                <li>Navigate to the nfts project</li>
-                <li>Run: <code style={{ background: '#0a0a0a', padding: '0.2rem 0.4rem', borderRadius: '3px' }}>npm run deploy</code></li>
-                <li>Wait for deployment to complete</li>
-                <li>The contract files will be automatically loaded</li>
-                <li>Refresh this page</li>
-              </ol>
-            </div>
           </div>
         )
       )}
@@ -215,7 +198,7 @@ function ZKPIssuer() {
   const [did, setDid] = useState("");
   const [kycExpiryDate, setKycExpiryDate] = useState<string>(() => {
     const d = new Date();
-    d.setFullYear(d.getFullYear() + 1);
+    d.setFullYear(d.getFullYear() + 2);
     return d.toISOString().split('T')[0];
   });
   const [zkProof, setZkProof] = useState<any>(null);
@@ -224,28 +207,35 @@ function ZKPIssuer() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [account, setAccount] = useState("");
   const [showQRRequest, setShowQRRequest] = useState(false);
-  const [qrSessionId, setQrSessionId] = useState<string>("");
+  const [entitySession, setEntitySession] = useState<EntityQRSession | null>(null);
 
   useEffect(() => {
     checkWallet();
   }, []);
 
-  // Poll relay server for response
+  // Poll relay server for wallet response
   useEffect(() => {
-    if (!qrSessionId) return;
+    if (!entitySession) return;
+    const { sessionId, challenge, entitySignature } = entitySession.qrPayload;
 
     const interval = setInterval(async () => {
       try {
-        const response = await fetch(`http://localhost:8000/qr-relay.php?sessionId=${qrSessionId}`);
-        const result = await response.json();
-        
+        const response = await fetch(`http://localhost:8000/qr-relay.php?sessionId=${sessionId}`);
+        const result   = await response.json();
+
         if (result.success && result.data) {
-          setDid(result.data.did);
-          if (result.data.ethAddress) {
-            console.log('Received eth address:', result.data.ethAddress);
+          try {
+            const { did, ethAddress } = await verifyWalletResponse(
+              result.data, sessionId, challenge, entitySignature
+            );
+            setDid(did);
+            if (ethAddress) console.log('Received eth address:', ethAddress);
+            setShowQRRequest(false);
+            setEntitySession(null);
+          } catch (verifyErr: any) {
+            console.error('QR mutual-auth verification failed:', verifyErr);
+            alert(`Security error: ${verifyErr.message}\n\nPossible man-in-the-middle attack — request rejected.`);
           }
-          setShowQRRequest(false);
-          setQrSessionId("");
         }
       } catch (err) {
         console.error('Error polling for response:', err);
@@ -253,12 +243,17 @@ function ZKPIssuer() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [qrSessionId]);
+  }, [entitySession]);
 
-  const generateQRRequest = () => {
-    const sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    setQrSessionId(sessionId);
-    setShowQRRequest(true);
+  const generateQRRequest = async () => {
+    try {
+      const session = await generateEntityQRSession();
+      await registerEntitySession(session.relayRegistration);
+      setEntitySession(session);
+      setShowQRRequest(true);
+    } catch (err: any) {
+      alert('Failed to create QR session: ' + (err?.message ?? err));
+    }
   };
 
   const checkWallet = async () => {
@@ -472,7 +467,7 @@ function ZKPIssuer() {
             <button
               onClick={() => {
                 setShowQRRequest(false);
-                setQrSessionId("");
+                setEntitySession(null);
               }}
               style={{
                 position: 'absolute',
@@ -498,7 +493,7 @@ function ZKPIssuer() {
               display: 'inline-block'
             }}>
               <QRCodeSVG 
-                value={JSON.stringify({ type: 'did-request', sessionId: qrSessionId })}
+                value={entitySession ? JSON.stringify(entitySession.qrPayload) : ''}
                 size={256}
               />
             </div>

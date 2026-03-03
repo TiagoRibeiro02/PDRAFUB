@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Html5QrcodeScanner } from "html5-qrcode";
+import { verifyEntityQR, buildWalletResponse, decryptPrivateKey, importPrivateKeyFromPEM } from "./utils/qrAuth";
 
 // contract address and ABI
 let contractAddress: string | undefined;
@@ -55,6 +56,11 @@ export default function Profile() {
   const [scannedData, setScannedData] = useState<any>(null);
   const [showShareConfirm, setShowShareConfirm] = useState(false);
   const [sending, setSending] = useState(false);
+  const [verifyingEntity, setVerifyingEntity] = useState(false);
+  const [keyFileContent, setKeyFileContent] = useState<string | null>(null);
+  const [keyFileIsEncrypted, setKeyFileIsEncrypted] = useState(false);
+  const [keyPassword, setKeyPassword] = useState('');
+  const [keyFileLoaded, setKeyFileLoaded] = useState(false);
 
   useEffect(() => {
     // Check if user is logged in
@@ -107,14 +113,23 @@ export default function Profile() {
     );
 
     scanner.render(
-      (decodedText) => {
+      async (decodedText) => {
         try {
           const data = JSON.parse(decodedText);
           if (data.type === 'did-request') {
-            setScannedData(data);
-            setShowShareConfirm(true);
             scanner.clear();
             setShowQRScanner(false);
+
+            try {
+              setVerifyingEntity(true);
+              await verifyEntityQR(data);
+              setScannedData(data);
+              setShowShareConfirm(true);
+            } catch (verifyErr: any) {
+              alert(`Security error: ${verifyErr.message}`);
+            } finally {
+              setVerifyingEntity(false);
+            }
           }
         } catch (err) {
           console.error('Invalid QR code:', err);
@@ -133,24 +148,76 @@ export default function Profile() {
   const handleShareConfirm = async () => {
     if (!scannedData || !identity || !user) return;
 
+    if (!keyFileLoaded || !keyFileContent) {
+      alert('Please select your DID private key file before sharing.');
+      return;
+    }
+
     try {
       setSending(true);
+
+      // Resolve PEM (decrypt if encrypted)
+      let pemKey: string;
+      if (keyFileIsEncrypted) {
+        if (!keyPassword) {
+          alert('Please enter the password to decrypt your private key.');
+          setSending(false);
+          return;
+        }
+        try {
+          pemKey = await decryptPrivateKey(keyFileContent, keyPassword);
+        } catch {
+          alert('Decryption failed. Please check your password and try again.');
+          setSending(false);
+          return;
+        }
+      } else {
+        pemKey = keyFileContent;
+      }
+
+      let privateKey: CryptoKey;
+      try {
+        privateKey = await importPrivateKeyFromPEM(pemKey);
+      } catch {
+        alert(
+          'Invalid key file. Make sure you selected the correct DID private key file\n' +
+          '(the .key or .key.enc file, NOT the Ethereum key).'
+        );
+        setSending(false);
+        return;
+      }
+
+      // Phase 3: build signed response including ethAddress + entitySignature (mutual auth)
+      const { signedData, signature } = await buildWalletResponse(
+        scannedData.challenge,
+        scannedData.sessionId,
+        scannedData.entitySignature ?? '',
+        identity.did,
+        user.eth_address ?? '',
+        privateKey
+      );
+
       const response = await fetch('http://localhost:8000/qr-relay.php', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sessionId: scannedData.sessionId,
           did: identity.did,
-          ethAddress: user.eth_address
+          ethAddress: user.eth_address,
+          didDocument: identity.didDocument,
+          signature,
+          signedData,
         })
       });
 
       if (response.ok) {
         setShowShareConfirm(false);
         setScannedData(null);
-        alert('Information shared successfully!');
+        setKeyFileContent(null);
+        setKeyFileLoaded(false);
+        setKeyFileIsEncrypted(false);
+        setKeyPassword('');
+        alert('Identity shared and cryptographically signed!');
       } else {
         alert('Failed to share information. Please try again.');
       }
@@ -165,6 +232,10 @@ export default function Profile() {
   const handleShareCancel = () => {
     setShowShareConfirm(false);
     setScannedData(null);
+    setKeyFileContent(null);
+    setKeyFileLoaded(false);
+    setKeyFileIsEncrypted(false);
+    setKeyPassword('');
   };
 
   // Check blockchain link status
@@ -856,23 +927,77 @@ export default function Profile() {
             width: '90%',
             border: '2px solid rgb(202, 165, 97)'
           }}>
-            <h3 style={{ marginTop: 0, color: 'rgb(202, 165, 97)' }}>Share Your Information?</h3>
-            <p style={{ color: '#ccc', marginBottom: '1.5rem' }}>
-              An entity is requesting your information. Do you want to share:
+            <h3 style={{ marginTop: 0, color: 'rgb(202, 165, 97)' }}>Share Your Identity?</h3>
+            <p style={{ color: '#ccc', marginBottom: '1rem' }}>
+              Entity verified ✓ — sign with your DID private key to respond.
             </p>
             <div style={{
               background: '#0a0a0a',
               padding: '1rem',
               borderRadius: '8px',
-              marginBottom: '1.5rem',
+              marginBottom: '1rem',
               border: '1px solid #333'
             }}>
-              <p style={{ margin: '0.5rem 0', color: '#fff' }}>
+              <p style={{ margin: '0.5rem 0', color: '#fff', wordBreak: 'break-all' }}>
                 <strong>DID:</strong> {identity?.did}
               </p>
               <p style={{ margin: '0.5rem 0', color: '#fff' }}>
                 <strong>Ethereum Address:</strong> {user?.eth_address || 'Not available'}
               </p>
+            </div>
+
+            {/* Private key loading */}
+            <div style={{
+              background: '#111', padding: '1rem', borderRadius: '8px',
+              marginBottom: '1.5rem',
+              border: `1px solid ${keyFileLoaded ? 'rgb(202, 165, 97)' : '#555'}`
+            }}>
+              <p style={{ margin: '0 0 0.5rem', color: '#ccc', fontSize: '0.9rem' }}>
+                🔑 <strong>Load your DID private key to sign</strong>
+              </p>
+              <input
+                type="file" accept=".key,.enc"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const isEnc = file.name.endsWith('.enc');
+                  setKeyFileIsEncrypted(isEnc);
+                  setKeyPassword('');
+                  const reader = new FileReader();
+                  reader.onload = (ev) => {
+                    setKeyFileContent((ev.target?.result as string).trim());
+                    setKeyFileLoaded(true);
+                  };
+                  reader.readAsText(file);
+                }}
+                disabled={sending}
+                style={{
+                  width: '100%', padding: '0.5rem', background: '#222',
+                  border: '1px solid #444', borderRadius: '4px',
+                  color: '#ccc', fontSize: '0.9rem',
+                  cursor: sending ? 'not-allowed' : 'pointer', boxSizing: 'border-box',
+                }}
+              />
+              {keyFileLoaded && (
+                <p style={{ margin: '0.5rem 0 0', color: 'rgb(100, 220, 100)', fontSize: '0.85rem' }}>
+                  ✓ Key file loaded{keyFileIsEncrypted ? ' (encrypted — enter password below)' : ''}
+                </p>
+              )}
+              {keyFileIsEncrypted && keyFileLoaded && (
+                <input
+                  type="password"
+                  value={keyPassword}
+                  onChange={e => setKeyPassword(e.target.value)}
+                  placeholder="Decryption password"
+                  disabled={sending}
+                  style={{
+                    width: '100%', marginTop: '0.5rem', padding: '0.5rem',
+                    background: '#222', border: '1px solid #555',
+                    borderRadius: '4px', color: '#fff', fontSize: '0.9rem',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              )}
             </div>
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
               <button
@@ -894,26 +1019,46 @@ export default function Profile() {
               </button>
               <button
                 onClick={handleShareConfirm}
-                disabled={sending}
+                disabled={sending || !keyFileLoaded}
                 style={{
                   padding: '0.75rem 1.5rem',
-                  background: sending ? '#666' : 'rgb(202, 165, 97)',
+                  background: (sending || !keyFileLoaded) ? '#666' : 'rgb(202, 165, 97)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',
-                  cursor: sending ? 'not-allowed' : 'pointer',
+                  cursor: (sending || !keyFileLoaded) ? 'not-allowed' : 'pointer',
                   fontSize: '1rem',
                   fontWeight: 'bold'
                 }}
               >
-                {sending ? 'Sharing...' : 'Share'}
+                {sending ? 'Signing & Sharing…' : 'Sign & Share'}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      
+      {/* Entity verification overlay */}
+      {verifyingEntity && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.85)', display: 'flex',
+          alignItems: 'center', justifyContent: 'center', zIndex: 1002
+        }}>
+          <div style={{
+            background: '#1a1a1a', padding: '2rem', borderRadius: '12px',
+            textAlign: 'center', border: '2px solid rgb(202, 165, 97)'
+          }}>
+            <p style={{ color: 'rgb(202, 165, 97)', fontSize: '1.1rem', margin: 0 }}>
+              🔒 Verifying entity identity…
+            </p>
+            <p style={{ color: '#888', fontSize: '0.9rem', marginTop: '0.5rem' }}>
+              Checking signature and relay registration
+            </p>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

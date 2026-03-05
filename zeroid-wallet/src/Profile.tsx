@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Html5QrcodeScanner } from "html5-qrcode";
-import { verifyEntityQR, buildPreAuth, buildWalletResponse, decryptPrivateKey, importPrivateKeyFromPEM } from "./utils/qrAuth";
+import { verifyEntityQR, encryptWalletData } from "./utils/qrAuth";
 
 // contract address and ABI
 let contractAddress: string | undefined;
@@ -57,10 +57,6 @@ export default function Profile() {
   const [showShareConfirm, setShowShareConfirm] = useState(false);
   const [sending, setSending] = useState(false);
   const [verifyingEntity, setVerifyingEntity] = useState(false);
-  const [keyFileContent, setKeyFileContent] = useState<string | null>(null);
-  const [keyFileIsEncrypted, setKeyFileIsEncrypted] = useState(false);
-  const [keyPassword, setKeyPassword] = useState('');
-  const [keyFileLoaded, setKeyFileLoaded] = useState(false);
 
   useEffect(() => {
     // Check if user is logged in
@@ -148,90 +144,37 @@ export default function Profile() {
   const handleShareConfirm = async () => {
     if (!scannedData || !identity || !user) return;
 
-    if (!keyFileLoaded || !keyFileContent) {
-      alert('Please select your DID private key file before sharing.');
+    if (!scannedData.secret) {
+      alert('Entity QR is missing the encryption secret. Please ask the entity to update their application.');
       return;
     }
 
     try {
       setSending(true);
 
-      // Resolve PEM (decrypt if encrypted)
-      let pemKey: string;
-      if (keyFileIsEncrypted) {
-        if (!keyPassword) {
-          alert('Please enter the password to decrypt your private key.');
-          setSending(false);
-          return;
-        }
-        try {
-          pemKey = await decryptPrivateKey(keyFileContent, keyPassword);
-        } catch {
-          alert('Decryption failed. Please check your password and try again.');
-          setSending(false);
-          return;
-        }
-      } else {
-        pemKey = keyFileContent;
-      }
+      // Encrypt identity data with the symmetric secret from the QR
+      const encrypted = await encryptWalletData(scannedData.secret, {
+        did:             identity.did,
+        ethAddress:      user.eth_address ?? '',
+        challenge:       scannedData.challenge,
+        sessionId:       scannedData.sessionId,
+        walletTimestamp: Date.now(),
+      });
 
-      let privateKey: CryptoKey;
-      try {
-        privateKey = await importPrivateKeyFromPEM(pemKey);
-      } catch {
-        alert(
-          'Invalid key file. Make sure you selected the correct DID private key file\n' +
-          '(the .key or .key.enc file, NOT the Ethereum key).'
-        );
-        setSending(false);
-        return;
-      }
-
-      // Phase 2.5: Build pre-auth commitment — encrypts "walletChallenge:did" with the
-      // entity's ECDH public key so the entity knows the expected DID in advance.
-      if (!scannedData.entityEncryptionPublicKey) {
-        alert('Entity QR is missing the encryption key. Please ask the entity to update their application.');
-        setSending(false);
-        return;
-      }
-      const { walletChallenge, encryptedPreAuth } = await buildPreAuth(
-        scannedData.entityEncryptionPublicKey,
-        identity.did
-      );
-
-      // Phase 3: build signed response including walletChallenge + ethAddress + entitySignature (mutual auth)
-      const { signedData, signature } = await buildWalletResponse(
-        scannedData.challenge,
-        scannedData.sessionId,
-        scannedData.entitySignature ?? '',
-        identity.did,
-        user.eth_address ?? '',
-        privateKey,
-        walletChallenge
-      );
-
+      // Post only the encrypted blob — no plaintext fields, no signatures
       const response = await fetch('http://localhost:8000/qr-relay.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sessionId: scannedData.sessionId,
-          did: identity.did,
-          ethAddress: user.eth_address,
-          didDocument: identity.didDocument,
-          signature,
-          signedData,
-          encryptedPreAuth,
+          encrypted,
         })
       });
 
       if (response.ok) {
         setShowShareConfirm(false);
         setScannedData(null);
-        setKeyFileContent(null);
-        setKeyFileLoaded(false);
-        setKeyFileIsEncrypted(false);
-        setKeyPassword('');
-        alert('Identity shared and cryptographically signed!');
+        alert('Identity shared successfully!');
       } else if (response.status === 409) {
         alert(
           'Security warning: this session has already received a response.\n\n' +
@@ -252,10 +195,6 @@ export default function Profile() {
   const handleShareCancel = () => {
     setShowShareConfirm(false);
     setScannedData(null);
-    setKeyFileContent(null);
-    setKeyFileLoaded(false);
-    setKeyFileIsEncrypted(false);
-    setKeyPassword('');
   };
 
   // Check blockchain link status
@@ -966,59 +905,6 @@ export default function Profile() {
               </p>
             </div>
 
-            {/* Private key loading */}
-            <div style={{
-              background: '#111', padding: '1rem', borderRadius: '8px',
-              marginBottom: '1.5rem',
-              border: `1px solid ${keyFileLoaded ? 'rgb(202, 165, 97)' : '#555'}`
-            }}>
-              <p style={{ margin: '0 0 0.5rem', color: '#ccc', fontSize: '0.9rem' }}>
-                <strong>Load your DID private key to sign</strong>
-              </p>
-              <input
-                type="file" accept=".key,.enc"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  const isEnc = file.name.endsWith('.enc');
-                  setKeyFileIsEncrypted(isEnc);
-                  setKeyPassword('');
-                  const reader = new FileReader();
-                  reader.onload = (ev) => {
-                    setKeyFileContent((ev.target?.result as string).trim());
-                    setKeyFileLoaded(true);
-                  };
-                  reader.readAsText(file);
-                }}
-                disabled={sending}
-                style={{
-                  width: '100%', padding: '0.5rem', background: '#222',
-                  border: '1px solid #444', borderRadius: '4px',
-                  color: '#ccc', fontSize: '0.9rem',
-                  cursor: sending ? 'not-allowed' : 'pointer', boxSizing: 'border-box',
-                }}
-              />
-              {keyFileLoaded && (
-                <p style={{ margin: '0.5rem 0 0', color: 'rgb(100, 220, 100)', fontSize: '0.85rem' }}>
-                  Key file loaded{keyFileIsEncrypted ? ' (encrypted — enter password below)' : ''}
-                </p>
-              )}
-              {keyFileIsEncrypted && keyFileLoaded && (
-                <input
-                  type="password"
-                  value={keyPassword}
-                  onChange={e => setKeyPassword(e.target.value)}
-                  placeholder="Decryption password"
-                  disabled={sending}
-                  style={{
-                    width: '100%', marginTop: '0.5rem', padding: '0.5rem',
-                    background: '#222', border: '1px solid #555',
-                    borderRadius: '4px', color: '#fff', fontSize: '0.9rem',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              )}
-            </div>
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
               <button
                 onClick={handleShareCancel}
@@ -1039,19 +925,19 @@ export default function Profile() {
               </button>
               <button
                 onClick={handleShareConfirm}
-                disabled={sending || !keyFileLoaded}
+                disabled={sending}
                 style={{
                   padding: '0.75rem 1.5rem',
-                  background: (sending || !keyFileLoaded) ? '#666' : 'rgb(202, 165, 97)',
+                  background: sending ? '#666' : 'rgb(202, 165, 97)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',
-                  cursor: (sending || !keyFileLoaded) ? 'not-allowed' : 'pointer',
+                  cursor: sending ? 'not-allowed' : 'pointer',
                   fontSize: '1rem',
                   fontWeight: 'bold'
                 }}
               >
-                {sending ? 'Signing & Sharing…' : 'Sign & Share'}
+                {sending ? 'Sharing…' : 'Share'}
               </button>
             </div>
           </div>

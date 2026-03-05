@@ -73,7 +73,7 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
   // Poll relay server for QR code response
   useEffect(() => {
     if (!entitySession || purchasingTokenId === null || purchasingPrice === null) return;
-    const { sessionId, challenge, entitySignature } = entitySession.qrPayload;
+    const { sessionId, challenge } = entitySession.qrPayload;
 
     const interval = setInterval(async () => {
       try {
@@ -83,8 +83,8 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
         if (result.success && result.data) {
           try {
             const { did, ethAddress } = await verifyWalletResponse(
-              result.data, sessionId, challenge, entitySignature,
-              entitySession.encryptionPrivateKey
+              result.data, sessionId, challenge,
+              entitySession.secretKey
             );
 
             setShowQRRequest(false);

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Html5QrcodeScanner } from "html5-qrcode";
 import NFTGallery from "./components/NFTGallery";
-import { verifyEntityQR, buildPreAuth, buildWalletResponse } from "./utils/qrAuth";
+import { verifyEntityQR, encryptWalletData } from "./utils/qrAuth";
 
 // Import contract address and ABI
 let contractAddress: string | undefined;
@@ -115,10 +115,6 @@ export default function Wallet() {
   const [scannedData, setScannedData] = useState<any>(null);
   const [showShareConfirm, setShowShareConfirm] = useState(false);
   const [sending, setSending] = useState(false);
-  const [keyFileContent, setKeyFileContent] = useState<string | null>(null);
-  const [keyFileIsEncrypted, setKeyFileIsEncrypted] = useState(false);
-  const [keyPassword, setKeyPassword] = useState('');
-  const [keyFileLoaded, setKeyFileLoaded] = useState(false);
   const [verifyingEntity, setVerifyingEntity] = useState(false);
 
   useEffect(() => {
@@ -213,56 +209,6 @@ export default function Wallet() {
       binary += String.fromCharCode(bytes[i]);
     }
     return btoa(binary);
-  };
-
-  // Decrypt a previously-encrypted private key file (AES-GCM + PBKDF2)
-  const decryptPrivateKey = async (encryptedBase64: string, password: string): Promise<string> => {
-    const encoder = new TextEncoder();
-    const combined = Uint8Array.from(atob(encryptedBase64.replace(/\s/g, '')), c => c.charCodeAt(0));
-    const salt = combined.slice(0, 16);
-    const iv  = combined.slice(16, 28);
-    const encrypted = combined.slice(28);
-
-    const passwordKey = await crypto.subtle.importKey(
-      'raw', encoder.encode(password), 'PBKDF2', false, ['deriveKey']
-    );
-    const decryptionKey = await crypto.subtle.deriveKey(
-      { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
-      passwordKey,
-      { name: 'AES-GCM', length: 256 },
-      false, ['decrypt']
-    );
-    const decrypted = await crypto.subtle.decrypt(
-      { name: 'AES-GCM', iv }, decryptionKey, encrypted
-    );
-    return new TextDecoder().decode(decrypted);
-  };
-
-  // Import an ECDSA P-256 private key from PKCS8 PEM
-  const importPrivateKeyFromPEM = async (pem: string): Promise<CryptoKey> => {
-    const b64 = pem
-      .replace(/-----BEGIN PRIVATE KEY-----/, '')
-      .replace(/-----END PRIVATE KEY-----/, '')
-      .replace(/\s/g, '');
-    const der = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-    return await crypto.subtle.importKey(
-      'pkcs8', der, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']
-    );
-  };
-
-  const handleKeyFileLoad = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const isEncrypted = file.name.endsWith('.enc');
-    setKeyFileIsEncrypted(isEncrypted);
-    setKeyPassword('');
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const content = (event.target?.result as string).trim();
-      setKeyFileContent(content);
-      setKeyFileLoaded(true);
-    };
-    reader.readAsText(file);
   };
 
   const encryptPrivateKey = async (keyData: string, password: string): Promise<string> => {
@@ -377,95 +323,37 @@ export default function Wallet() {
   const handleShareConfirm = async () => {
     if (!scannedData || !identity || !user) return;
 
-    if (!keyFileLoaded || !keyFileContent) {
-      alert('Please select your DID private key file before sharing.');
+    if (!scannedData.secret) {
+      alert('Entity QR is missing the encryption secret. Please ask the entity to update their application.');
       return;
     }
 
     try {
       setSending(true);
 
-      // Step 1: Resolve the PEM key (decrypt if the file is encrypted)
-      let pemKey: string;
-      if (keyFileIsEncrypted) {
-        if (!keyPassword) {
-          alert('Please enter the password to decrypt your private key.');
-          setSending(false);
-          return;
-        }
-        try {
-          pemKey = await decryptPrivateKey(keyFileContent, keyPassword);
-        } catch {
-          alert('Decryption failed. Please check your password and try again.');
-          setSending(false);
-          return;
-        }
-      } else {
-        pemKey = keyFileContent;
-      }
+      // Encrypt identity data with the symmetric secret from the QR
+      const encrypted = await encryptWalletData(scannedData.secret, {
+        did:             identity.did,
+        ethAddress:      user.eth_address ?? '',
+        challenge:       scannedData.challenge,
+        sessionId:       scannedData.sessionId,
+        walletTimestamp: Date.now(),
+      });
 
-      // Step 2: Import the ECDSA private key
-      let privateKey: CryptoKey;
-      try {
-        privateKey = await importPrivateKeyFromPEM(pemKey);
-      } catch {
-        alert(
-          'Invalid key file. Make sure you selected the correct DID private key file\n' +
-          '(the .key or .key.enc file downloaded when you created your DID, NOT the Ethereum key).'
-        );
-        setSending(false);
-        return;
-      }
-
-      // Step 3a: Build pre-auth commitment — encrypts "walletChallenge:did" with the
-      // entity's ECDH public key so the entity knows the expected DID before verifying
-      // any ECDSA material (Phase 2.5 commitment binding).
-      if (!scannedData.entityEncryptionPublicKey) {
-        alert('Entity QR is missing the encryption key. Please ask the entity to update their application.');
-        setSending(false);
-        return;
-      }
-      const { walletChallenge, encryptedPreAuth } = await buildPreAuth(
-        scannedData.entityEncryptionPublicKey,
-        identity.did
-      );
-
-      // Step 3b: Build signed response — includes walletChallenge + ethAddress + entitySignature
-      // to bind both the pre-auth commitment and the entity session.
-      // Format: entityChallenge:walletChallenge:sessionId:entitySig:ethAddress:did:...:walletTimestamp
-      const { signedData, signature } = await buildWalletResponse(
-        scannedData.challenge,
-        scannedData.sessionId,
-        scannedData.entitySignature ?? '',
-        identity.did,
-        user.eth_address ?? '',
-        privateKey,
-        walletChallenge
-      );
-
-      // Step 4: Send signed identity data + encrypted pre-auth to relay
+      // Post only the encrypted blob — no plaintext fields, no signatures
       const response = await fetch('http://localhost:8000/qr-relay.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sessionId: scannedData.sessionId,
-          did: identity.did,
-          ethAddress: user.eth_address,
-          didDocument: identity.didDocument,
-          signature,
-          signedData,
-          encryptedPreAuth,
+          encrypted,
         })
       });
 
       if (response.ok) {
         setShowShareConfirm(false);
         setScannedData(null);
-        setKeyFileContent(null);
-        setKeyFileLoaded(false);
-        setKeyFileIsEncrypted(false);
-        setKeyPassword('');
-        alert('Identity shared and cryptographically signed!');
+        alert('Identity shared successfully!');
       } else if (response.status === 409) {
         alert(
           'Security warning: this session has already received a response.\n\n' +
@@ -486,10 +374,6 @@ export default function Wallet() {
   const handleShareCancel = () => {
     setShowShareConfirm(false);
     setScannedData(null);
-    setKeyFileContent(null);
-    setKeyFileLoaded(false);
-    setKeyFileIsEncrypted(false);
-    setKeyPassword('');
   };
 
   const downloadEthereumPrivateKey = async (privateKey: string, ethAddress: string, did: string) => {
@@ -1022,71 +906,6 @@ export default function Wallet() {
               )}
             </div>
 
-            {/* Private key loading */}
-            <div style={{
-              background: '#111',
-              padding: '1rem',
-              borderRadius: '8px',
-              marginBottom: '1.5rem',
-              border: `1px solid ${keyFileLoaded ? 'rgb(202, 165, 97)' : '#555'}`
-            }}>
-              <p style={{ margin: '0 0 0.75rem', color: '#ccc', fontSize: '0.95rem' }}>
-                <strong>Load your DID private key to sign</strong>
-              </p>
-              <p style={{ margin: '0 0 0.75rem', color: '#888', fontSize: '0.85rem' }}>
-                Select the <code>.key</code> or <code>.key.enc</code> file downloaded when you created your DID
-                (not the Ethereum key).
-              </p>
-              <input
-                type="file"
-                accept=".key,.enc"
-                onChange={handleKeyFileLoad}
-                disabled={sending}
-                style={{
-                  width: '100%',
-                  padding: '0.5rem',
-                  background: '#222',
-                  border: '1px solid #444',
-                  borderRadius: '4px',
-                  color: '#ccc',
-                  fontSize: '0.9rem',
-                  cursor: sending ? 'not-allowed' : 'pointer',
-                  boxSizing: 'border-box',
-                }}
-              />
-              {keyFileLoaded && (
-                <p style={{ margin: '0.5rem 0 0', color: 'rgb(100, 220, 100)', fontSize: '0.85rem' }}>
-                  Key file loaded{keyFileIsEncrypted ? ' (encrypted — enter password below)' : ''}
-                </p>
-              )}
-
-              {/* Password field for encrypted keys */}
-              {keyFileIsEncrypted && keyFileLoaded && (
-                <div style={{ marginTop: '0.75rem' }}>
-                  <label style={{ color: '#ccc', fontSize: '0.9rem', display: 'block', marginBottom: '0.4rem' }}>
-                    Decryption password:
-                  </label>
-                  <input
-                    type="password"
-                    value={keyPassword}
-                    onChange={e => setKeyPassword(e.target.value)}
-                    placeholder="Password used when saving the key"
-                    disabled={sending}
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem',
-                      background: '#222',
-                      border: '1px solid #555',
-                      borderRadius: '4px',
-                      color: '#fff',
-                      fontSize: '0.9rem',
-                      boxSizing: 'border-box',
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
               <button
                 onClick={handleShareCancel}
@@ -1107,14 +926,14 @@ export default function Wallet() {
               </button>
               <button
                 onClick={handleShareConfirm}
-                disabled={sending || !keyFileLoaded}
+                disabled={sending}
                 style={{
                   padding: '0.75rem 1.5rem',
-                  background: (sending || !keyFileLoaded) ? '#666' : 'rgb(202, 165, 97)',
+                  background: sending ? '#666' : 'rgb(202, 165, 97)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',
-                  cursor: (sending || !keyFileLoaded) ? 'not-allowed' : 'pointer',
+                  cursor: sending ? 'not-allowed' : 'pointer',
                   fontSize: '1rem',
                   fontWeight: 'bold'
                 }}

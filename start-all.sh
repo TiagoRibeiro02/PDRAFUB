@@ -27,6 +27,7 @@ cleanup() {
     lsof -ti:5174 | xargs -r kill -9 2>/dev/null || true
     lsof -ti:5175 | xargs -r kill -9 2>/dev/null || true
     lsof -ti:8000 | xargs -r kill -9 2>/dev/null || true
+    lsof -ti:8001 | xargs -r kill -9 2>/dev/null || true
     
     echo "All services stopped"
     exit 0
@@ -163,13 +164,22 @@ cd ..
 sleep 3
 
 # Start PHP backend
-echo "8: Starting PHP Backend..."
+echo "8: Starting PHP Backend (Wallet)..."
 cd zeroid-wallet/backend
 php -S localhost:8000 > /tmp/php-backend.log 2>&1 &
 PHP_PID=$!
 cd ../..
 sleep 2
-echo "PHP backend running (PID: $PHP_PID)"
+echo "PHP wallet backend running (PID: $PHP_PID)"
+echo ""
+
+echo "8b: Starting PHP Backend (Entity)..."
+cd zeroid-entity/backend
+php -S localhost:8001 > /tmp/php-entity-backend.log 2>&1 &
+PHP_ENTITY_PID=$!
+cd ../..
+sleep 2
+echo "PHP entity backend running (PID: $PHP_ENTITY_PID)"
 echo ""
 
 echo "9: Starting Third Party Viewer..."
@@ -195,14 +205,16 @@ echo "  Bank Interface:      http://localhost:5173"
 echo "  User Wallet:         http://localhost:5174"
 echo "  Third Party Viewer:  http://localhost:5175"
 echo "  Blockchain RPC:      http://127.0.0.1:8545"
-echo "  PHP Backend:         http://localhost:8000"
+echo "  PHP Backend (Wallet): http://localhost:8000"
+echo "  PHP Backend (Entity): http://localhost:8001"
 echo ""
 echo "Logs:"
 echo "  Hardhat:        tail -f /tmp/hardhat.log"
 echo "  Bank:           tail -f /tmp/zeroid-entity.log"
 echo "  Wallet:         tail -f /tmp/zeroid-wallet.log"
 echo "  Third Party:    tail -f /tmp/zeroid-3p.log"
-echo "  PHP Backend:    tail -f /tmp/php-backend.log"
+echo "  PHP Backend (Wallet):  tail -f /tmp/php-backend.log"
+echo "  PHP Backend (Entity):  tail -f /tmp/php-entity-backend.log"
 echo ""
 echo "Press Ctrl+C to stop all services..."
 echo ""
@@ -228,7 +240,12 @@ while true; do
     fi
     
     if ! kill -0 $PHP_PID 2>/dev/null; then
-        echo "X PHP backend stopped unexpectedly"
+        echo "X PHP wallet backend stopped unexpectedly"
+        cleanup
+    fi
+
+    if ! kill -0 $PHP_ENTITY_PID 2>/dev/null; then
+        echo "X PHP entity backend stopped unexpectedly"
         cleanup
     fi
     

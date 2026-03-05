@@ -110,6 +110,28 @@ export async function verifyEntityQR(scannedData: {
   }
 }
 
+/**
+ * Sign a canonical string with the user's DID private key file.
+ * Detects automatically whether the file is encrypted (lacks PEM headers).
+ * If encrypted, `password` must be provided.
+ */
+export async function signWalletPayload(
+  fileContent: string,
+  password: string | null,
+  canonicalData: string
+): Promise<string> {
+  const trimmed = fileContent.trim();
+  let pem: string;
+  if (trimmed.startsWith('-----BEGIN PRIVATE KEY-----')) {
+    pem = trimmed;
+  } else {
+    if (!password) throw new Error('This key file is encrypted — please enter your key password.');
+    pem = await decryptPrivateKey(trimmed, password);
+  }
+  const privateKey = await importPrivateKeyFromPEM(pem);
+  return signECDSA(privateKey, canonicalData);
+}
+
 // ─── Phase 2: wallet encrypts identity data with the QR secret ──────────────
 
 /**
@@ -124,6 +146,8 @@ export async function encryptWalletData(
   payload: {
     did: string;
     ethAddress: string;
+    publicKey: string;
+    signature: string;
     challenge: string;
     sessionId: string;
     walletTimestamp: number;

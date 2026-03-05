@@ -28,16 +28,13 @@ function cleanupOldSessions($data) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
-    // Entity registers its ephemeral public keys for this session.
-    // The wallet will cross-check entityPublicKey and use entityEncryptionPublicKey
-    // to build the encrypted pre-auth commitment in Phase 2.5.
+    // Entity registers a new session — only sessionId and sessionTimestamp needed.
+    // No key material is stored here; the symmetric secret lives only in the QR.
     $input = json_decode(file_get_contents('php://input'), true);
 
-    if (!isset($input['sessionId']) || !isset($input['entityPublicKey']) ||
-        !isset($input['entitySignature']) || !isset($input['sessionTimestamp']) ||
-        !isset($input['entityEncryptionPublicKey'])) {
+    if (!isset($input['sessionId']) || !isset($input['sessionTimestamp'])) {
         http_response_code(400);
-        echo json_encode(['error' => 'Missing required fields']);
+        echo json_encode(['error' => 'Missing required fields (sessionId, sessionTimestamp)']);
         exit;
     }
 
@@ -52,32 +49,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     }
 
     $entityData[$input['sessionId']] = [
-        'entityPublicKey'           => $input['entityPublicKey'],
-        'entitySignature'           => $input['entitySignature'],
-        'sessionTimestamp'          => $input['sessionTimestamp'],
-        'entityEncryptionPublicKey' => $input['entityEncryptionPublicKey'],
-        'timestamp'                 => time(),
+        'sessionTimestamp' => $input['sessionTimestamp'],
+        'timestamp'        => time(),
     ];
 
     file_put_contents($entityFile, json_encode($entityData));
     echo json_encode(['success' => true]);
 
 } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Store a response
+    // Wallet posts the AES-GCM encrypted identity blob.
     $input = json_decode(file_get_contents('php://input'), true);
-    
-    if (!isset($input['sessionId']) || !isset($input['did']) || !isset($input['signature'])) {
+
+    if (!isset($input['sessionId']) || !isset($input['encrypted']['iv']) || !isset($input['encrypted']['ciphertext'])) {
         http_response_code(400);
-        echo json_encode(['error' => 'Missing required fields (sessionId, did, signature)']);
+        echo json_encode(['error' => 'Missing required fields (sessionId, encrypted.iv, encrypted.ciphertext)']);
         exit;
     }
-    
+
     $data = json_decode(file_get_contents($dataFile), true);
     $data = cleanupOldSessions($data);
 
     // Reject duplicate wallet responses — only the first valid POST wins.
-    // Prevents a race-condition substitution attack where an attacker who
-    // sees the QR code POSTs their own credentials before the intended wallet.
     if (isset($data[$input['sessionId']])) {
         http_response_code(409);
         echo json_encode(['error' => 'Session already has a wallet response']);
@@ -85,18 +77,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     }
 
     $data[$input['sessionId']] = [
-        'did'              => $input['did'],
-        'ethAddress'       => $input['ethAddress']    ?? null,
-        'pk'               => $input['pk']            ?? null,
-        'didDocument'      => $input['didDocument']   ?? null,
-        'signature'        => $input['signature'],
-        'signedData'       => $input['signedData']    ?? null,
-        'encryptedPreAuth' => $input['encryptedPreAuth'] ?? null,
-        'timestamp'        => time()
+        'encrypted' => $input['encrypted'],
+        'timestamp' => time()
     ];
-    
+
     file_put_contents($dataFile, json_encode($data));
-    
     echo json_encode(['success' => true]);
     
 } elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -113,18 +98,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     }
 
     if ($verify) {
-        // Return entity registration data for wallet cross-validation
+        // Wallet can still check that the session was registered (optional).
         $entityData = json_decode(file_get_contents($entityFile), true);
         $entityData = cleanupOldSessions($entityData);
 
         if (isset($entityData[$sessionId])) {
-            echo json_encode([
-                'success'                   => true,
-                'entityPublicKey'           => $entityData[$sessionId]['entityPublicKey'],
-                'entityEncryptionPublicKey' => $entityData[$sessionId]['entityEncryptionPublicKey'] ?? null,
-            ]);
+            echo json_encode(['success' => true]);
         } else {
-            echo json_encode(['success' => false, 'entityPublicKey' => null]);
+            echo json_encode(['success' => false]);
         }
     } else {
         // Entity polls for wallet response

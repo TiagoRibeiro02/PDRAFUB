@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import BankNFTManager from "./BankNFTManager";
 import { QRCodeSVG } from "qrcode.react";
 import { generateEntityQRSession, registerEntitySession, verifyWalletResponse, type EntityQRSession } from "./utils/qrAuth";
+import UserPicker, { type BankUser } from './components/UserPicker';
 import "./App.css";
 
 // Import contract address and ABI
@@ -208,6 +209,8 @@ function ZKPIssuer() {
   const [account, setAccount] = useState("");
   const [showQRRequest, setShowQRRequest] = useState(false);
   const [entitySession, setEntitySession] = useState<EntityQRSession | null>(null);
+  const [selectedBankUser, setSelectedBankUser] = useState<BankUser | null>(null);
+  const [scannedPublicKey, setScannedPublicKey] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     checkWallet();
@@ -216,8 +219,7 @@ function ZKPIssuer() {
   // Poll relay server for wallet response
   useEffect(() => {
     if (!entitySession) return;
-    const { sessionId, challenge, entitySignature } = entitySession.qrPayload;
-    const { encryptionPrivateKey } = entitySession;
+    const { sessionId, challenge } = entitySession.qrPayload;
 
     const interval = setInterval(async () => {
       try {
@@ -226,11 +228,12 @@ function ZKPIssuer() {
 
         if (result.success && result.data) {
           try {
-            const { did, ethAddress } = await verifyWalletResponse(
-              result.data, sessionId, challenge, entitySignature, encryptionPrivateKey
+            const { did, ethAddress, publicKey } = await verifyWalletResponse(
+              result.data, sessionId, challenge, entitySession.secretKey
             );
             setDid(did);
             if (ethAddress) console.log('Received eth address:', ethAddress);
+            if (publicKey)  setScannedPublicKey(publicKey);
             setShowQRRequest(false);
             setEntitySession(null);
           } catch (verifyErr: any) {
@@ -251,6 +254,8 @@ function ZKPIssuer() {
       const session = await generateEntityQRSession();
       await registerEntitySession(session.relayRegistration);
       setEntitySession(session);
+      setSelectedBankUser(null);
+      setScannedPublicKey(undefined);
       setShowQRRequest(true);
     } catch (err: any) {
       alert('Failed to create QR session: ' + (err?.message ?? err));
@@ -286,6 +291,12 @@ function ZKPIssuer() {
       <p style={{ color: '#888', marginBottom: '1rem' }}>
         Generate zero-knowledge proofs for user DIDs
       </p>
+
+      <UserPicker
+        selectedUser={selectedBankUser}
+        onSelect={setSelectedBankUser}
+        label="Bank User"
+      />
 
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
         <input
@@ -401,6 +412,38 @@ function ZKPIssuer() {
               setSubmitting(true);
               setError(null);
               await submitProofToContract(did, zkProof, new Date(kycExpiryDate).getTime() / 1000);
+              // Link DID + set KYC in the bank DB if a bank user is selected
+              if (selectedBankUser) {
+                // Reject if the wallet's key doesn't match the user's registered key
+                if (selectedBankUser.pk && selectedBankUser.pk !== scannedPublicKey) {
+                  setError('Security warning: the public key from the wallet does not match the one registered for this bank user. Submission cancelled.');
+                  setSubmitting(false);
+                  return;
+                }
+                try {
+                  // Store the public key (first time) or confirm it matches
+                  const linkRes = await fetch('http://localhost:8001/api.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'link_did', userId: selectedBankUser.id, publicKey: scannedPublicKey }),
+                  });
+                  const linkData = await linkRes.json();
+                  if (!linkData.success) console.warn('link_did failed:', linkData.message);
+                } catch (linkErr) {
+                  console.warn('Failed to link DID in bank DB:', linkErr);
+                }
+                try {
+                  const res = await fetch('http://localhost:8001/api.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'set_kyc', userId: selectedBankUser.id }),
+                  });
+                  const data = await res.json();
+                  if (!data.success) console.warn('set_kyc failed:', data.message);
+                } catch (kycErr) {
+                  console.warn('Failed to set KYC in bank DB:', kycErr);
+                }
+              }
               setSubmitSuccess(true);
             } catch (err) {
               setError(err instanceof Error ? err.message : "Failed to submit proof");
@@ -469,6 +512,7 @@ function ZKPIssuer() {
               onClick={() => {
                 setShowQRRequest(false);
                 setEntitySession(null);
+                setSelectedBankUser(null);
               }}
               style={{
                 position: 'absolute',

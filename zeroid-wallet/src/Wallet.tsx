@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Html5QrcodeScanner } from "html5-qrcode";
 import NFTGallery from "./components/NFTGallery";
-import { verifyEntityQR, encryptWalletData } from "./utils/qrAuth";
+import { verifyEntityQR, encryptWalletData, signWalletPayload } from "./utils/qrAuth";
 
 // Import contract address and ABI
 let contractAddress: string | undefined;
@@ -116,6 +116,9 @@ export default function Wallet() {
   const [showShareConfirm, setShowShareConfirm] = useState(false);
   const [sending, setSending] = useState(false);
   const [verifyingEntity, setVerifyingEntity] = useState(false);
+  const [keyFileContent, setKeyFileContent] = useState<string | null>(null);
+  const [keyIsEncrypted, setKeyIsEncrypted] = useState(false);
+  const [keyPassword, setKeyPassword] = useState('');
 
   useEffect(() => {
     // Check if user is logged in
@@ -161,6 +164,14 @@ export default function Wallet() {
   useEffect(() => {
     if (!showQRScanner) return;
 
+    // html5-qrcode fires console.error on every frame it doesn't find a code.
+    // Suppress that specific noise while the scanner is active.
+    const _origError = console.error.bind(console);
+    console.error = (...args: any[]) => {
+      if (typeof args[0] === 'string' && args[0].includes('NotFoundException')) return;
+      _origError(...args);
+    };
+
     const scanner = new Html5QrcodeScanner(
       "qr-reader",
       { fps: 10, qrbox: 250 },
@@ -198,7 +209,8 @@ export default function Wallet() {
     );
 
     return () => {
-      scanner.clear().catch(console.error);
+      console.error = _origError;
+      scanner.clear().catch(_origError);
     };
   }, [showQRScanner]);
 
@@ -320,6 +332,30 @@ export default function Wallet() {
     URL.revokeObjectURL(url);
   };
 
+  const handleKeyFileLoad = (content: string) => {
+    const trimmed = content.trim();
+    setKeyFileContent(trimmed);
+    setKeyIsEncrypted(!trimmed.startsWith('-----BEGIN PRIVATE KEY-----'));
+    setKeyPassword('');
+  };
+
+  const handleKeyFileDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => handleKeyFileLoad(ev.target?.result as string);
+    reader.readAsText(file);
+  };
+
+  const handleKeyFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => handleKeyFileLoad(ev.target?.result as string);
+    reader.readAsText(file);
+  };
+
   const handleShareConfirm = async () => {
     if (!scannedData || !identity || !user) return;
 
@@ -328,16 +364,40 @@ export default function Wallet() {
       return;
     }
 
+    if (!keyFileContent) {
+      alert('Please drop your DID private key file to sign this request.');
+      return;
+    }
+
+    if (keyIsEncrypted && !keyPassword) {
+      alert('Please enter your key password.');
+      return;
+    }
+
     try {
       setSending(true);
+
+      const walletTimestamp = Date.now();
+      const canonicalData = `${identity.did}|${scannedData.challenge}|${scannedData.sessionId}|${walletTimestamp}`;
+
+      let signature: string;
+      try {
+        signature = await signWalletPayload(keyFileContent, keyIsEncrypted ? keyPassword : null, canonicalData);
+      } catch (signErr: any) {
+        alert('Failed to sign payload: ' + signErr.message);
+        setSending(false);
+        return;
+      }
 
       // Encrypt identity data with the symmetric secret from the QR
       const encrypted = await encryptWalletData(scannedData.secret, {
         did:             identity.did,
         ethAddress:      user.eth_address ?? '',
+        publicKey:       JSON.stringify(identity.publicKeyJwk),
+        signature,
         challenge:       scannedData.challenge,
         sessionId:       scannedData.sessionId,
-        walletTimestamp: Date.now(),
+        walletTimestamp,
       });
 
       // Post only the encrypted blob — no plaintext fields, no signatures
@@ -353,6 +413,9 @@ export default function Wallet() {
       if (response.ok) {
         setShowShareConfirm(false);
         setScannedData(null);
+        setKeyFileContent(null);
+        setKeyPassword('');
+        setKeyIsEncrypted(false);
         alert('Identity shared successfully!');
       } else if (response.status === 409) {
         alert(
@@ -374,6 +437,9 @@ export default function Wallet() {
   const handleShareCancel = () => {
     setShowShareConfirm(false);
     setScannedData(null);
+    setKeyFileContent(null);
+    setKeyPassword('');
+    setKeyIsEncrypted(false);
   };
 
   const downloadEthereumPrivateKey = async (privateKey: string, ethAddress: string, did: string) => {
@@ -906,6 +972,58 @@ export default function Wallet() {
               )}
             </div>
 
+            {/* Key file drop zone */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <p style={{ color: '#aaa', margin: '0 0 0.5rem', fontSize: '0.85rem' }}>
+                Drop your DID private key file to sign:
+              </p>
+              <div
+                onDragOver={e => e.preventDefault()}
+                onDrop={handleKeyFileDrop}
+                onClick={() => (document.getElementById('wlt-key-input') as HTMLInputElement)?.click()}
+                style={{
+                  border: `2px dashed ${keyFileContent ? '#4CAF50' : '#555'}`,
+                  borderRadius: '8px',
+                  padding: '0.75rem 1rem',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  background: keyFileContent ? '#0a2a0a' : '#111',
+                  color: keyFileContent ? '#4CAF50' : '#888',
+                  fontSize: '0.9rem',
+                  userSelect: 'none',
+                }}
+              >
+                {keyFileContent
+                  ? `✓ Key loaded${keyIsEncrypted ? ' (encrypted)' : ''}`
+                  : 'Drop .key file here or click to browse'}
+                <input
+                  id="wlt-key-input"
+                  type="file"
+                  accept=".key,.enc"
+                  style={{ display: 'none' }}
+                  onChange={handleKeyFileSelect}
+                />
+              </div>
+              {keyIsEncrypted && (
+                <input
+                  type="password"
+                  placeholder="Key password"
+                  value={keyPassword}
+                  onChange={e => setKeyPassword(e.target.value)}
+                  style={{
+                    width: '100%',
+                    marginTop: '0.5rem',
+                    padding: '0.5rem 0.75rem',
+                    background: '#1a1a1a',
+                    border: '1px solid #555',
+                    color: 'white',
+                    borderRadius: '6px',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              )}
+            </div>
+
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
               <button
                 onClick={handleShareCancel}
@@ -926,14 +1044,14 @@ export default function Wallet() {
               </button>
               <button
                 onClick={handleShareConfirm}
-                disabled={sending}
+                disabled={sending || !keyFileContent || (keyIsEncrypted && !keyPassword)}
                 style={{
                   padding: '0.75rem 1.5rem',
-                  background: sending ? '#666' : 'rgb(202, 165, 97)',
+                  background: (sending || !keyFileContent || (keyIsEncrypted && !keyPassword)) ? '#666' : 'rgb(202, 165, 97)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',
-                  cursor: sending ? 'not-allowed' : 'pointer',
+                  cursor: (sending || !keyFileContent || (keyIsEncrypted && !keyPassword)) ? 'not-allowed' : 'pointer',
                   fontSize: '1rem',
                   fontWeight: 'bold'
                 }}

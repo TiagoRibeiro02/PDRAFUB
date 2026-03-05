@@ -33,7 +33,16 @@ function ab2b64(buffer: ArrayBuffer): string {
   for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
   return btoa(s);
 }
-
+async function verifyECDSA(publicKeyJwk: JsonWebKey, data: string, b64Sig: string): Promise<boolean> {
+  const key = await crypto.subtle.importKey(
+    'jwk', publicKeyJwk, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']
+  );
+  const sigBytes = Uint8Array.from(atob(b64Sig), c => c.charCodeAt(0));
+  return crypto.subtle.verify(
+    { name: 'ECDSA', hash: 'SHA-256' },
+    key, sigBytes, new TextEncoder().encode(data)
+  );
+}
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 /** AES-GCM encrypted payload produced by the wallet and posted to the relay. */
@@ -132,7 +141,7 @@ export async function registerEntitySession(
  * @param secretKey      The AES-GCM key generated alongside the QR (never leaves memory).
  * @param didResolverUrl Base URL of the wallet backend (default: http://localhost:8000).
  *
- * Returns `{ did, ethAddress }` on success, throws on failure.
+ * Returns `{ did, ethAddress, publicKey }` on success, throws on failure.
  */
 export async function verifyWalletResponse(
   result: any,
@@ -140,7 +149,7 @@ export async function verifyWalletResponse(
   challenge: string,
   secretKey: CryptoKey,
   didResolverUrl = 'http://localhost:8000'
-): Promise<{ did: string; ethAddress: string }> {
+): Promise<{ did: string; ethAddress: string; publicKey: string | undefined }> {
   const { encrypted } = result;
 
   if (!encrypted?.iv || !encrypted?.ciphertext) {
@@ -151,6 +160,8 @@ export async function verifyWalletResponse(
   let payload: {
     did: string;
     ethAddress: string;
+    publicKey?: string;
+    signature?: string;
     challenge: string;
     sessionId: string;
     walletTimestamp: number;
@@ -164,7 +175,7 @@ export async function verifyWalletResponse(
     throw new Error(`Decryption failed — wallet did not use the correct QR secret: ${err.message}`);
   }
 
-  const { did, ethAddress, challenge: wChallenge, sessionId: wSession, walletTimestamp } = payload;
+  const { did, ethAddress, publicKey, signature, challenge: wChallenge, sessionId: wSession, walletTimestamp } = payload;
 
   // ── Validate fields ───────────────────────────────────────────────────────
   if (wChallenge !== challenge)   throw new Error('Challenge mismatch');
@@ -173,6 +184,21 @@ export async function verifyWalletResponse(
   if (!ethAddress?.startsWith('0x')) throw new Error('Ethereum address missing or malformed in payload');
   if (Math.abs(Date.now() - Number(walletTimestamp)) > 5 * 60 * 1000)
     throw new Error('Wallet response timestamp expired');
+
+  // ── Verify ECDSA signature ─────────────────────────────────────────────
+  if (!signature || !publicKey) {
+    throw new Error('Payload is missing a signature or public key — wallet must sign the request.');
+  }
+  const canonicalData = `${did}|${challenge}|${sessionId}|${walletTimestamp}`;
+  let sigValid: boolean;
+  try {
+    sigValid = await verifyECDSA(JSON.parse(publicKey) as JsonWebKey, canonicalData, signature);
+  } catch (err: any) {
+    throw new Error(`Signature verification error: ${err.message}`);
+  }
+  if (!sigValid) {
+    throw new Error('Signature verification failed — the payload may have been tampered with.');
+  }
 
   // ── Resolve DID from authoritative source ─────────────────────────────────
   let resolvedEthAddress: string;
@@ -193,5 +219,5 @@ export async function verifyWalletResponse(
     );
   }
 
-  return { did, ethAddress };
+  return { did, ethAddress, publicKey };
 }

@@ -97,12 +97,6 @@ export default function QRModal({
             />
           </div>
 
-          {selectedBankUser?.pk && manualDID && selectedBankUser.pk !== manualDID && (
-            <p style={{ color: '#ff6b6b', fontSize: '0.8rem', marginTop: '0.4rem' }}>
-              ⚠ This user already has a different DID linked ({selectedBankUser.pk.slice(0, 24)}…)
-            </p>
-          )}
-
           <button
             onClick={onManualSubmit}
             disabled={!canSubmit}

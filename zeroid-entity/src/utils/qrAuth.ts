@@ -221,3 +221,48 @@ export async function verifyWalletResponse(
 
   return { did, ethAddress, publicKey };
 }
+
+// ─── Blockchain public-key helpers ──────────────────────────────────────────
+
+/**
+ * Convert a WebCrypto-exported P-256 JWK public key to the compressed 33-byte
+ * representation stored on-chain: pkX (bytes32 hex) + pkParity (odd-y flag).
+ *
+ * The contract stores:
+ *   pkX     = x-coordinate as bytes32 (32 B)
+ *   pkParity = true → prefix 0x03 (odd y), false → prefix 0x02 (even y)
+ */
+export function jwkToCompressed(jwk: JsonWebKey): { pkX: string; pkParity: boolean } {
+  const b64url = (s: string) =>
+    Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+  const x = b64url(jwk.x!);
+  const y = b64url(jwk.y!);
+  const pkX = '0x' + Array.from(x).map(b => b.toString(16).padStart(2, '0')).join('');
+  const pkParity = (y[y.length - 1] & 1) === 1;
+  return { pkX, pkParity };
+}
+
+/**
+ * Query the KYCCompliance contract for the compressed public key stored for a DID.
+ *
+ * @param did             The DID to look up.
+ * @param contractAddress Deployed KYCCompliance address.
+ * @param abi             KYCCompliance ABI (must include getPublicKey).
+ * @returns 33-byte hex string ("0x02…" or "0x03…"), or "" if not registered.
+ */
+export async function getOnChainPublicKey(
+  did: string,
+  contractAddress: string,
+  abi: any,
+): Promise<string> {
+  try {
+    const { ethers } = await import('ethers');
+    const provider = new ethers.BrowserProvider((window as any).ethereum);
+    const kycContract = new ethers.Contract(contractAddress, abi, provider);
+    const result: string = await kycContract.getPublicKey(did);
+    return result; // ethers returns bytes as a hex string
+  } catch (err: any) {
+    console.warn('getOnChainPublicKey error:', err.message);
+    return '';
+  }
+}

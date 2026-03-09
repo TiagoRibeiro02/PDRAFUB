@@ -5,7 +5,7 @@ export interface BankUser {
   nome: string;
   sobrenome: string;
   NIF: number;
-  pk: string | null;
+  // pk removed — public key is stored on-chain in KYCCompliance contract
   eth_address?: string | null;
   balance: number;
   kyc: boolean;
@@ -141,7 +141,6 @@ export default function UserPicker({ selectedUser, onSelect, label = 'Bank User'
             <strong>{selectedUser.nome} {selectedUser.sobrenome}</strong>
             &nbsp;·&nbsp;NIF {selectedUser.NIF}
             {selectedUser.kyc && <span style={{ marginLeft: '0.5rem', color: 'rgb(202, 165, 97)', fontSize: '0.75rem' }}>✓ KYC</span>}
-            {selectedUser.pk && <span style={{ marginLeft: '0.5rem', color: '#888', fontSize: '0.75rem' }}>DID linked</span>}
           </span>
           <button
             onClick={handleClear}
@@ -194,9 +193,6 @@ function UserRow({ user, onSelect, rowStyle }: { user: BankUser; onSelect: (u: B
       <span style={{ color: '#888', marginLeft: '0.5rem', fontSize: '0.8rem' }}>
         NIF {user.NIF}
       </span>
-      {user.pk && (
-        <span style={{ marginLeft: '0.5rem', color: '#888', fontSize: '0.75rem' }}>DID linked</span>
-      )}
       {user.kyc && (
         <span style={{ marginLeft: '0.5rem', color: 'rgb(202, 165, 97)', fontSize: '0.75rem' }}>✓ KYC</span>
       )}

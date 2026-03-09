@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 
-import { generateEntityQRSession, registerEntitySession, verifyWalletResponse, type EntityQRSession } from './utils/qrAuth';
+import { generateEntityQRSession, registerEntitySession, verifyWalletResponse, jwkToCompressed, getOnChainPublicKey, type EntityQRSession } from './utils/qrAuth';
 import './BankNFTManager.css';
 import AvailableNFTCard from './components/AvailableNFTCard';
 import PurchasedNFTCard from './components/PurchasedNFTCard';
@@ -61,8 +61,9 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
   const [purchasingPrice, setPurchasingPrice] = useState<bigint | null>(null);
   const [manualDID, setManualDID] = useState('');
   const [manualEthAddress, setManualEthAddress] = useState('');
-  const [scannedPublicKey, setScannedPublicKey] = useState<string | undefined>(undefined);
   const [selectedBankUser, setSelectedBankUser] = useState<BankUser | null>(null);
+  // Compressed public key (pkX + pkParity) verified against blockchain during QR scan
+  const [compressedPk, setCompressedPk] = useState<{ pkX: string; pkParity: boolean } | null>(null);
 
   useEffect(() => {
     checkWallet();
@@ -94,10 +95,42 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
               result.data, sessionId, challenge,
               entitySession.secretKey
             );
+
+            // ── Blockchain public-key check ─────────────────────────────────
+            let compressed: { pkX: string; pkParity: boolean } | null = null;
+            if (publicKey && kycContractAddress && KYCComplianceABI) {
+              try {
+                compressed = jwkToCompressed(JSON.parse(publicKey) as JsonWebKey);
+                const onChainHex = await getOnChainPublicKey(did, kycContractAddress, KYCComplianceABI);
+                if (onChainHex && onChainHex !== '0x') {
+                  const onChainParity = onChainHex.slice(2, 4) === '03';
+                  const onChainX     = onChainHex.slice(4).toLowerCase();
+                  if (
+                    onChainX !== compressed.pkX.slice(2).toLowerCase() ||
+                    onChainParity !== compressed.pkParity
+                  ) {
+                    alert(
+                      'Security error: the public key from the wallet does not match ' +
+                      'the key registered on the blockchain for this DID.\n\n' +
+                      'Possible key substitution attack — request rejected.'
+                    );
+                    setShowQRRequest(false);
+                    setEntitySession(null);
+                    return;
+                  }
+                  console.log('On-chain PK verified ✓');
+                } else {
+                  console.log('No on-chain PK yet — will be registered on first KYC submission.');
+                }
+              } catch (pkErr: any) {
+                console.warn('Blockchain PK check skipped:', pkErr.message);
+              }
+            }
+
             // Fill the fields so the entity can review and pick a bank user
             setManualDID(did);
             setManualEthAddress(ethAddress);
-            setScannedPublicKey(publicKey);
+            if (compressed) setCompressedPk(compressed);
             // Keep modal open — entity still needs to select a bank user
           } catch (verifyErr: any) {
             console.error('QR mutual-auth verification failed:', verifyErr);
@@ -300,7 +333,7 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
       setEntitySession(session);
       setManualDID('');
       setManualEthAddress('');
-      setScannedPublicKey(undefined);
+      setCompressedPk(null);
       setSelectedBankUser(null);
       setShowQRRequest(true);
     } catch (err: any) {
@@ -338,38 +371,14 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
       setShowQRRequest(false);
       setEntitySession(null);
 
-      // Link public key to the bank user (no-op if already linked to the same key)
-      if (selectedBankUser.pk && selectedBankUser.pk !== scannedPublicKey) {
-        alert(
-          'Security warning: the public key received from the wallet does not match ' +
-          'the key already registered for this bank user.\n\nPurchase cancelled.'
-        );
-        return;
-      }
-
-      try {
-        const res = await fetch('http://localhost:8001/api.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'link_did',
-            userId: selectedBankUser.id,
-            publicKey: scannedPublicKey,
-          }),
-        });
-        const data = await res.json();
-        if (!data.success) throw new Error(data.message);
-      } catch (err: any) {
-        alert('Failed to link public key to bank user: ' + err.message);
-        return;
-      }
-
+      // PK was already verified against the blockchain during QR scan.
       await executePurchase(purchasingTokenId, purchasingPrice, manualDID, manualEthAddress);
+      console.log('Compressed PK for this DID (to register on-chain if needed):', compressedPk);
       setPurchasingTokenId(null);
       setPurchasingPrice(null);
       setManualDID('');
       setManualEthAddress('');
-      setScannedPublicKey(undefined);
+      setCompressedPk(null);
       setSelectedBankUser(null);
     }
   };
@@ -554,7 +563,7 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
             setPurchasingPrice(null);
             setManualDID('');
             setManualEthAddress('');
-            setScannedPublicKey(undefined);
+            setCompressedPk(null);
             setSelectedBankUser(null);
           }}
           onManualDIDChange={setManualDID}

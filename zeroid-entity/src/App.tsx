@@ -34,8 +34,9 @@ type TabType = 'nft-bank' | 'zkp-issuer';
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabType>('nft-bank');
   const [account, setAccount] = useState<string>('');
-
-  const entityUser = JSON.parse(localStorage.getItem('entity_user') || 'null');
+  const [entityUser, setEntityUser] = useState<any>(
+    JSON.parse(localStorage.getItem('entity_user') || 'null')
+  );
 
   const handleLogout = () => {
     localStorage.removeItem('entity_user');
@@ -44,6 +45,21 @@ export default function App() {
 
   useEffect(() => {
     checkWalletConnection();
+
+    // Fetch fresh entity data from the DB
+    const stored = JSON.parse(localStorage.getItem('entity_user') || 'null');
+    if (stored?.id) {
+      fetch(`http://localhost:8001/me.php?user_id=${stored.id}`)
+        .then(r => r.json())
+        .then(res => {
+          if (res.success) {
+            const updated = { ...stored, ...res.data };
+            localStorage.setItem('entity_user', JSON.stringify(updated));
+            setEntityUser(updated);
+          }
+        })
+        .catch(() => {}); // keep cached data on network error
+    }
   }, []);
 
   const checkWalletConnection = async () => {

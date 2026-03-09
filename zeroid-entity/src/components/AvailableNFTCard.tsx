@@ -21,7 +21,7 @@ export default function AvailableNFTCard({ nft, loading, ethEurRate, onPurchase 
       <div className='nftPrice'>
         {nft.price} ETH
         {eurPrice !== null && (
-          <span style={{ marginLeft: '0.5rem', color: '#aaa', fontSize: '0.9em' }}>
+          <span className='ethPrice'>
             ≈ {eurPrice} €
           </span>
         )}

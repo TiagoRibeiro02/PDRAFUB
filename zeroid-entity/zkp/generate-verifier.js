@@ -11,16 +11,16 @@ async function generateSolidityVerifier() {
     console.log("Generating Solidity verifier for PLONK...");
     
     // Load the PLONK verifier template from snarkjs package
-    const templatePath = join(__dirname, 'node_modules', 'snarkjs', 'templates', 'verifier_plonk.sol.ejs');
+    const templatePath = join(__dirname, '..', 'node_modules', 'snarkjs', 'templates', 'verifier_plonk.sol.ejs');
     const template = fs.readFileSync(templatePath, 'utf8');
     
     // For PLONK, export verifier using the zkey file path and template
     const verifierCode = await snarkjs.zKey.exportSolidityVerifier(
-      "circuit_final.zkey",
+      join(__dirname, 'circuit_final.zkey'),
       { plonk: template }
     );
     
-    fs.writeFileSync("Verifier.sol", verifierCode);
+    fs.writeFileSync(join(__dirname, 'Verifier.sol'), verifierCode);
     
     console.log("Solidity verifier generated successfully: Verifier.sol");
 

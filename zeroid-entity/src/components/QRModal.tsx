@@ -2,6 +2,7 @@ import { ethers } from 'ethers';
 import { QRCodeSVG } from 'qrcode.react';
 import type { EntityQRSession } from '../utils/qrAuth';
 import UserPicker, { type BankUser } from './UserPicker';
+import '../BankNFTManager.css';
 
 interface QRModalProps {
   qrPayload: EntityQRSession['qrPayload'] | null;
@@ -57,7 +58,7 @@ export default function QRModal({
         </div>
 
         {manualDID ? (
-          <p style={{ color: 'rgb(100, 220, 100)', fontSize: '0.85rem', margin: '0.5rem 0' }}>
+          <p className='responsereceived'>
             ✓ Wallet response received
           </p>
         ) : (
@@ -71,7 +72,7 @@ export default function QRModal({
 
           <input
             type="text"
-            placeholder="User DID (e.g., did:zeroid:...)"
+            placeholder="User DID (e.g., did:zeroid: ...)"
             value={manualDID}
             onChange={(e) => onManualDIDChange(e.target.value)}
             className='didInput'

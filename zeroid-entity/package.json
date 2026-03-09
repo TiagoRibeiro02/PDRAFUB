@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "generate-verifier": "node generate-verifier.js"
+    "generate-verifier": "node zkp/generate-verifier.js"
   },
   "dependencies": {
     "circomlib": "^2.0.5",

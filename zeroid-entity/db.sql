@@ -6,12 +6,10 @@ CREATE TABLE IF NOT EXISTS users (
     nome VARCHAR(255) NOT NULL UNIQUE,
     sobrenome VARCHAR(64) NOT NULL,
     NIF INT NOT NULL,
-    -- pk is stored on-chain in KYCCompliance.sol as a compressed 33-byte secp256k1 key
-    eth_address VARCHAR(42),
     balance DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     kyc BOOLEAN NOT NULL DEFAULT FALSE
 );
 
-INSERT INTO users (nome, sobrenome, NIF, pk, balance, kyc) VALUES
-('Alice', 'Smith', 123456789, NULL, 1000.00, FALSE),
-('Bob', 'Johnson', 987654321, NULL, 500.00, FALSE);
+INSERT INTO users (nome, sobrenome, NIF, balance, kyc) VALUES
+('Alice', 'Smith', 123456789, 1000.00, FALSE),
+('Bob', 'Johnson', 987654321, 500.00, FALSE);

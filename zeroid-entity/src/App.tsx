@@ -634,7 +634,7 @@ async function didToBigInt(did: string): Promise<bigint> {
 async function generatePlonkZKP(userDid: string) {
   const snarkjs = await import("snarkjs");
   const { buildPoseidon } = await import("circomlibjs");
-  const verificationKey = await import("../verification_key.json");
+  const verificationKey = await import("../zkp/verification_key.json");
 
   if (!userDid.startsWith("did:")) {
     throw new Error("Invalid DID format. Expected format: did:zeroid:xxxx");
@@ -650,8 +650,8 @@ async function generatePlonkZKP(userDid: string) {
   
   const { proof, publicSignals } = await snarkjs.plonk.fullProve(
     { DID: DID.toString(), status: status.toString(), commitment, r: r.toString() },
-    "/circuit_js/circuit.wasm",
-    "/circuit_final.zkey"
+    "/zkp/circuit_js/circuit.wasm",
+    "/zkp/circuit_final.zkey"
   );
 
   const res = await snarkjs.plonk.verify(verificationKey, publicSignals, proof);

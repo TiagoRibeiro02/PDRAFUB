@@ -35,6 +35,13 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<TabType>('nft-bank');
   const [account, setAccount] = useState<string>('');
 
+  const entityUser = JSON.parse(localStorage.getItem('entity_user') || 'null');
+
+  const handleLogout = () => {
+    localStorage.removeItem('entity_user');
+    window.location.href = '/login';
+  };
+
   useEffect(() => {
     checkWalletConnection();
   }, []);
@@ -112,8 +119,31 @@ export default function App() {
         marginBottom: '1rem',
         borderRadius: '12px 12px 0 0',
       }}>
-        <h1 style={{ margin: '0 0 1rem 0' }}>Bank Entity - ZeroID System</h1>
-        
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+          <h1 style={{ margin: 0 }}>{entityUser.entity_name} - ZeroID System</h1>
+          {entityUser && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.9rem' }}>
+              <span style={{ color: 'rgb(202, 165, 97)' }}>
+                Logged in as <strong>{entityUser.username}</strong>
+              </span>
+              <button
+                onClick={handleLogout}
+                style={{
+                  padding: '0.4rem 1rem',
+                  background: '#c0392b',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem',
+                }}
+              >
+                Logout
+              </button>
+            </div>
+          )}
+        </div>
+
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
           <button 
             style={tabStyle(activeTab === 'nft-bank')}

@@ -101,7 +101,7 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
             // Keep modal open — entity still needs to select a bank user
           } catch (verifyErr: any) {
             console.error('QR mutual-auth verification failed:', verifyErr);
-            alert(`Security error: ${verifyErr.message}\n\nPossible man-in-the-middle attack — request rejected.`);
+            alert(`Security error: ${verifyErr.message}\n\n Request rejected.`);
           }
         }
       } catch (err) {

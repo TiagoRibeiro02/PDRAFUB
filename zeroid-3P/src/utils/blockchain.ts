@@ -49,11 +49,12 @@ export async function fetchAllNFTs(
           let complianceTimestamp = 0;
           let complianceCommitment = '';
           let kycExpiryTimestamp = 0;
+          let kycIssuer = '';
 
           if (kycContractAddress && kycABI) {
             try {
               const kycContract = new ethers.Contract(kycContractAddress, kycABI, provider);
-              const [isComp, timestamp, expiryDate, commitment] = await kycContract.checkCompliance(didOwner);
+              const [isComp, timestamp, expiryDate, commitment, kycIssuer] = await kycContract.checkCompliance(didOwner);
               isCompliant = isComp;
               complianceTimestamp = Number(timestamp);
               kycExpiryTimestamp = Number(expiryDate);
@@ -89,6 +90,7 @@ export async function fetchAllNFTs(
               complianceTimestamp: complianceTimestamp > 0 ? complianceTimestamp : undefined,
               kycExpiryTimestamp: kycExpiryTimestamp > 0 ? kycExpiryTimestamp : undefined,
               complianceCommitment: complianceCommitment || undefined,
+              kycIssuer: kycIssuer || undefined,
             }
           });
         }

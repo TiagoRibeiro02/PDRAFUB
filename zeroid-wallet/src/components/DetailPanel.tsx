@@ -10,6 +10,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({ nft, onClose }) => {
   const imageUrl = nft.metadata?.image || '';
   const complianceTimestamp = nft.metadata?.complianceTimestamp as number | undefined;
   const kycExpiryTimestamp = nft.metadata?.kycExpiryTimestamp as number | undefined;
+  const kycIssuer = nft.metadata?.kycIssuer as string | undefined;
 
   return (
     <div className="detail-panel">
@@ -100,6 +101,12 @@ const DetailPanel: React.FC<DetailPanelProps> = ({ nft, onClose }) => {
             <div className="detail-value">
               {new Date(kycExpiryTimestamp * 1000).toLocaleString()}
             </div>
+          </div>
+        )}
+        {kycIssuer && (
+          <div className="detail-field">
+            <div className="detail-label">KYC Issuer</div>
+            <div className="detail-value">{kycIssuer}</div>
           </div>
         )}
       </div>

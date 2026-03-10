@@ -244,6 +244,7 @@ export default function App() {
 function ZKPIssuer() {
   const entityUser = JSON.parse(localStorage.getItem('entity_user') || 'null');
   const bankApiUrl: string = entityUser?.entity_api ?? 'http://localhost:8002/bank1_api.php';
+  const kycIssuer: string = entityUser?.entity_name || entityUser?.entity_did || 'did:zeroid:unknown';
 
   const [did, setDid] = useState("");
   const [kycExpiryDate, setKycExpiryDate] = useState<string>(() => {
@@ -501,6 +502,7 @@ function ZKPIssuer() {
               await submitProofToContract(
                 did,
                 zkProof,
+                kycIssuer,
                 new Date(kycExpiryDate).getTime() / 1000,
                 compressedPk?.pkX,
                 compressedPk?.pkParity,
@@ -718,6 +720,7 @@ async function generatePlonkZKP(userDid: string) {
 async function submitProofToContract(
   userDid: string,
   zkProof: any,
+  kycIssuer: string,
   expiryTimestamp: number,
   pkX?: string,
   pkParity?: boolean,
@@ -768,6 +771,7 @@ async function submitProofToContract(
   const tx = await kycContract.submitComplianceProof(
     userDid,
     zkProof.commitment,
+    kycIssuer,
     Math.floor(expiryTimestamp),
     pkX  ?? ZeroHash,   // bytes32 x-coordinate (0x00…00 = skip)
     pkParity ?? false,  // parity prefix: true → 0x03, false → 0x02

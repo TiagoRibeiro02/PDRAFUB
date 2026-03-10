@@ -35,6 +35,7 @@ contract KYCCompliance {
         uint256 expiryDate;
         bytes32 pkX;          // x-coordinate of the compressed public key
         string commitment;    // zero-knowledge proof commitment
+        string kycIssuer;     // DID/name of the entity that issued the KYC
     }
 
     // Mapping from DID hash to compliance status
@@ -112,6 +113,7 @@ contract KYCCompliance {
      *      same transaction — pass pkX = bytes32(0) to skip key registration.
      * @param did          The user's DID (Decentralized Identifier)
      * @param commitment   The commitment from the zero-knowledge proof
+     * @param kycIssuer    The DID or name of the entity issuing the KYC (e.g. did:zeroid:bank1)
      * @param expiryDate   Unix timestamp when this KYC verification expires
      * @param pkX          x-coordinate of compressed secp256k1 public key (0 to skip)
      * @param pkParity     true = prefix 0x03, false = prefix 0x02
@@ -121,6 +123,7 @@ contract KYCCompliance {
     function submitComplianceProof(
         string memory did,
         string memory commitment,
+        string memory kycIssuer,
         uint256 expiryDate,
         bytes32 pkX,
         bool pkParity,
@@ -144,7 +147,8 @@ contract KYCCompliance {
             timestamp:   block.timestamp,
             expiryDate:  expiryDate,
             pkX:         pkX,
-            commitment:  commitment
+            commitment:  commitment,
+            kycIssuer:   kycIssuer
         });
 
         emit ComplianceVerified(didHash, did, true, commitment, block.timestamp, expiryDate);
@@ -161,20 +165,21 @@ contract KYCCompliance {
      * @return timestamp When the compliance was verified
      * @return expiryDate When the compliance expires
      * @return commitment The proof commitment
+     * @return kycIssuer  The entity that issued the KYC
      */
     function checkCompliance(string memory did)
         external
         view
-        returns (bool isCompliant, uint256 timestamp, uint256 expiryDate, string memory commitment)
+        returns (bool isCompliant, uint256 timestamp, uint256 expiryDate, string memory commitment, string memory kycIssuer)
     {
         bytes32 didHash = keccak256(abi.encodePacked(did));
         ComplianceStatus memory status = complianceStatuses[didHash];
 
         if (!status.exists) {
-            return (false, 0, 0, "");
+            return (false, 0, 0, "", "");
         }
 
-        return (status.isCompliant, status.timestamp, status.expiryDate, status.commitment);
+        return (status.isCompliant, status.timestamp, status.expiryDate, status.commitment, status.kycIssuer);
     }
 
     /**

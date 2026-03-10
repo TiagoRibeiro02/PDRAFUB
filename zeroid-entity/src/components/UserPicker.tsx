@@ -15,9 +15,13 @@ interface UserPickerProps {
   selectedUser: BankUser | null;
   onSelect: (user: BankUser | null) => void;
   label?: string;
+  /** Override the bank API URL (defaults to Bank1 at localhost:8002) */
+  apiUrl?: string;
 }
 
-export default function UserPicker({ selectedUser, onSelect, label = 'Bank User' }: UserPickerProps) {
+const DEFAULT_API_URL = 'http://localhost:8002/bank1_api.php';
+
+export default function UserPicker({ selectedUser, onSelect, label = 'Bank User', apiUrl = DEFAULT_API_URL }: UserPickerProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<BankUser[]>([]);
   const [loading, setLoading] = useState(false);
@@ -25,10 +29,11 @@ export default function UserPicker({ selectedUser, onSelect, label = 'Bank User'
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Load all users on mount
+  // Load all users when the component mounts or the API URL changes
   useEffect(() => {
     fetchUsers('');
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiUrl]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -44,7 +49,7 @@ export default function UserPicker({ selectedUser, onSelect, label = 'Bank User'
   const fetchUsers = async (q: string) => {
     setLoading(true);
     try {
-      const url = `http://localhost:8001/api.php?action=search&q=${encodeURIComponent(q)}`;
+      const url = `${apiUrl}?action=search&q=${encodeURIComponent(q)}`;
       const res = await fetch(url);
       const data = await res.json();
       if (data.success) setResults(data.users);

@@ -28,6 +28,7 @@ cleanup() {
     lsof -ti:5175 | xargs -r kill -9 2>/dev/null || true
     lsof -ti:8000 | xargs -r kill -9 2>/dev/null || true
     lsof -ti:8001 | xargs -r kill -9 2>/dev/null || true
+    lsof -ti:8002 | xargs -r kill -9 2>/dev/null || true
     
     echo "All services stopped"
     exit 0
@@ -180,6 +181,15 @@ PHP_ENTITY_PID=$!
 cd ../..
 sleep 2
 echo "PHP entity backend running (PID: $PHP_ENTITY_PID)"
+echo ""
+
+echo "8c: Starting PHP Backend (Bank1 API)..."
+cd zeroid-entity/backend
+php -S localhost:8002 > /tmp/php-bank1-backend.log 2>&1 &
+PHP_BANK1_PID=$!
+cd ../..
+sleep 2
+echo "PHP Bank1 API running on :8002 (PID: $PHP_BANK1_PID)"
 echo ""
 
 echo "9: Starting Third Party Viewer..."

@@ -242,6 +242,9 @@ export default function App() {
 
 // Original ZKP Issuer component
 function ZKPIssuer() {
+  const entityUser = JSON.parse(localStorage.getItem('entity_user') || 'null');
+  const bankApiUrl: string = entityUser?.entity_api ?? 'http://localhost:8002/bank1_api.php';
+
   const [did, setDid] = useState("");
   const [kycExpiryDate, setKycExpiryDate] = useState<string>(() => {
     const d = new Date();
@@ -377,6 +380,7 @@ function ZKPIssuer() {
         selectedUser={selectedBankUser}
         onSelect={setSelectedBankUser}
         label="Bank User"
+        apiUrl={bankApiUrl}
       />
 
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
@@ -504,7 +508,7 @@ function ZKPIssuer() {
               // Update KYC flag in the bank DB for UI display
               if (selectedBankUser) {
                 try {
-                  const res = await fetch('http://localhost:8001/api.php', {
+                  const res = await fetch(bankApiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'set_kyc', userId: selectedBankUser.id }),

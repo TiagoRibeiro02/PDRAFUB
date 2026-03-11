@@ -104,7 +104,7 @@ export default function PhysicalTransferModal({ nft, kycContractAddress, kycCont
     if (kycContractAddress && kycContractABI && typeof window !== 'undefined') {
       try {
         const provider = new ethers.BrowserProvider(
-          (window as unknown as { ethereum: Parameters<typeof ethers.BrowserProvider>[0] }).ethereum
+          (window as any).ethereum
         );
         const kyc = new ethers.Contract(
           kycContractAddress,

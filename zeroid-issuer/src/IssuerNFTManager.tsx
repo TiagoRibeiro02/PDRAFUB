@@ -3,7 +3,7 @@ import { ethers } from 'ethers';
 import './IssuerNFTManager.css';
 import IssuedNFTCard from './components/IssuedNFTCard';
 import AvailableNFTCard from './components/AvailableNFTCard';
-import NFTDetailModal from './components/NFTDetailModal';
+import NFTDetailModal from './components/NFTDetailModal.tsx';
 
 declare global { interface Window { ethereum?: unknown } }
 
@@ -97,7 +97,7 @@ export default function IssuerNFTManager({
     try {
       setLoading(true);
       setError('');
-      const provider = new ethers.BrowserProvider((window as unknown as { ethereum: unknown }).ethereum as Parameters<typeof ethers.BrowserProvider>[0]);
+      const provider = new ethers.BrowserProvider((window as unknown as { ethereum: any }).ethereum);
       const contract = new ethers.Contract(contractAddress, contractABI as ethers.InterfaceAbi, provider);
 
       const parseMetadata = async (tokenId: number | bigint): Promise<{ meta: NFTMetadata; price: bigint; didOwner: string }> => {

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import IssuerNFTManager from './IssuerNFTManager';
-import './App.css';
+import IssuerNFTManager from './IssuerNFTManager.tsx';
 
 let contractAddress: string | undefined;
 let MyNFTABI: unknown;

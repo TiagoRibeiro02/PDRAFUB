@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { NFTItem } from '../IssuerNFTManager';
-import PhysicalTransferModal from './PhysicalTransferModal';
+import PhysicalTransferModal from './PhysicalTransferModal.tsx';
 
 interface Props {
   nft: NFTItem;

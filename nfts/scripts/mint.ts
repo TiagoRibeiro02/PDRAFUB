@@ -1,65 +1,101 @@
 import { ethers } from "hardhat";
 
 // Sample NFT metadata (normally this would be hosted on IPFS)
+// The top-level `issuer` field holds the issuer's DID and is used by the
+// ZeroID Issuer portal (zeroid-issuer) to filter assets by issuer.
+//
+// NFTs are split between two issuers:
+//   - Diamond House  (did:zeroid:diamond-house)  — tokens 0-2
+//   - Gem Gallery    (did:zeroid:gem-gallery)    — tokens 3-4
 const nftMetadata = [
+  // ── Diamond House ──────────────────────────────────────────────────────
   {
-    name: "Cool Cat #1",
-    description: "A very cool cat NFT",
-    image: "https://placehold.co/400x400/orange/white?text=Cool+Cat+1",
-    price: "0.01", // ETH
+    name: "Diamond Solitaire Ring",
+    description: "1.2 ct round-cut D/VS1 diamond set in 18 k white gold.",
+    image: "https://placehold.co/400x400/e0e0e0/333?text=Diamond+Ring",
+    issuer: "did:zeroid:diamond-house",
+    issuer_name: "Diamond House",
+    price: "0.50",
     attributes: [
-      { trait_type: "Nationality", value: "United States" },
-      { trait_type: "Document Type", value: "Identity Card" },
-      { trait_type: "Document Number", value: "CAT123456789" },
-      { trait_type: "Issuer", value: "Cool Cats Authority" }
+      { trait_type: "Asset Type",    value: "Diamond Ring" },
+      { trait_type: "Carat Weight",  value: "1.2 ct" },
+      { trait_type: "Cut",           value: "Round Brilliant" },
+      { trait_type: "Colour",        value: "D" },
+      { trait_type: "Clarity",       value: "VS1" },
+      { trait_type: "Metal",         value: "18k White Gold" },
+      { trait_type: "Certificate",   value: "GIA-2021-123456" },
+      { trait_type: "Issuer",        value: "Diamond House" }
     ]
   },
   {
-    name: "Cool Dog #1",
-    description: "A very cool dog NFT",
-    image: "https://placehold.co/400x400/blue/white?text=Cool+Dog+1",
-    price: "0.02",
+    name: "Diamond Tennis Bracelet",
+    description: "Eternity bracelet with 3.5 ct total weight of F/SI1 round diamonds.",
+    image: "https://placehold.co/400x400/d4d4d4/333?text=Tennis+Bracelet",
+    issuer: "did:zeroid:diamond-house",
+    issuer_name: "Diamond House",
+    price: "0.80",
     attributes: [
-      { trait_type: "Nationality", value: "Canada" },
-      { trait_type: "Document Type", value: "Passport" },
-      { trait_type: "Document Number", value: "DOG987654321" },
-      { trait_type: "Issuer", value: "Canine Registry" }
+      { trait_type: "Asset Type",    value: "Diamond Bracelet" },
+      { trait_type: "Total Carat",   value: "3.5 ct" },
+      { trait_type: "Colour",        value: "F" },
+      { trait_type: "Clarity",       value: "SI1" },
+      { trait_type: "Metal",         value: "18k Yellow Gold" },
+      { trait_type: "Certificate",   value: "GIA-2022-789012" },
+      { trait_type: "Issuer",        value: "Diamond House" }
     ]
   },
   {
-    name: "Cool Bird #1",
-    description: "A very cool bird NFT",
-    image: "https://placehold.co/400x400/green/white?text=Cool+Bird+1",
-    price: "0.015",
+    name: "Princess-Cut Diamond Pendant",
+    description: "0.75 ct princess-cut E/VS2 diamond pendant on a platinum chain.",
+    image: "https://placehold.co/400x400/c8c8c8/333?text=Diamond+Pendant",
+    issuer: "did:zeroid:diamond-house",
+    issuer_name: "Diamond House",
+    price: "0.35",
     attributes: [
-      { trait_type: "Nationality", value: "United Kingdom" },
-      { trait_type: "Document Type", value: "Travel Document" },
-      { trait_type: "Document Number", value: "BRD555444333" },
-      { trait_type: "Issuer", value: "Avian Federation" }
+      { trait_type: "Asset Type",    value: "Diamond Pendant" },
+      { trait_type: "Carat Weight",  value: "0.75 ct" },
+      { trait_type: "Cut",           value: "Princess" },
+      { trait_type: "Colour",        value: "E" },
+      { trait_type: "Clarity",       value: "VS2" },
+      { trait_type: "Metal",         value: "Platinum" },
+      { trait_type: "Certificate",   value: "GIA-2023-345678" },
+      { trait_type: "Issuer",        value: "Diamond House" }
+    ]
+  },
+
+  // ── Gem Gallery ────────────────────────────────────────────────────────
+  {
+    name: "Burmese Ruby Ring",
+    description: "2.1 ct unheated Burmese ruby set in 18 k rose gold with diamond halo.",
+    image: "https://placehold.co/400x400/c0392b/white?text=Ruby+Ring",
+    issuer: "did:zeroid:gem-gallery",
+    issuer_name: "Gem Gallery",
+    price: "1.20",
+    attributes: [
+      { trait_type: "Asset Type",    value: "Ruby Ring" },
+      { trait_type: "Carat Weight",  value: "2.1 ct" },
+      { trait_type: "Origin",        value: "Burma (Myanmar)" },
+      { trait_type: "Treatment",     value: "Unheated" },
+      { trait_type: "Metal",         value: "18k Rose Gold" },
+      { trait_type: "Certificate",   value: "GRS-2023-RB001" },
+      { trait_type: "Issuer",        value: "Gem Gallery" }
     ]
   },
   {
-    name: "Cool Fish #1",
-    description: "A very cool fish NFT",
-    image: "https://placehold.co/400x400/purple/white?text=Cool+Fish+1",
-    price: "0.025",
+    name: "Colombian Emerald Necklace",
+    description: "1.8 ct Colombian emerald drop necklace in 18 k yellow gold with minor oil treatment.",
+    image: "https://placehold.co/400x400/27ae60/white?text=Emerald+Necklace",
+    issuer: "did:zeroid:gem-gallery",
+    issuer_name: "Gem Gallery",
+    price: "0.90",
     attributes: [
-      { trait_type: "Nationality", value: "Australia" },
-      { trait_type: "Document Type", value: "Residence Permit" },
-      { trait_type: "Document Number", value: "FSH111222333" },
-      { trait_type: "Issuer", value: "Marine Registry" }
-    ]
-  },
-  {
-    name: "Cool Monkey #1",
-    description: "A very cool monkey NFT",
-    image: "https://placehold.co/400x400/red/white?text=Cool+Monkey+1",
-    price: "0.05",
-    attributes: [
-      { trait_type: "Nationality", value: "Brazil" },
-      { trait_type: "Document Type", value: "National ID" },
-      { trait_type: "Document Number", value: "MNK777888999" },
-      { trait_type: "Issuer", value: "Primate Authority" }
+      { trait_type: "Asset Type",    value: "Emerald Necklace" },
+      { trait_type: "Carat Weight",  value: "1.8 ct" },
+      { trait_type: "Origin",        value: "Colombia" },
+      { trait_type: "Treatment",     value: "Minor Oil" },
+      { trait_type: "Metal",         value: "18k Yellow Gold" },
+      { trait_type: "Certificate",   value: "GRS-2024-EM002" },
+      { trait_type: "Issuer",        value: "Gem Gallery" }
     ]
   }
 ];

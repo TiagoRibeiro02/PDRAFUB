@@ -26,9 +26,11 @@ cleanup() {
     lsof -ti:5173 | xargs -r kill -9 2>/dev/null || true
     lsof -ti:5174 | xargs -r kill -9 2>/dev/null || true
     lsof -ti:5175 | xargs -r kill -9 2>/dev/null || true
+    lsof -ti:5176 | xargs -r kill -9 2>/dev/null || true
     lsof -ti:8000 | xargs -r kill -9 2>/dev/null || true
     lsof -ti:8001 | xargs -r kill -9 2>/dev/null || true
     lsof -ti:8002 | xargs -r kill -9 2>/dev/null || true
+    lsof -ti:8003 | xargs -r kill -9 2>/dev/null || true
     
     echo "All services stopped"
     exit 0
@@ -67,6 +69,14 @@ fi
 if [ ! -d "zeroid-3P/node_modules" ]; then
     echo "Installing 3Party dependencies..."
     cd zeroid-3P
+    npm install
+    cd ..
+fi
+
+# Install zeroid-issuer dependencies if needed
+if [ ! -d "zeroid-issuer/node_modules" ]; then
+    echo "Installing Issuer dependencies..."
+    cd zeroid-issuer
     npm install
     cd ..
 fi
@@ -145,6 +155,17 @@ if [ -f "zeroid-entity/src/contracts/kyc-deployment.json" ]; then
     cp zeroid-entity/src/contracts/PlonkVerifierAdapter.json zeroid-3P/src/contracts/
 fi
 
+# Copy to zeroid-issuer
+mkdir -p zeroid-issuer/src/contracts
+cp nfts/frontend/src/contracts/MyNFT.json zeroid-issuer/src/contracts/
+cp nfts/frontend/src/contracts/contract-address.json zeroid-issuer/src/contracts/
+
+# Copy KYC contracts to zeroid-issuer
+if [ -f "zeroid-entity/src/contracts/kyc-deployment.json" ]; then
+    cp zeroid-entity/src/contracts/kyc-deployment.json zeroid-issuer/src/contracts/
+    cp zeroid-entity/src/contracts/KYCCompliance.json zeroid-issuer/src/contracts/
+fi
+
 echo "Contract files copied to all interfaces"
 echo ""
 
@@ -201,6 +222,24 @@ sleep 3
 echo "Third Party Viewer running (PID: $THIRDPARTY_PID)"
 echo ""
 
+echo "10: Starting Issuer Interface..."
+cd zeroid-issuer
+npm run dev > /tmp/zeroid-issuer.log 2>&1 &
+ISSUER_PID=$!
+cd ..
+sleep 3
+echo "Issuer interface running (PID: $ISSUER_PID)"
+echo ""
+
+echo "10b: Starting PHP Backend (Issuer)..."
+cd zeroid-issuer/backend
+php -S localhost:8003 > /tmp/php-issuer-backend.log 2>&1 &
+PHP_ISSUER_PID=$!
+cd ../..
+sleep 2
+echo "PHP issuer backend running on :8003 (PID: $PHP_ISSUER_PID)"
+echo ""
+
 echo "================================================"
 echo "All services started successfully!"
 echo "================================================"
@@ -211,20 +250,26 @@ echo "  KYC Compliance System:  PlonkVerifierAdapter, KYCCompliance"
 echo "                          See zeroid-entity/src/contracts/kyc-deployment.json"
 echo ""
 echo "Access Points:"
-echo "  Bank Interface:      http://localhost:5173"
-echo "  User Wallet:         http://localhost:5174"
-echo "  Third Party Viewer:  http://localhost:5175"
-echo "  Blockchain RPC:      http://127.0.0.1:8545"
+echo "  Bank Interface:       http://localhost:5173"
+echo "  User Wallet:          http://localhost:5174"
+echo "  Third Party Viewer:   http://localhost:5175"
+echo "  Issuer Portal:        http://localhost:5176"
+echo "  Blockchain RPC:       http://127.0.0.1:8545"
 echo "  PHP Backend (Wallet): http://localhost:8000"
 echo "  PHP Backend (Entity): http://localhost:8001"
+echo "  PHP Backend (Bank1):  http://localhost:8002"
+echo "  PHP Backend (Issuer): http://localhost:8003"
 echo ""
 echo "Logs:"
-echo "  Hardhat:        tail -f /tmp/hardhat.log"
-echo "  Bank:           tail -f /tmp/zeroid-entity.log"
-echo "  Wallet:         tail -f /tmp/zeroid-wallet.log"
-echo "  Third Party:    tail -f /tmp/zeroid-3p.log"
+echo "  Hardhat:               tail -f /tmp/hardhat.log"
+echo "  Bank:                  tail -f /tmp/zeroid-entity.log"
+echo "  Wallet:                tail -f /tmp/zeroid-wallet.log"
+echo "  Third Party:           tail -f /tmp/zeroid-3p.log"
+echo "  Issuer:                tail -f /tmp/zeroid-issuer.log"
 echo "  PHP Backend (Wallet):  tail -f /tmp/php-backend.log"
 echo "  PHP Backend (Entity):  tail -f /tmp/php-entity-backend.log"
+echo "  PHP Backend (Bank1):   tail -f /tmp/php-bank1-backend.log"
+echo "  PHP Backend (Issuer):  tail -f /tmp/php-issuer-backend.log"
 echo ""
 echo "Press Ctrl+C to stop all services..."
 echo ""
@@ -261,6 +306,16 @@ while true; do
     
     if ! kill -0 $THIRDPARTY_PID 2>/dev/null; then
         echo "X Third Party Viewer stopped unexpectedly"
+        cleanup
+    fi
+
+    if ! kill -0 $ISSUER_PID 2>/dev/null; then
+        echo "X Issuer interface stopped unexpectedly"
+        cleanup
+    fi
+
+    if ! kill -0 $PHP_ISSUER_PID 2>/dev/null; then
+        echo "X PHP issuer backend stopped unexpectedly"
         cleanup
     fi
 done

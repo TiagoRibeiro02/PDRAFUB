@@ -77,11 +77,11 @@ export default function PhysicalTransferModal({ nft, kycContractAddress, kycCont
       // Warn if DID or token ID doesn't match
       if (parsed.did !== nft.didOwner) {
         setParseError(
-          `⚠ DID mismatch: file claims "${parsed.did}" but this NFT is owned by "${nft.didOwner}". Proceeding anyway.`
+          `DID mismatch: file claims "${parsed.did}" but this NFT is owned by "${nft.didOwner}". Proceeding anyway.`
         );
       } else if (parsed.nftId !== nft.tokenId) {
         setParseError(
-          `⚠ Token ID mismatch: file claims NFT #${parsed.nftId} but you opened NFT #${nft.tokenId}. Proceeding anyway.`
+          `Token ID mismatch: file claims NFT #${parsed.nftId} but you opened NFT #${nft.tokenId}. Proceeding anyway.`
         );
       }
 
@@ -235,7 +235,6 @@ export default function PhysicalTransferModal({ nft, kycContractAddress, kycCont
         {/* ── Step: verifying ────────────────────────────────────────── */}
         {step === 'verifying' && (
           <div style={{ textAlign: 'center', padding: '2rem' }}>
-            <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>🔐</div>
             <p style={{ color: '#aaa' }}>Verifying signature and querying blockchain…</p>
           </div>
         )}

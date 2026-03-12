@@ -107,15 +107,6 @@ export default function NFTDetailModal({ nft, kycContractAddress, kycContractABI
             {nft.kycIssuer && <Field label="KYC Issuer" value={nft.kycIssuer} />}
           </Section>
 
-          {/* Extra metadata */}
-          {metaKeys.length > 0 && (
-            <Section title="Metadata">
-              {metaKeys.map(k => (
-                <Field key={k} label={k} value={String(nft.metadata[k])} />
-              ))}
-            </Section>
-          )}
-
           {/* Physical Transfer button */}
           <div style={{ borderTop: '1px solid #333', paddingTop: '1.5rem', marginTop: '0.5rem' }}>
             <p style={{ color: '#888', fontSize: '0.85rem', marginBottom: '1rem' }}>

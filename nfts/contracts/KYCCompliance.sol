@@ -14,7 +14,9 @@ interface IPlonkVerifier {
  */
 contract KYCCompliance {
     IPlonkVerifier public verifier;
+    address public admin;
     address public issuer;
+    mapping(address => bool) public authorizedIssuers;
 
     /**
      * Storage layout (slots per entry):
@@ -59,24 +61,48 @@ contract KYCCompliance {
     );
 
     event IssuerUpdated(address indexed oldIssuer, address indexed newIssuer);
+    event IssuerAuthorizationUpdated(address indexed issuerAddress, bool authorized);
+
+    modifier onlyAdmin() {
+        require(msg.sender == admin, "Only admin can call this function");
+        _;
+    }
     
-    modifier onlyIssuer() {
-        require(msg.sender == issuer, "Only issuer can call this function");
+    modifier onlyAuthorizedIssuer() {
+        require(authorizedIssuers[msg.sender], "Only authorized issuer can call this function");
         _;
     }
     
     constructor(address _verifierAddress) {
         verifier = IPlonkVerifier(_verifierAddress);
+        admin = msg.sender;
         issuer = msg.sender;
+        authorizedIssuers[msg.sender] = true;
+        emit IssuerAuthorizationUpdated(msg.sender, true);
+    }
+
+    /**
+     * @dev Authorize or revoke issuer wallets (entity addresses).
+     */
+    function setIssuerAuthorization(address issuerAddress, bool authorized) external onlyAdmin {
+        require(issuerAddress != address(0), "Invalid issuer address");
+        authorizedIssuers[issuerAddress] = authorized;
+        emit IssuerAuthorizationUpdated(issuerAddress, authorized);
     }
     
     /**
      * @dev Update the issuer address
      */
-    function updateIssuer(address newIssuer) external onlyIssuer {
+    function updateIssuer(address newIssuer) external onlyAdmin {
         require(newIssuer != address(0), "Invalid issuer address");
         address oldIssuer = issuer;
+        authorizedIssuers[oldIssuer] = false;
+        emit IssuerAuthorizationUpdated(oldIssuer, false);
+
         issuer = newIssuer;
+        authorizedIssuers[newIssuer] = true;
+        emit IssuerAuthorizationUpdated(newIssuer, true);
+
         emit IssuerUpdated(oldIssuer, newIssuer);
     }
     
@@ -94,7 +120,7 @@ contract KYCCompliance {
         string memory did,
         bytes32 pkX,
         bool pkParity
-    ) external onlyIssuer {
+    ) external onlyAuthorizedIssuer {
         require(bytes(did).length > 0, "DID cannot be empty");
         require(pkX != bytes32(0), "Invalid public key");
 
@@ -129,7 +155,7 @@ contract KYCCompliance {
         bool pkParity,
         bytes memory proof,
         uint[] memory publicSignals
-    ) external onlyIssuer {
+    ) external onlyAuthorizedIssuer {
         require(bytes(did).length > 0, "DID cannot be empty");
         require(expiryDate > block.timestamp, "Expiry date must be in the future");
 
@@ -217,7 +243,7 @@ contract KYCCompliance {
      * @dev Revoke compliance status (in case of issues)
      * @param did The DID to revoke
      */
-    function revokeCompliance(string memory did) external onlyIssuer {
+    function revokeCompliance(string memory did) external onlyAuthorizedIssuer {
         bytes32 didHash = keccak256(abi.encodePacked(did));
         require(complianceStatuses[didHash].exists, "DID not found");
         

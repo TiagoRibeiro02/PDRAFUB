@@ -8,6 +8,7 @@ interface QRModalProps {
   qrPayload: EntityQRSession['qrPayload'] | null;
   purchasingTokenId: number | null;
   purchasingPrice: bigint | null;
+  bankApiUrl: string;
   manualDID: string;
   manualEthAddress: string;
   selectedBankUser: BankUser | null;
@@ -22,6 +23,7 @@ export default function QRModal({
   qrPayload,
   purchasingTokenId,
   purchasingPrice,
+  bankApiUrl,
   manualDID,
   manualEthAddress,
   selectedBankUser,
@@ -95,6 +97,7 @@ export default function QRModal({
               selectedUser={selectedBankUser}
               onSelect={onBankUserSelect}
               label="Select bank user to assign this NFT to"
+              apiUrl={bankApiUrl}
             />
           </div>
 

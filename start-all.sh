@@ -213,6 +213,15 @@ sleep 2
 echo "PHP Bank1 API running on :8002 (PID: $PHP_BANK1_PID)"
 echo ""
 
+echo "8d: Starting PHP Backend (Bank2 API)..."
+cd zeroid-entity/backend
+php -S localhost:8004 > /tmp/php-bank2-backend.log 2>&1 &
+PHP_BANK2_PID=$!
+cd ../..
+sleep 2
+echo "PHP Bank2 API running on :8004 (PID: $PHP_BANK2_PID)"
+echo ""
+
 echo "9: Starting Third Party Viewer..."
 cd zeroid-3P
 npm run dev > /tmp/zeroid-3p.log 2>&1 &
@@ -258,6 +267,7 @@ echo "  Blockchain RPC:       http://127.0.0.1:8545"
 echo "  PHP Backend (Wallet): http://localhost:8000"
 echo "  PHP Backend (Entity): http://localhost:8001"
 echo "  PHP Backend (Bank1):  http://localhost:8002"
+echo "  PHP Backend (Bank2):  http://localhost:8004"
 echo "  PHP Backend (Issuer): http://localhost:8003"
 echo ""
 echo "Logs:"
@@ -269,6 +279,7 @@ echo "  Issuer:                tail -f /tmp/zeroid-issuer.log"
 echo "  PHP Backend (Wallet):  tail -f /tmp/php-backend.log"
 echo "  PHP Backend (Entity):  tail -f /tmp/php-entity-backend.log"
 echo "  PHP Backend (Bank1):   tail -f /tmp/php-bank1-backend.log"
+echo "  PHP Backend (Bank2):   tail -f /tmp/php-bank2-backend.log"
 echo "  PHP Backend (Issuer):  tail -f /tmp/php-issuer-backend.log"
 echo ""
 echo "Press Ctrl+C to stop all services..."

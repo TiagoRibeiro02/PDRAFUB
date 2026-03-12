@@ -47,12 +47,16 @@ interface BankNFTManagerProps {
 }
 
 export default function BankNFTManager({ contractAddress, contractABI }: BankNFTManagerProps) {
+  const entityUser = JSON.parse(localStorage.getItem('entity_user') || 'null');
+  const bankApiUrl: string = entityUser?.entity_api ?? 'http://localhost:8002/bank1_api.php';
+
   const [available, setAvailable] = useState<NFTListing[]>([]);
   const [purchased, setPurchased] = useState<NFTListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [account, setAccount] = useState('');
   const [isOwner, setIsOwner] = useState(false);
+  const [entityEthAddress, setEntityEthAddress] = useState('');
   const [complianceStatuses, setComplianceStatuses] = useState<{[did: string]: {isCompliant: boolean, timestamp: number, commitment: string}}>();
   const [showQRRequest, setShowQRRequest] = useState(false);
   const [entitySession, setEntitySession] = useState<EntityQRSession | null>(null);
@@ -66,6 +70,10 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
   const [compressedPk, setCompressedPk] = useState<{ pkX: string; pkParity: boolean } | null>(null);
 
   useEffect(() => {
+    const entityUser = JSON.parse(localStorage.getItem('entity_user') || 'null');
+    const entityAddress = (entityUser?.entity_eth_address || '').toLowerCase();
+    setEntityEthAddress(entityAddress);
+
     checkWallet();
     
     fetch('https://api.binance.com/api/v3/ticker/price?symbol=ETHEUR')
@@ -77,7 +85,7 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
     if (account) {
       loadNFTs();
     }
-  }, [account, contractAddress, contractABI]);
+  }, [account, contractAddress, contractABI, entityEthAddress]);
 
   // Poll relay server for QR code response
   useEffect(() => {
@@ -227,9 +235,8 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
       const provider = new ethers.BrowserProvider(window.ethereum);
       const contract = new ethers.Contract(contractAddress, contractABI, provider);
 
-      // Check if connected account is owner
-      const owner = await contract.owner();
-      setIsOwner(owner.toLowerCase() === account.toLowerCase());
+      // Check if connected account matches logged-in entity wallet
+      setIsOwner(!!entityEthAddress && entityEthAddress === account.toLowerCase());
 
       // Get available NFTs (for sale)
       const [availableIds, prices] = await contract.getAvailableNFTs();
@@ -466,8 +473,13 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
       <div className='noAcountStyle'>
         <h2 className='titleStyle2'>Access Denied</h2>
         <p className='notOwnerStyle'>
-          You are not a financial instituition worker.
+          Connected wallet is not the wallet registered for your entity.
         </p>
+        {entityEthAddress && (
+          <p className='smaller'>
+            Expected: {entityEthAddress.slice(0, 6)}...{entityEthAddress.slice(-4)}
+          </p>
+        )}
         <p className='smaller'>
           Connected: {account.slice(0, 6)}...{account.slice(-4)}
         </p>
@@ -553,6 +565,7 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
           qrPayload={entitySession?.qrPayload ?? null}
           purchasingTokenId={purchasingTokenId}
           purchasingPrice={purchasingPrice}
+          bankApiUrl={bankApiUrl}
           manualDID={manualDID}
           manualEthAddress={manualEthAddress}
           selectedBankUser={selectedBankUser}

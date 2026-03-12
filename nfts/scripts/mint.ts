@@ -62,6 +62,24 @@ const nftMetadata = [
       { trait_type: "Issuer",        value: "Diamond House" }
     ]
   },
+  {
+    name: "Diamond Pendant 3D",
+    description: "0.90 ct princess-cut E/VS2 diamond pendant 3D on a platinum chain.",
+    image: "https://placehold.co/400x400/c8c8c8/333?text=Diamond+Pendant+3D",
+    issuer: "did:zeroid:diamond-house",
+    issuer_name: "Diamond House",
+    price: "6.0",
+    attributes: [
+      { trait_type: "Asset Type",    value: "Diamond Pendant" },
+      { trait_type: "Carat Weight",  value: "0.90 ct" },
+      { trait_type: "Cut",           value: "Princess" },
+      { trait_type: "Colour",        value: "E" },
+      { trait_type: "Clarity",       value: "VS2" },
+      { trait_type: "Metal",         value: "Platinum" },
+      { trait_type: "Certificate",   value: "GIA-2023-345678" },
+      { trait_type: "Issuer",        value: "Diamond House" }
+    ]
+  },
 
   // ── Gem Gallery ────────────────────────────────────────────────────────
   {

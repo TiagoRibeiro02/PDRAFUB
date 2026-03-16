@@ -4,6 +4,7 @@ import PhysicalTransferModal from './PhysicalTransferModal.tsx';
 
 interface Props {
   nft: NFTItem;
+  ethEurRate: number | null;
   kycContractAddress?: string;
   kycContractABI?: unknown;
   onClose: () => void;
@@ -50,8 +51,11 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-export default function NFTDetailModal({ nft, kycContractAddress, kycContractABI, onClose }: Props) {
+export default function NFTDetailModal({ nft, ethEurRate, kycContractAddress, kycContractABI, onClose }: Props) {
   const [showTransfer, setShowTransfer] = useState(false);
+  const approxEur = ethEurRate !== null
+    ? (parseFloat(nft.price) * ethEurRate).toLocaleString('pt-PT', { maximumFractionDigits: 2 })
+    : null;
 
   const metaKeys = Object.keys(nft.metadata).filter(
     k => !['name', 'description', 'image', 'issuer', 'issuer_name'].includes(k)
@@ -86,6 +90,8 @@ export default function NFTDetailModal({ nft, kycContractAddress, kycContractABI
             <Field label="Name"        value={nft.name} />
             <Field label="Description" value={nft.description || '—'} />
             <Field label="Token ID"    value={`#${nft.tokenId}`} />
+            <Field label="Price"       value={`${nft.price} ETH`} />
+            {approxEur && <Field label="Approx. Value" value={`€${approxEur}`} />}
             {nft.issuerName && <Field label="Issuer" value={nft.issuerName} />}
             {nft.issuer     && <Field label="Issuer DID" value={nft.issuer} />}
           </Section>
@@ -131,6 +137,7 @@ export default function NFTDetailModal({ nft, kycContractAddress, kycContractABI
       {showTransfer && (
         <PhysicalTransferModal
           nft={nft}
+          ethEurRate={ethEurRate}
           kycContractAddress={kycContractAddress}
           kycContractABI={kycContractABI}
           onClose={() => setShowTransfer(false)}

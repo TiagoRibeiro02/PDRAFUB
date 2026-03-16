@@ -143,7 +143,7 @@ export default function IssuerNFTManager({
 
       for (let i = 0; i < availableIds.length; i++) {
         try {
-          const { meta, price } = await parseMetadata(availableIds[i]);
+          const { meta } = await parseMetadata(availableIds[i]);
           const { issuer: avIssuer, issuerName: avIssuerName } = extractIssuerFields(meta);
           availItems.push({
             tokenId: Number(availableIds[i]),
@@ -165,6 +165,23 @@ export default function IssuerNFTManager({
       const totalSupply: bigint = await contract.totalSupply();
       const purchItems: NFTItem[] = [];
       const didsToCheck: string[] = [];
+      const soldPriceByTokenId = new Map<number, bigint>();
+
+      // In this contract, `getPrice(tokenId)` is set to 0 after purchase.
+      // Recover the historical sale price from NFTPurchased events.
+      try {
+        const purchaseEvents = await contract.queryFilter(contract.filters.NFTPurchased());
+        for (const ev of purchaseEvents) {
+          const args = (ev as ethers.EventLog).args as { tokenId?: bigint; price?: bigint; [k: number]: unknown };
+          const tokenIdRaw = args.tokenId ?? (args[0] as bigint | undefined);
+          const priceRaw = args.price ?? (args[2] as bigint | undefined);
+          if (typeof tokenIdRaw !== 'undefined' && typeof priceRaw !== 'undefined') {
+            soldPriceByTokenId.set(Number(tokenIdRaw), BigInt(priceRaw.toString()));
+          }
+        }
+      } catch (e) {
+        console.warn('Could not load NFTPurchased event history:', e);
+      }
 
       for (let i = 0; i < Number(totalSupply); i++) {
         try {
@@ -172,14 +189,15 @@ export default function IssuerNFTManager({
           if (!didOwner) continue;
 
           const { meta, price } = await parseMetadata(i);
+          const effectivePrice = price > 0n ? price : (soldPriceByTokenId.get(i) ?? 0n);
           const { issuer: pIssuer, issuerName: pIssuerName } = extractIssuerFields(meta);
           const item: NFTItem = {
             tokenId: i,
             name: meta.name || `NFT #${i}`,
             description: meta.description || '',
             image: meta.image || '',
-            price: ethers.formatEther(price),
-            priceWei: price,
+            price: ethers.formatEther(effectivePrice),
+            priceWei: effectivePrice,
             didOwner,
             issuer: pIssuer,
             issuerName: pIssuerName,
@@ -329,6 +347,7 @@ export default function IssuerNFTManager({
       {selectedNFT && (
         <NFTDetailModal
           nft={selectedNFT}
+          ethEurRate={ethEurRate}
           kycContractAddress={kycContractAddress}
           kycContractABI={kycContractABI}
           onClose={() => setSelectedNFT(null)}

@@ -13,6 +13,41 @@ echo ""
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR"
 
+# Database bootstrap configuration
+DB_HOST="${DB_HOST:-localhost}"
+DB_USER="${DB_USER:-root}"
+DB_PASS="${DB_PASS:-admin}"
+DB_NAMES=("zeroid_wallet" "zeroid_entity" "bank1" "bank2" "zeroid_issuer")
+DB_SQL_FILES=(
+    "zeroid-wallet/db.sql"
+    "zeroid-entity/db.sql"
+    "zeroid-issuer/db.sql"
+)
+
+run_mysql() {
+    local mysql_args=("-h" "$DB_HOST" "-u" "$DB_USER")
+    if [ -n "$DB_PASS" ]; then
+        mysql_args+=("-p$DB_PASS")
+    fi
+    mysql "${mysql_args[@]}" "$@"
+}
+
+reset_databases() {
+    echo "Resetting databases..."
+    for db_name in "${DB_NAMES[@]}"; do
+        run_mysql -e "DROP DATABASE IF EXISTS \`$db_name\`;"
+    done
+    echo "Databases dropped"
+}
+
+import_database_files() {
+    echo "Importing SQL files..."
+    for sql_file in "${DB_SQL_FILES[@]}"; do
+        run_mysql < "$sql_file"
+        echo "Imported $sql_file"
+    done
+}
+
 # Function to cleanup on exit
 cleanup() {
     echo ""
@@ -37,6 +72,32 @@ cleanup() {
 }
 
 trap cleanup SIGINT SIGTERM
+
+echo "0: Setting up databases..."
+if ! command -v mysql >/dev/null 2>&1; then
+    echo "X mysql client not found. Install MySQL client and try again."
+    exit 1
+fi
+
+echo "DB Setup Option:"
+echo "  0) Create/update from db.sql files (default)"
+echo "  1) Fresh reset (drop DBs + re-import db.sql files)"
+
+DB_SETUP_OPTION="0"
+if [ -t 0 ]; then
+    read -r -p "Select DB setup option [0/1]: " DB_SETUP_OPTION
+fi
+DB_SETUP_OPTION="${DB_SETUP_OPTION:-0}"
+
+if [ "$DB_SETUP_OPTION" = "1" ]; then
+    reset_databases
+elif [ "$DB_SETUP_OPTION" != "0" ]; then
+    echo "Invalid option '$DB_SETUP_OPTION'. Using default option 0."
+fi
+
+import_database_files
+echo "Databases ready"
+echo ""
 
 echo "1: Installing dependencies..."
 echo ""

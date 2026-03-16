@@ -40,7 +40,6 @@ async function getQuantumRandomUUID(): Promise<string> {
   let timeoutId: number | undefined;
 
   try {
-    console.log("Fetching quantum random data for UUID generation...");
     // Fetch 16 random bytes via Vite proxy with timeout fallback
     const controller = new AbortController();
     timeoutId = window.setTimeout(() => controller.abort(), 6000);
@@ -59,14 +58,14 @@ async function getQuantumRandomUUID(): Promise<string> {
       throw new Error("Failed to get quantum random data");
     }
 
-    // Convert the first 16 random bytes to UUID v4 format (8-4-4-4-12)
-    const bytes = new Uint8Array(data.data.slice(0, 16));
-    bytes[6] = (bytes[6] & 0x0f) | 0x40;
-    bytes[8] = (bytes[8] & 0x3f) | 0x80;
-
-    const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-
-    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
+    // Convert the 16 random bytes to UUID format (8-4-4-4-12)
+    const bytes = data.data;
+    const hex = bytes.map((b: number) => b.toString(16).padStart(2, "0")).join("");
+    
+    // Format as UUID: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-${(
+      (parseInt(hex.slice(16, 18), 16) & 0x3f) | 0x80
+    ).toString(16)}${hex.slice(18, 20)}-${hex.slice(20, 32)}`;
   } catch (error) {
     console.warn("Failed to get quantum random UUID, falling back to crypto.randomUUID():", error);
     return crypto.randomUUID();

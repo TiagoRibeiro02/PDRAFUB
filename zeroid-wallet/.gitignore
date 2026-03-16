@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Generated contract artifacts
+src/contracts/*.json
+
+# Runtime backend JSON storage
+backend/qr-sessions.json
+backend/qr-entity-sessions.json

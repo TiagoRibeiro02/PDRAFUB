@@ -27,3 +27,6 @@ dist-ssr
 .env
 .env.local
 .env.production
+
+# Generated contract artifacts
+src/contracts/*.json

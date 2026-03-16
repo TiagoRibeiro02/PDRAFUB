@@ -493,6 +493,13 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
 
   return (
     <div className='mainDivStyle'>
+      {/* Info bar */}
+      <div className="issuer-info-bar">
+        <span><strong>Contract:</strong> {contractAddress.slice(0, 8)}…{contractAddress.slice(-4)}</span>
+        <span><strong>Network:</strong> Localhost:8545</span>
+        <span className="wallet-chip">Wallet: {account.slice(0, 6)}…{account.slice(-4)}</span>
+      </div>
+
       <div className='refreshDiv'>
         <div>
           <h1 className='titleStyle'>Bank NFT Management</h1>
@@ -509,7 +516,7 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
       )}
 
       <div className='summaryDiv'>
-        <h3 className='titleStyle3'>Inventory Summary</h3>
+        <h3 className='summarytitle'>Inventory Summary</h3>
         <p className='summaryp'>
           Available for purchase: {available.length} | Already purchased: {purchased.length}
         </p>

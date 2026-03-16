@@ -57,7 +57,7 @@ export default function App() {
       <div style={{
         background: '#1a1a1a',
         padding: '1rem 2rem',
-        borderBottom: '2px solid #333',
+        borderBottom: '2px solid rgb(202, 165, 97)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',

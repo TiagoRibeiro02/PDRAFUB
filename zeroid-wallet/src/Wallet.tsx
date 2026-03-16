@@ -110,7 +110,7 @@ async function generateDid(): Promise<any> {
     did,
     didDocument,
     publicKeyJwk,
-    privateKeyRaw: keyPair.privateKey, // Keep the CryptoKey object for DID
+    privateKeyRaw: keyPair.privateKey,
     ethAddress: ethWallet.address,
     ethPrivateKey: ethWallet.privateKey,
   };

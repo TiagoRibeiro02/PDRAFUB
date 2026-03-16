@@ -39,19 +39,6 @@ export default function AvailableNFTCard({ nft, ethEurRate }: Props) {
             Issuer: {nft.issuerName || nft.issuer}
           </div>
         )}
-
-        <div style={{
-          marginTop: '0.6rem',
-          padding: '0.3rem 0.6rem',
-          background: '#222',
-          border: '1px solid #444',
-          borderRadius: '4px',
-          fontSize: '0.75rem',
-          color: '#888',
-          textAlign: 'center',
-        }}>
-          Purchase via Bank Portal
-        </div>
       </div>
     </div>
   );

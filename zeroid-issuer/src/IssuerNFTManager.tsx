@@ -213,14 +213,15 @@ export default function IssuerNFTManager({
     }
   };
 
-  // Filter helpers
-  const filterByIssuer = (items: NFTItem[]) => {
-    if (showAllIssuers || !issuerDid) return items;
-    return items.filter(n => n.issuer === issuerDid);
-  };
+  // Sold assets should always be scoped to this issuer.
+  const myPurchased = issuerDid
+    ? purchased.filter(n => n.issuer === issuerDid)
+    : purchased;
 
-  const myPurchased  = filterByIssuer(purchased);
-  const myAvailable  = filterByIssuer(available);
+  // "Show all issuers" only affects available assets.
+  const myAvailable = (showAllIssuers || !issuerDid)
+    ? available
+    : available.filter(n => n.issuer === issuerDid);
 
   if (!account) {
     return (
@@ -255,7 +256,7 @@ export default function IssuerNFTManager({
             checked={showAllIssuers}
             onChange={e => setShowAllIssuers(e.target.checked)}
           />
-          Show NFTs from all issuers
+          Show available assets from all issuers
         </label>
       </div>
 
@@ -265,7 +266,7 @@ export default function IssuerNFTManager({
       <section className="issuer-section">
         <h2>
           Sold Assets ({myPurchased.length})
-          {!showAllIssuers && issuerDid && (
+          {issuerDid && (
             <span style={{ color: '#888', fontSize: '0.75rem', marginLeft: '0.5rem' }}>
               — {issuerName}
             </span>

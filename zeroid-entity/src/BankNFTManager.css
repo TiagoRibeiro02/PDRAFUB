@@ -1,3 +1,30 @@
+/* ── Info bar (matches issuer style) ──────────────────────────────────── */
+.issuer-info-bar {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  color: #aaa;
+  margin-bottom: 2rem;
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.issuer-info-bar strong { color: rgb(202, 165, 97); }
+
+.wallet-chip {
+  background: #242424;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+  color: #888;
+  margin-left: auto;
+}
+
 .cardStyle {
     background: #1a1a1a;
     border-radius: 12px;
@@ -269,14 +296,20 @@
 /* ===================== */
 
 .summaryDiv {
-    background: #fef3cd;
+    background: #1a1a1a;
     padding: clamp(0.75rem, 2vw, 1.25rem);
     border-radius: 10px;
     margin-bottom: clamp(1.5rem, 3vw, 2rem);
-    color: #856404;
+    color: #aaa;
     border: 1px solid rgb(202, 165, 97);
     transition: all 0.3s ease;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.summarytitle {
+    color: rgb(202, 165, 97);
+    margin: 0 0 0.5rem 0;
+    font-size: clamp(1rem, 1.8vw, 1.2rem);
 }
 
 .summaryDiv:hover {

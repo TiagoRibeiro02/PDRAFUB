@@ -33,7 +33,6 @@ type TabType = 'nft-bank' | 'zkp-issuer';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabType>('nft-bank');
-  const [account, setAccount] = useState<string>('');
   const [entityUser, setEntityUser] = useState<any>(
     JSON.parse(localStorage.getItem('entity_user') || 'null')
   );
@@ -44,8 +43,6 @@ export default function App() {
   };
 
   useEffect(() => {
-    checkWalletConnection();
-
     // Fetch fresh entity data from the DB
     const stored = JSON.parse(localStorage.getItem('entity_user') || 'null');
     if (stored?.id) {
@@ -61,57 +58,6 @@ export default function App() {
         .catch(() => {}); // keep cached data on network error
     }
   }, []);
-
-  const checkWalletConnection = async () => {
-    if (typeof window.ethereum !== 'undefined') {
-      try {
-        const accounts = await window.ethereum.request({ 
-          method: 'eth_accounts' 
-        });
-        if (accounts.length > 0) {
-          setAccount(accounts[0]);
-        }
-      } catch (err) {
-        console.error('Error checking wallet connection:', err);
-      }
-    }
-  };
-
-  const connectWallet = async () => {
-    if (typeof window.ethereum === 'undefined') {
-      alert('Please install MetaMask to use this app!');
-      return;
-    }
-
-    try {
-      const accounts = await window.ethereum.request({ 
-        method: 'eth_requestAccounts' 
-      });
-      setAccount(accounts[0]);
-
-      // Switch to localhost network
-      try {
-        await window.ethereum.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: '0x539' }], // 1337 in hex
-        });
-      } catch (switchError: any) {
-        // Chain hasn't been added yet
-        if (switchError.code === 4902) {
-          await window.ethereum.request({
-            method: 'wallet_addEthereumChain',
-            params: [{
-              chainId: '0x539',
-              chainName: 'Localhost 8545',
-              rpcUrls: ['http://127.0.0.1:8545'],
-            }],
-          });
-        }
-      }
-    } catch (err: any) {
-      console.error('Failed to connect wallet:', err);
-    }
-  };
 
   const tabStyle = (isActive: boolean): React.CSSProperties => ({
     padding: '0.75rem 1.5rem',
@@ -131,7 +77,7 @@ export default function App() {
       <div style={{ 
         background: '#1a1a1a', 
         padding: '1rem 2rem', 
-        borderBottom: '2px solid #333',
+        borderBottom: '2px solid rgb(202, 165, 97)',
         marginBottom: '1rem',
         borderRadius: '12px 12px 0 0',
       }}>
@@ -175,46 +121,6 @@ export default function App() {
           </button>
         </div>
 
-        {activeTab === 'nft-bank' && (
-          <div style={{
-            background: '#fef3cd',
-            padding: '0.75rem',
-            borderRadius: '6px',
-            color: '#856404',
-            fontSize: '0.9rem',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}>
-            <div>
-              <strong>Contract:</strong> {contractAddress || <em>Not deployed</em>}
-              {' | '}
-              <strong>Network:</strong> Localhost:8545 (Chain ID: 1337)
-            </div>
-            {!account && (
-              <button 
-                onClick={connectWallet}
-                style={{
-                  padding: '0.5rem 1rem',
-                  background: '#1565c0',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '0.9rem',
-                  fontWeight: 'bold'
-                }}
-              >
-                Connect Wallet
-              </button>
-            )}
-            {account && (
-              <div style={{ fontSize: '0.85rem' }}>
-                Connected: {account.substring(0, 6)}...{account.substring(38)}
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {activeTab === 'nft-bank' && (

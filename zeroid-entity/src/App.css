@@ -3,3 +3,331 @@
   min-height: 100vh;
   background: #0a0a0a;
 }
+
+/* Shared UI utilities */
+.ui-btn {
+  padding: 0.75rem 1.5rem;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.ui-btn-gold {
+  background: rgb(202, 165, 97);
+}
+
+.ui-btn-gold:hover:not(:disabled) {
+  background: rgb(180, 145, 77);
+}
+
+.ui-btn-disabled,
+.ui-btn:disabled {
+  background: #666;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.ui-input-dark {
+  padding: 0.75rem;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  color: white;
+  border-radius: 6px;
+}
+
+.ui-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.ui-modal-panel {
+  background: #1a1a1a;
+  padding: 2rem;
+  border-radius: 12px;
+  position: relative;
+  border: 2px solid #333;
+}
+
+.ui-modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: transparent;
+  border: none;
+  color: #888;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.entity-app {
+  min-height: 100vh;
+  background: #0a0a0a;
+  color: white;
+  border-radius: 12px;
+}
+
+.entity-header {
+  background: #1a1a1a;
+  padding: 1rem 2rem 0;
+  border-bottom: 2px solid rgb(202, 165, 97);
+  margin-bottom: 1rem;
+  border-radius: 12px 12px 0 0;
+}
+
+.entity-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.entity-title {
+  margin: 0;
+}
+
+.entity-user-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.9rem;
+}
+
+.entity-logged-in {
+  color: rgb(202, 165, 97);
+}
+
+.entity-logout-btn {
+  padding: 0.4rem 1rem;
+  background: #c0392b;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.entity-tabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.entity-tab-btn {
+  padding: 0.75rem 1.5rem;
+  background: #333;
+  color: white;
+  border: none;
+  border-radius: 6px 6px 0 0;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: normal;
+  transition: all 0.2s;
+}
+
+.entity-tab-btn.active {
+  background: rgb(202, 165, 97);
+  font-weight: bold;
+}
+
+.entity-contract-missing {
+  padding: 2rem;
+  text-align: center;
+}
+
+.entity-contract-missing-text {
+  color: #888;
+}
+
+.zkp-issuer {
+  padding: 2rem;
+}
+
+.zkp-subtitle {
+  color: #888;
+  margin-bottom: 1rem;
+}
+
+.zkp-form-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.zkp-did-input {
+  flex: 1;
+  padding: 0.75rem;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  color: white;
+  border-radius: 6px;
+}
+
+.zkp-expiry-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.zkp-expiry-label {
+  font-size: 0.75rem;
+  color: #888;
+}
+
+.zkp-expiry-input {
+  padding: 0.75rem;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  color: white;
+  border-radius: 6px;
+}
+
+.zkp-wallet-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.zkp-wallet-chip {
+  padding: 0.75rem 1.5rem;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #888;
+}
+
+.zkp-actions-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.zkp-btn {
+  padding: 0.75rem 1.5rem;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.zkp-btn-gold {
+  background: rgb(202, 165, 97);
+}
+
+.zkp-btn-gold:disabled {
+  background: #666;
+  cursor: not-allowed;
+}
+
+.zkp-btn-disabled {
+  background: #333;
+  cursor: not-allowed;
+}
+
+.zkp-error {
+  color: #ff6b6b;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #2a1a1a;
+  border-radius: 6px;
+}
+
+.zkp-success {
+  color: #4caf50;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #1a2a1a;
+  border-radius: 6px;
+  border: 1px solid #4caf50;
+}
+
+.zkp-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.zkp-modal {
+  background: #1a1a1a;
+  padding: 2rem;
+  border-radius: 12px;
+  max-width: 500px;
+  position: relative;
+  border: 2px solid #333;
+}
+
+.zkp-modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: transparent;
+  border: none;
+  color: #888;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.zkp-modal-title {
+  margin-top: 0;
+}
+
+.zkp-modal-subtitle {
+  color: #888;
+  margin-bottom: 1.5rem;
+}
+
+.zkp-modal-qr-box {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+.zkp-modal-wait {
+  color: rgb(202, 165, 97);
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.zkp-proof-section {
+  margin-top: 2rem;
+}
+
+.zkp-proof-card {
+  background: #1a1a1a;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-top: 1rem;
+}
+
+.zkp-proof-subtitle {
+  margin-top: 1rem;
+}
+
+.zkp-proof-pre {
+  overflow: auto;
+  font-size: 0.8rem;
+  background: #0a0a0a;
+  padding: 1rem;
+  border-radius: 4px;
+}

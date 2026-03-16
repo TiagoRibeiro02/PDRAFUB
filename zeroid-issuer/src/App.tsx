@@ -63,7 +63,7 @@ export default function App() {
         alignItems: 'center',
       }}>
         <div>
-          <h1 style={{ margin: 0, color: 'rgb(202,165,97)' }}>
+          <h1 style={{ margin: 0 }}>
             {issuerUser.issuer_name || 'ZeroID Issuer'} — Asset Portal
           </h1>
         </div>

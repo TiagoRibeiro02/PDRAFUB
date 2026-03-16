@@ -36,9 +36,9 @@ export default function QRModal({
   const canSubmit = manualDID.trim() && manualEthAddress.trim() && selectedBankUser !== null;
 
   return (
-    <div className='qRequestDiv'>
-      <div className='closeButtonDiv'>
-        <button onClick={onClose} className='closeButton'>
+    <div className='ui-modal-overlay'>
+      <div className='closeButtonDiv ui-modal-panel'>
+        <button onClick={onClose} className='ui-modal-close'>
           ✕
         </button>
         <h3 className='titleStyle3Gold'>Purchase NFT for User</h3>
@@ -77,7 +77,7 @@ export default function QRModal({
             placeholder="User DID (e.g., did:zeroid: ...)"
             value={manualDID}
             onChange={(e) => onManualDIDChange(e.target.value)}
-            className='didInput'
+            className='didInput ui-input-dark'
           />
 
           {manualDID.trim() && (
@@ -86,7 +86,7 @@ export default function QRModal({
               placeholder="Ethereum Address (0x...)"
               value={manualEthAddress}
               onChange={(e) => onManualEthAddressChange(e.target.value)}
-              className='didInput'
+              className='didInput ui-input-dark'
               style={{ marginTop: '0.5rem' }}
             />
           )}
@@ -104,7 +104,7 @@ export default function QRModal({
           <button
             onClick={onManualSubmit}
             disabled={!canSubmit}
-            className="buttonStyle submitManual"
+            className="ui-btn ui-btn-gold submitManual"
             style={{ marginTop: '1rem', opacity: canSubmit ? 1 : 0.5 }}
           >
             Confirm Purchase

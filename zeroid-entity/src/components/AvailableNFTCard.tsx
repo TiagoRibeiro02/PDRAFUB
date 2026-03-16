@@ -29,7 +29,7 @@ export default function AvailableNFTCard({ nft, loading, ethEurRate, onPurchase 
       <button
         onClick={() => onPurchase(nft.tokenId, nft.priceWei)}
         disabled={loading}
-        className="buttonStyle purchase"
+        className="ui-btn ui-btn-gold purchase"
       >
         Purchase for User
       </button>

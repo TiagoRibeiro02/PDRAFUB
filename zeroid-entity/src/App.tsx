@@ -59,46 +59,19 @@ export default function App() {
     }
   }, []);
 
-  const tabStyle = (isActive: boolean): React.CSSProperties => ({
-    padding: '0.75rem 1.5rem',
-    background: isActive ? 'rgb(202, 165, 97)' : '#333',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px 6px 0 0',
-    cursor: 'pointer',
-    fontSize: '1rem',
-    fontWeight: isActive ? 'bold' : 'normal',
-    transition: 'all 0.2s',
-    marginRight: '0.5rem'
-  });
-
   return (
-    <div style={{ minHeight: '100vh', background: '#0a0a0a', color: 'white', borderRadius: '12px' }}>
-      <div style={{ 
-        background: '#1a1a1a', 
-        padding: '1rem 2rem', 
-        borderBottom: '2px solid rgb(202, 165, 97)',
-        marginBottom: '1rem',
-        borderRadius: '12px 12px 0 0',
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-          <h1 style={{ margin: 0 }}>{entityUser.entity_name} - ZeroID System</h1>
+    <div className="entity-app">
+      <div className="entity-header">
+        <div className="entity-header-top">
+          <h1 className="entity-title">{entityUser.entity_name} - ZeroID System</h1>
           {entityUser && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.9rem' }}>
-              <span style={{ color: 'rgb(202, 165, 97)' }}>
+            <div className="entity-user-info">
+              <span className="entity-logged-in">
                 Logged in as <strong>{entityUser.username}</strong>
               </span>
               <button
                 onClick={handleLogout}
-                style={{
-                  padding: '0.4rem 1rem',
-                  background: '#c0392b',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '0.85rem',
-                }}
+                className="entity-logout-btn"
               >
                 Logout
               </button>
@@ -106,15 +79,15 @@ export default function App() {
           )}
         </div>
 
-        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+        <div className="entity-tabs">
           <button 
-            style={tabStyle(activeTab === 'nft-bank')}
+            className={`entity-tab-btn ${activeTab === 'nft-bank' ? 'active' : ''}`}
             onClick={() => setActiveTab('nft-bank')}
           >
             NFT Bank
           </button>
           <button 
-            style={tabStyle(activeTab === 'zkp-issuer')}
+            className={`entity-tab-btn ${activeTab === 'zkp-issuer' ? 'active' : ''}`}
             onClick={() => setActiveTab('zkp-issuer')}
           >
             ZK Proof Issuer
@@ -130,9 +103,9 @@ export default function App() {
             contractABI={MyNFTABI}
           />
         ) : (
-          <div style={{ padding: '2rem', textAlign: 'center' }}>
+          <div className="entity-contract-missing">
             <h2>NFT Contract Not Found</h2>
-            <p style={{ color: '#888' }}>
+            <p className="entity-contract-missing-text">
               Please deploy the NFT contract first.
             </p>
           </div>
@@ -277,9 +250,9 @@ function ZKPIssuer() {
   };
 
   return (
-    <div style={{ padding: "2rem" }}>
+    <div className="zkp-issuer">
       <h2>Entity - KYC Issuer</h2>
-      <p style={{ color: '#888', marginBottom: '1rem' }}>
+      <p className="zkp-subtitle">
         Generate zero-knowledge proofs for user DIDs
       </p>
 
@@ -290,7 +263,7 @@ function ZKPIssuer() {
         apiUrl={bankApiUrl}
       />
 
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+      <div className="zkp-form-row">
         <input
           placeholder="User DID (e.g., did:zeroid:...)"
           value={did}
@@ -298,234 +271,140 @@ function ZKPIssuer() {
             setDid(e.target.value);
             setError(null);
           }}
-          style={{ 
-            flex: '1',
-            padding: '0.75rem',
-            background: '#1a1a1a',
-            border: '1px solid #333',
-            color: 'white',
-            borderRadius: '6px'
-          }}
+          className="zkp-did-input ui-input-dark"
         />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-          <label style={{ fontSize: '0.75rem', color: '#888' }}>KYC Expiry Date</label>
+        <div className="zkp-expiry-wrap">
+          <label className="zkp-expiry-label">KYC Expiry Date</label>
           <input
             type="date"
             value={kycExpiryDate}
             onChange={e => setKycExpiryDate(e.target.value)}
-            style={{ 
-              padding: '0.75rem',
-              background: '#1a1a1a',
-              border: '1px solid #333',
-              color: 'white',
-              borderRadius: '6px'
-            }}
+            className="zkp-expiry-input ui-input-dark"
           />
         </div>
         <button
           onClick={generateQRRequest}
-          style={{
-            padding: '0.75rem 1.5rem',
-            background: 'rgb(202, 165, 97)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontSize: '1rem',
-            fontWeight: 'bold',
-            whiteSpace: 'nowrap'
-          }}
+          className="zkp-btn zkp-btn-gold ui-btn ui-btn-gold"
         >
           Request via QR
         </button>
       </div>
 
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+      <div className="zkp-wallet-row">
         {!account ? (
           <button
             onClick={connectWallet}
-            style={{
-              padding: '0.75rem 1.5rem',
-              background: 'rgb(202, 165, 97)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '1rem',
-              fontWeight: 'bold'
-            }}
+            className="zkp-btn zkp-btn-gold ui-btn ui-btn-gold"
           >
             Connect Wallet
           </button>
         ) : (
-          <div style={{ 
-            padding: '0.75rem 1.5rem',
-            background: '#1a1a1a',
-            border: '1px solid #333',
-            borderRadius: '6px',
-            color: '#888'
-          }}>
+          <div className="zkp-wallet-chip">
             Connected: {account.substring(0, 6)}...{account.substring(38)}
           </div>
         )}
       </div>
 
-      <button
-        onClick={async () => {
-          try {
-            setError(null);
-            setSubmitSuccess(false);
-            const proof = await generatePlonkZKP(did);
-            setZkProof(proof);
-          } catch (err) {
-            setError(err instanceof Error ? err.message : "Unknown error");
-          }
-        }}
-        disabled={!did}
-        style={{
-          padding: '0.75rem 1.5rem',
-          background: did ? 'rgb(202, 165, 97)' : '#333',
-          color: 'white',
-          border: 'none',
-          borderRadius: '6px',
-          cursor: did ? 'pointer' : 'not-allowed',
-          fontSize: '1rem',
-          fontWeight: 'bold',
-          marginRight: '1rem'
-        }}
-      >
-        Generate PLONK ZK Proof
-      </button>
-
-      {zkProof && kycContractAddress && account && (
+      <div className="zkp-actions-row">
         <button
           onClick={async () => {
             try {
-              setSubmitting(true);
               setError(null);
-              // Public key is stored on-chain inside submitComplianceProof (first time)
-              // or was already verified against on-chain record during QR scan.
-              await submitProofToContract(
-                did,
-                zkProof,
-                kycIssuer,
-                new Date(kycExpiryDate).getTime() / 1000,
-                compressedPk?.pkX,
-                compressedPk?.pkParity,
-              );
-              // Update KYC flag in the bank DB for UI display
-              if (selectedBankUser) {
-                try {
-                  const res = await fetch(bankApiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'set_kyc', userId: selectedBankUser.id }),
-                  });
-                  const data = await res.json();
-                  if (!data.success) console.warn('set_kyc failed:', data.message);
-                } catch (kycErr) {
-                  console.warn('Failed to set KYC in bank DB:', kycErr);
-                }
-              }
-              setSubmitSuccess(true);
+              setSubmitSuccess(false);
+              const proof = await generatePlonkZKP(did);
+              setZkProof(proof);
             } catch (err) {
-              setError(err instanceof Error ? err.message : "Failed to submit proof");
-            } finally {
-              setSubmitting(false);
+              setError(err instanceof Error ? err.message : "Unknown error");
             }
           }}
-          disabled={submitting}
-          style={{
-            padding: '0.75rem 1.5rem',
-            background: submitting ? '#666' : 'rgb(202, 165, 97)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: submitting ? 'not-allowed' : 'pointer',
-            fontSize: '1rem',
-            fontWeight: 'bold'
-          }}
+          disabled={!did}
+          className={`zkp-btn ui-btn ${did ? 'zkp-btn-gold ui-btn-gold' : 'zkp-btn-disabled ui-btn-disabled'}`}
         >
-          {submitting ? 'Submitting...' : 'Submit to Blockchain'}
+          Generate PLONK ZK Proof
         </button>
-      )}
+
+        {zkProof && kycContractAddress && account && (
+          <button
+            onClick={async () => {
+              try {
+                setSubmitting(true);
+                setError(null);
+                // Public key is stored on-chain inside submitComplianceProof (first time)
+                // or was already verified against on-chain record during QR scan.
+                await submitProofToContract(
+                  did,
+                  zkProof,
+                  kycIssuer,
+                  new Date(kycExpiryDate).getTime() / 1000,
+                  compressedPk?.pkX,
+                  compressedPk?.pkParity,
+                );
+                // Update KYC flag in the bank DB for UI display
+                if (selectedBankUser) {
+                  try {
+                    const res = await fetch(bankApiUrl, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ action: 'set_kyc', userId: selectedBankUser.id }),
+                    });
+                    const data = await res.json();
+                    if (!data.success) console.warn('set_kyc failed:', data.message);
+                  } catch (kycErr) {
+                    console.warn('Failed to set KYC in bank DB:', kycErr);
+                  }
+                }
+                setSubmitSuccess(true);
+              } catch (err) {
+                setError(err instanceof Error ? err.message : "Failed to submit proof");
+              } finally {
+                setSubmitting(false);
+              }
+            }}
+            disabled={submitting}
+            className="zkp-btn zkp-btn-gold ui-btn ui-btn-gold"
+          >
+            {submitting ? 'Submitting...' : 'Submit to Blockchain'}
+          </button>
+        )}
+      </div>
 
       {error && (
-        <p style={{ color: "#ff6b6b", marginTop: "1rem", padding: '1rem', background: '#2a1a1a', borderRadius: '6px' }}>
+        <p className="zkp-error">
           Error: {error}
         </p>
       )}
 
       {submitSuccess && (
-        <div style={{ 
-          color: "#4CAF50", 
-          marginTop: "1rem", 
-          padding: '1rem', 
-          background: '#1a2a1a', 
-          borderRadius: '6px',
-          border: '1px solid #4CAF50'
-        }}>
+        <div className="zkp-success">
           Proof successfully submitted to blockchain! The DID is now marked as KYC/AML compliant.
         </div>
       )}
 
       {/* QR Code Request Modal */}
       {showQRRequest && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.8)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            background: '#1a1a1a',
-            padding: '2rem',
-            borderRadius: '12px',
-            maxWidth: '500px',
-            position: 'relative',
-            border: '2px solid #333'
-          }}>
+        <div className="zkp-modal-overlay ui-modal-overlay">
+          <div className="zkp-modal ui-modal-panel">
             <button
               onClick={() => {
                 setShowQRRequest(false);
                 setEntitySession(null);
                 setSelectedBankUser(null);
               }}
-              style={{
-                position: 'absolute',
-                top: '1rem',
-                right: '1rem',
-                background: 'transparent',
-                border: 'none',
-                color: '#888',
-                fontSize: '1.5rem',
-                cursor: 'pointer'
-              }}
+              className="zkp-modal-close ui-modal-close"
             >
               ✕
             </button>
-            <h3 style={{ marginTop: 0 }}>Scan with Wallet</h3>
-            <p style={{ color: '#888', marginBottom: '1.5rem' }}>
+            <h3 className="zkp-modal-title">Scan with Wallet</h3>
+            <p className="zkp-modal-subtitle">
               Open your ZeroID Wallet and scan this QR code to share your DID
             </p>
-            <div style={{
-              background: 'white',
-              padding: '1rem',
-              borderRadius: '8px',
-              display: 'inline-block'
-            }}>
+            <div className="zkp-modal-qr-box">
               <QRCodeSVG 
                 value={entitySession ? JSON.stringify(entitySession.qrPayload) : ''}
                 size={256}
               />
             </div>
-            <p style={{ color: 'rgb(202, 165, 97)', marginTop: '1rem', fontSize: '0.9rem', fontWeight: 'bold' }}>
+            <p className="zkp-modal-wait">
               Waiting for wallet response...
             </p>
           </div>
@@ -533,44 +412,21 @@ function ZKPIssuer() {
       )}
 
       {zkProof && (
-        <div style={{ marginTop: "2rem" }}>
+        <div className="zkp-proof-section">
           <h3>✓ Proof Generated</h3>
-          <div style={{
-            background: '#1a1a1a',
-            padding: '1rem',
-            borderRadius: '6px',
-            marginTop: '1rem'
-          }}>
+          <div className="zkp-proof-card">
             <h4>Proof:</h4>
-            <pre style={{ 
-              overflow: "auto", 
-              fontSize: "0.8rem",
-              background: '#0a0a0a',
-              padding: '1rem',
-              borderRadius: '4px'
-            }}>
+            <pre className="zkp-proof-pre">
               {JSON.stringify(zkProof.proof, null, 2)}
             </pre>
 
-            <h4 style={{ marginTop: '1rem' }}>Public Signals:</h4>
-            <pre style={{ 
-              overflow: "auto", 
-              fontSize: "0.8rem",
-              background: '#0a0a0a',
-              padding: '1rem',
-              borderRadius: '4px'
-            }}>
+            <h4 className="zkp-proof-subtitle">Public Signals:</h4>
+            <pre className="zkp-proof-pre">
               {JSON.stringify(zkProof.publicSignals, null, 2)}
             </pre>
 
-            <h4 style={{ marginTop: '1rem' }}>Commitment:</h4>
-            <pre style={{ 
-              overflow: "auto", 
-              fontSize: "0.8rem",
-              background: '#0a0a0a',
-              padding: '1rem',
-              borderRadius: '4px'
-            }}>
+            <h4 className="zkp-proof-subtitle">Commitment:</h4>
+            <pre className="zkp-proof-pre">
               {zkProof.commitment}
             </pre>
           </div>

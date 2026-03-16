@@ -118,27 +118,9 @@
 
 /* ====== Buttons ====== */
 
-.buttonStyle {
-    background: rgb(202, 165, 97);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    padding: 0.75rem 1rem;
-    cursor: pointer;
-    width: 100%;
-    font-size: 1rem;
-    font-weight: bold;
-    margin-top: 0.5rem;
-    transition: background 0.2s ease;
-}
-
-.buttonStyle:not(:disabled):hover {
-    background: rgb(180, 145, 77);
-}
-
 .noacc {
-    font-size: 'clamp(0.95rem, 1.5vw, 1.1rem)';
-    padding: 'clamp(0.75rem, 1.5vw, 1rem) clamp(1.5rem, 3vw, 2rem)';
+    font-size: clamp(0.95rem, 1.5vw, 1.1rem);
+    padding: clamp(0.75rem, 1.5vw, 1rem) clamp(1.5rem, 3vw, 2rem);
 }
 
 .refresh {
@@ -219,37 +201,9 @@
 
 /* ====== QR Code ====== */
 
-.qRequestDiv {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0,0,0,0.8);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
-
 .closeButtonDiv {
-    background: #1a1a1a;
-    padding: 2rem;
-    border-radius: 12px;
     max-width: 500px;
-    position: relative;
     border: 2px solid rgb(202, 165, 97)
-}
-
-.closeButton {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    background: transparent;
-    border: none;
-    color: #888;
-    font-size: 1.5rem;
-    cursor: pointer;
 }
 
 .scantext {
@@ -339,11 +293,6 @@
 
 .didInput {
     width: 100%;
-    padding: clamp(0.75rem, 1.5vw, 1rem);
-    background: #0a0a0a;
-    border: 1px solid #333;
-    border-radius: 6px;
-    color: white;
     font-size: clamp(0.9rem, 1.5vw, 1rem);
     margin-bottom: clamp(0.75rem, 1.5vw, 1rem);
     box-sizing: border-box;
@@ -372,20 +321,9 @@
     margin-bottom: clamp(0.75rem, 1.5vw, 1rem);
 }
 
-.titleStyle3 {
-    margin: 0 0 0.5rem 0;
-    font-size: clamp(1rem, 1.8vw, 1.2rem);
-}
-
 .titleStyle3Gold {
     margin-top: 0;
     color: rgb(202, 165, 97);
-}
-
-.titleStyle4 {
-    color: #888;
-    font-size: clamp(0.9rem, 1.5vw, 0.95rem);
-    margin-bottom: clamp(0.75rem, 1.5vw, 1rem);
 }
 
 .titleStyle2smaller {

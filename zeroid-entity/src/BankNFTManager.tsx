@@ -461,7 +461,7 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
       <div className='noAcountStyle'>
         <h2 className='titleStyle2'>Bank NFT Management</h2>
         <p className='normal'>Connect your bank wallet to manage NFTs</p>
-        <button onClick={connectWallet} className="buttonStyle noacc">
+        <button onClick={connectWallet} className="ui-btn ui-btn-gold noacc">
           Connect MetaMask
         </button>
       </div>
@@ -504,7 +504,7 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
         <div>
           <h1 className='titleStyle'>Bank NFT Management</h1>
         </div>
-        <button onClick={loadNFTs} className="buttonStyle refresh">
+        <button onClick={loadNFTs} className="ui-btn ui-btn-gold refresh">
           Refresh
         </button>
       </div>

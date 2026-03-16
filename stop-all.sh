@@ -20,7 +20,13 @@ lsof -ti:5175 | xargs -r kill -9 2>/dev/null || true
 echo "Stopping PHP backend (port 8000)..."
 lsof -ti:8000 | xargs -r kill -9 2>/dev/null || true
 
+echo "Stopping PHP backend (port 8001)..."
+lsof -ti:8001 | xargs -r kill -9 2>/dev/null || true
+
+echo "Stopping Bank1 API (port 8002)..."
+lsof -ti:8002 | xargs -r kill -9 2>/dev/null || true
+
 # Clean up log files
-rm -f /tmp/hardhat.log /tmp/zeroid-entity.log /tmp/zeroid-wallet.log /tmp/zeroid-3p.log /tmp/php-backend.log
+rm -f /tmp/hardhat.log /tmp/zeroid-entity.log /tmp/zeroid-wallet.log /tmp/zeroid-3p.log /tmp/php-backend.log /tmp/php-entity-backend.log /tmp/php-bank1-backend.log
 
 echo "All services stopped"

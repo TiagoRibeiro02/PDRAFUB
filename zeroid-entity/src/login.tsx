@@ -1,0 +1,143 @@
+import { useState } from 'react';
+import { generateNonce, computeScramProof, verifyServerSignature } from './utils/scram';
+
+export default function Login() {
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+        setLoading(true);
+
+        const username = (document.getElementById('username') as HTMLInputElement).value;
+        const password = (document.getElementById('password') as HTMLInputElement).value;
+
+        try {
+            // Phase 1: SCRAM Client-First Message
+            const clientNonce = generateNonce();
+
+            const clientFirstResponse = await fetch('http://localhost:8001/login.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'client-first',
+                    username,
+                    client_nonce: clientNonce
+                }),
+            });
+
+            const serverFirstData = await clientFirstResponse.json();
+
+            if (!serverFirstData.success) {
+                setError(serverFirstData.message || 'Failed to start authentication');
+                setLoading(false);
+                return;
+            }
+
+            const { identifier, salt, iterations, server_nonce } = serverFirstData.data;
+
+            // Phase 2: SCRAM Client-Final Message
+            const { clientProof, authMessage } = await computeScramProof(
+                username,
+                password,
+                clientNonce,
+                server_nonce,
+                salt,
+                iterations
+            );
+
+            const clientFinalResponse = await fetch('http://localhost:8001/login.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'client-final',
+                    username,
+                    identifier,
+                    client_nonce: clientNonce,
+                    server_nonce,
+                    client_proof: clientProof
+                }),
+            });
+
+            const authData = await clientFinalResponse.json();
+
+            if (authData.success) {
+                // Phase 3: Verify server signature (mutual authentication)
+                const isServerValid = await verifyServerSignature(
+                    password,
+                    salt,
+                    iterations,
+                    authMessage,
+                    authData.data.server_signature
+                );
+
+                if (!isServerValid) {
+                    setError('Server authentication failed! Possible man-in-the-middle attack.');
+                    setLoading(false);
+                    return;
+                }
+
+                localStorage.setItem('entity_user', JSON.stringify(authData.data));
+                window.location.href = '/app';
+            } else {
+                setError(authData.message || 'Authentication failed');
+            }
+        } catch (err) {
+            setError('Connection error. Please make sure the backend server is running.');
+            console.error('Login error:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div style={{ padding: '2rem', maxWidth: '600px', margin: '0 auto' }}>
+            <div style={{ color: 'rgb(202, 165, 97)', marginTop: '2rem', textAlign: 'center' }}>
+                <h2>Entity Login</h2>
+            </div>
+
+            {error && (
+                <div style={{
+                    padding: '1rem',
+                    marginTop: '1rem',
+                    backgroundColor: '#fee',
+                    color: '#c33',
+                    borderRadius: '4px'
+                }}>
+                    {error}
+                </div>
+            )}
+
+            <form style={{ marginTop: '1rem' }} id="login-form" onSubmit={handleSubmit}>
+                <label>Username</label>
+                <input
+                    type="text"
+                    id="username"
+                    required
+                    style={{ width: '95%', marginBottom: '1rem' }}
+                    disabled={loading}
+                />
+
+                <label>Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    required
+                    style={{ width: '95%', marginBottom: '1rem' }}
+                    disabled={loading}
+                />
+
+                <div style={{ textAlign: 'center' }}>
+                    <button type="submit" style={{ padding: '0.5rem 7.5rem' }} disabled={loading}>
+                        {loading ? 'Logging in...' : 'Login'}
+                    </button>
+                </div>
+
+                <p style={{ marginTop: '1rem', textAlign: 'center' }}>
+                    Don't have an account? <a href="/register">Register here</a>
+                </p>
+            </form>
+        </div>
+    );
+}

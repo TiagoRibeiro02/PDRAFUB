@@ -1,0 +1,239 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   IssuerNFTManager styles
+   ────────────────────────────────────────────────────────────────────────── */
+
+.issuer-manager {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ── Header row ─────────────────────────────────────────────────────────── */
+.issuer-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.issuer-section-title {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: rgb(202, 165, 97);
+  margin: 0;
+}
+
+.issuer-subtitle {
+  color: #888;
+  font-size: 0.9rem;
+  margin: 0 0 1.5rem 0;
+}
+
+/* ── Info bar ────────────────────────────────────────────────────────────── */
+.issuer-info-bar {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  color: #aaa;
+  margin-bottom: 2rem;
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.issuer-info-bar strong { color: rgb(202, 165, 97); }
+
+/* ── Refresh / wallet bar ───────────────────────────────────────────────── */
+.issuer-action-bar {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+/* ── Buttons ────────────────────────────────────────────────────────────── */
+.btn {
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: bold;
+  transition: opacity 0.15s;
+}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-gold   { background: rgb(202, 165, 97); color: white; }
+.btn-dark   { background: #333; color: #ccc; }
+.btn-blue   { background: #1565c0; color: white; }
+.btn-green  { background: #2e7d32; color: white; }
+
+/* ── Sections ───────────────────────────────────────────────────────────── */
+.issuer-section {
+  margin-bottom: 3rem;
+}
+
+.issuer-section h2 {
+  font-size: 1.2rem;
+  color: white;
+  margin-bottom: 0.25rem;
+}
+
+.issuer-section-hint {
+  color: #666;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+/* ── NFT grid ───────────────────────────────────────────────────────────── */
+.nft-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.25rem;
+}
+
+/* ── Individual card ────────────────────────────────────────────────────── */
+.nft-card {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.15s;
+}
+.nft-card:hover {
+  border-color: rgb(202, 165, 97);
+  transform: translateY(-2px);
+}
+
+.nft-card-img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  display: block;
+}
+.nft-card-img-placeholder {
+  width: 100%;
+  height: 160px;
+  background: #222;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+}
+
+.nft-card-body {
+  padding: 0.85rem;
+}
+
+.nft-card-name {
+  font-weight: bold;
+  font-size: 0.95rem;
+  margin-bottom: 0.25rem;
+  color: white;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nft-card-desc {
+  color: #888;
+  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.nft-card-id {
+  font-size: 0.75rem;
+  color: #555;
+  margin-bottom: 0.4rem;
+}
+
+.nft-card-did {
+  font-size: 0.7rem;
+  color: #666;
+  font-family: monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 0.5rem;
+}
+
+.nft-card-price {
+  font-size: 0.9rem;
+  color: rgb(202, 165, 97);
+  font-weight: bold;
+}
+
+/* ── Compliance badge ───────────────────────────────────────────────────── */
+.compliance-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  margin-top: 0.4rem;
+}
+.compliance-badge.ok    { background: #1a2a1a; color: #4CAF50; border: 1px solid #4CAF50; }
+.compliance-badge.notok { background: #2a1a1a; color: #ff6b6b; border: 1px solid #ff6b6b; }
+
+/* ── Empty state ────────────────────────────────────────────────────────── */
+.empty-state {
+  background: #1a1a1a;
+  border: 1px dashed #333;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  color: #555;
+}
+
+/* ── Error bar ──────────────────────────────────────────────────────────── */
+.error-bar {
+  background: #2a1a1a;
+  border: 1px solid #ff6b6b;
+  border-radius: 6px;
+  color: #ff6b6b;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+/* ── Wallet bar ─────────────────────────────────────────────────────────── */
+.wallet-chip {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  color: #888;
+}
+
+/* ── Filter bar ─────────────────────────────────────────────────────────── */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.filter-bar label { color: #888; font-size: 0.85rem; }
+
+.filter-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #aaa;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.filter-toggle input { cursor: pointer; accent-color: rgb(202, 165, 97); }

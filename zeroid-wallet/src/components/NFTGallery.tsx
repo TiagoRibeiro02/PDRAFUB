@@ -81,14 +81,16 @@ export default function NFTGallery({ userDid, contractAddress, contractABI, onNF
           let isCompliant = false;
           let complianceTimestamp = 0;
           let kycExpiryDate = 0;
+          let kycIssuer = '';
 
           if (kycContractAddress && KYCComplianceABI && didOwner) {
             try {
               const kycContract = new ethers.Contract(kycContractAddress, KYCComplianceABI, provider);
-              const [isComp, timestamp, expiryDate] = await kycContract.checkCompliance(didOwner);
+              const [isComp, timestamp, expiryDate, , issuerVal] = await kycContract.checkCompliance(didOwner);
               isCompliant         = isComp;
               complianceTimestamp = Number(timestamp);
               kycExpiryDate       = Number(expiryDate);
+              kycIssuer           = issuerVal || '';
             } catch (err) {
               console.warn(`Could not check KYC for DID ${didOwner}:`, err);
             }
@@ -112,6 +114,7 @@ export default function NFTGallery({ userDid, contractAddress, contractABI, onNF
               description:         metadata.description || '',
               complianceTimestamp: complianceTimestamp > 0 ? complianceTimestamp : undefined,
               kycExpiryTimestamp:  kycExpiryDate > 0 ? kycExpiryDate : undefined,
+              kycIssuer:           kycIssuer || undefined,
             },
           });
         } catch (err) {

@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 
-import { generateEntityQRSession, registerEntitySession, verifyWalletResponse, type EntityQRSession } from './utils/qrAuth';
+import { generateEntityQRSession, registerEntitySession, verifyWalletResponse, jwkToCompressed, getOnChainPublicKey, type EntityQRSession } from './utils/qrAuth';
 import './BankNFTManager.css';
 import AvailableNFTCard from './components/AvailableNFTCard';
 import PurchasedNFTCard from './components/PurchasedNFTCard';
 import QRModal from './components/QRModal';
+import { type BankUser } from './components/UserPicker';
 
 
 // Import KYC contract
@@ -46,34 +47,50 @@ interface BankNFTManagerProps {
 }
 
 export default function BankNFTManager({ contractAddress, contractABI }: BankNFTManagerProps) {
+  const entityUser = JSON.parse(localStorage.getItem('entity_user') || 'null');
+  const bankApiUrl: string = entityUser?.entity_api ?? 'http://localhost:8002/bank1_api.php';
+
   const [available, setAvailable] = useState<NFTListing[]>([]);
   const [purchased, setPurchased] = useState<NFTListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [account, setAccount] = useState('');
   const [isOwner, setIsOwner] = useState(false);
+  const [entityEthAddress, setEntityEthAddress] = useState('');
   const [complianceStatuses, setComplianceStatuses] = useState<{[did: string]: {isCompliant: boolean, timestamp: number, commitment: string}}>();
   const [showQRRequest, setShowQRRequest] = useState(false);
   const [entitySession, setEntitySession] = useState<EntityQRSession | null>(null);
+  const [ethEurRate, setEthEurRate] = useState<number | null>(null);
   const [purchasingTokenId, setPurchasingTokenId] = useState<number | null>(null);
   const [purchasingPrice, setPurchasingPrice] = useState<bigint | null>(null);
   const [manualDID, setManualDID] = useState('');
   const [manualEthAddress, setManualEthAddress] = useState('');
+  const [selectedBankUser, setSelectedBankUser] = useState<BankUser | null>(null);
+  // Compressed public key (pkX + pkParity) verified against blockchain during QR scan
+  const [compressedPk, setCompressedPk] = useState<{ pkX: string; pkParity: boolean } | null>(null);
 
   useEffect(() => {
+    const entityUser = JSON.parse(localStorage.getItem('entity_user') || 'null');
+    const entityAddress = (entityUser?.entity_eth_address || '').toLowerCase();
+    setEntityEthAddress(entityAddress);
+
     checkWallet();
+    
+    fetch('https://api.binance.com/api/v3/ticker/price?symbol=ETHEUR')
+      .then(r => r.json())
+      .then(d => setEthEurRate(parseFloat(d.price)))
   }, []);
 
   useEffect(() => {
     if (account) {
       loadNFTs();
     }
-  }, [account, contractAddress, contractABI]);
+  }, [account, contractAddress, contractABI, entityEthAddress]);
 
   // Poll relay server for QR code response
   useEffect(() => {
     if (!entitySession || purchasingTokenId === null || purchasingPrice === null) return;
-    const { sessionId, challenge, entitySignature } = entitySession.qrPayload;
+    const { sessionId, challenge } = entitySession.qrPayload;
 
     const interval = setInterval(async () => {
       try {
@@ -82,19 +99,50 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
 
         if (result.success && result.data) {
           try {
-            const { did, ethAddress } = await verifyWalletResponse(
-              result.data, sessionId, challenge, entitySignature,
-              entitySession.encryptionPrivateKey
+            const { did, ethAddress, publicKey } = await verifyWalletResponse(
+              result.data, sessionId, challenge,
+              entitySession.secretKey
             );
 
-            setShowQRRequest(false);
-            setEntitySession(null);
-            await executePurchase(purchasingTokenId, purchasingPrice, did, ethAddress);
-            setPurchasingTokenId(null);
-            setPurchasingPrice(null);
+            // ── Blockchain public-key check ─────────────────────────────────
+            let compressed: { pkX: string; pkParity: boolean } | null = null;
+            if (publicKey && kycContractAddress && KYCComplianceABI) {
+              try {
+                compressed = jwkToCompressed(JSON.parse(publicKey) as JsonWebKey);
+                const onChainHex = await getOnChainPublicKey(did, kycContractAddress, KYCComplianceABI);
+                if (onChainHex && onChainHex !== '0x') {
+                  const onChainParity = onChainHex.slice(2, 4) === '03';
+                  const onChainX     = onChainHex.slice(4).toLowerCase();
+                  if (
+                    onChainX !== compressed.pkX.slice(2).toLowerCase() ||
+                    onChainParity !== compressed.pkParity
+                  ) {
+                    alert(
+                      'Security error: the public key from the wallet does not match ' +
+                      'the key registered on the blockchain for this DID.\n\n' +
+                      'Possible key substitution attack — request rejected.'
+                    );
+                    setShowQRRequest(false);
+                    setEntitySession(null);
+                    return;
+                  }
+                  console.log('On-chain PK verified ✓');
+                } else {
+                  console.log('No on-chain PK yet — will be registered on first KYC submission.');
+                }
+              } catch (pkErr: any) {
+                console.warn('Blockchain PK check skipped:', pkErr.message);
+              }
+            }
+
+            // Fill the fields so the entity can review and pick a bank user
+            setManualDID(did);
+            setManualEthAddress(ethAddress);
+            if (compressed) setCompressedPk(compressed);
+            // Keep modal open — entity still needs to select a bank user
           } catch (verifyErr: any) {
             console.error('QR mutual-auth verification failed:', verifyErr);
-            alert(`Security error: ${verifyErr.message}\n\nPossible man-in-the-middle attack — request rejected.`);
+            alert(`Security error: ${verifyErr.message}\n\n Request rejected.`);
           }
         }
       } catch (err) {
@@ -187,9 +235,8 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
       const provider = new ethers.BrowserProvider(window.ethereum);
       const contract = new ethers.Contract(contractAddress, contractABI, provider);
 
-      // Check if connected account is owner
-      const owner = await contract.owner();
-      setIsOwner(owner.toLowerCase() === account.toLowerCase());
+      // Check if connected account matches logged-in entity wallet
+      setIsOwner(!!entityEthAddress && entityEthAddress === account.toLowerCase());
 
       // Get available NFTs (for sale)
       const [availableIds, prices] = await contract.getAvailableNFTs();
@@ -293,6 +340,8 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
       setEntitySession(session);
       setManualDID('');
       setManualEthAddress('');
+      setCompressedPk(null);
+      setSelectedBankUser(null);
       setShowQRRequest(true);
     } catch (err: any) {
       alert('Failed to create QR session: ' + (err?.message ?? err));
@@ -304,13 +353,13 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
       alert('Please enter a DID');
       return;
     }
-    
+
     if (!manualDID.startsWith('did:')) {
       alert('Invalid DID format. Must start with "did:"');
       return;
     }
 
-    if (manualDID.trim() && !manualEthAddress.trim()) {
+    if (!manualEthAddress.trim()) {
       alert('Please enter an Ethereum address');
       return;
     }
@@ -320,13 +369,24 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
       return;
     }
 
+    if (!selectedBankUser) {
+      alert('Please select a bank user to assign this NFT to');
+      return;
+    }
+
     if (purchasingTokenId !== null && purchasingPrice !== null) {
       setShowQRRequest(false);
+      setEntitySession(null);
+
+      // PK was already verified against the blockchain during QR scan.
       await executePurchase(purchasingTokenId, purchasingPrice, manualDID, manualEthAddress);
+      console.log('Compressed PK for this DID (to register on-chain if needed):', compressedPk);
       setPurchasingTokenId(null);
       setPurchasingPrice(null);
       setManualDID('');
       setManualEthAddress('');
+      setCompressedPk(null);
+      setSelectedBankUser(null);
     }
   };
 
@@ -413,8 +473,13 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
       <div className='noAcountStyle'>
         <h2 className='titleStyle2'>Access Denied</h2>
         <p className='notOwnerStyle'>
-          You are not a financial instituition worker.
+          Connected wallet is not the wallet registered for your entity.
         </p>
+        {entityEthAddress && (
+          <p className='smaller'>
+            Expected: {entityEthAddress.slice(0, 6)}...{entityEthAddress.slice(-4)}
+          </p>
+        )}
         <p className='smaller'>
           Connected: {account.slice(0, 6)}...{account.slice(-4)}
         </p>
@@ -467,6 +532,7 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
                 key={nft.tokenId}
                 nft={nft}
                 loading={loading}
+                ethEurRate={ethEurRate}
                 onPurchase={purchaseForUser}
               />
             ))}
@@ -499,8 +565,10 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
           qrPayload={entitySession?.qrPayload ?? null}
           purchasingTokenId={purchasingTokenId}
           purchasingPrice={purchasingPrice}
+          bankApiUrl={bankApiUrl}
           manualDID={manualDID}
           manualEthAddress={manualEthAddress}
+          selectedBankUser={selectedBankUser}
           onClose={() => {
             setShowQRRequest(false);
             setEntitySession(null);
@@ -508,9 +576,12 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
             setPurchasingPrice(null);
             setManualDID('');
             setManualEthAddress('');
+            setCompressedPk(null);
+            setSelectedBankUser(null);
           }}
           onManualDIDChange={setManualDID}
           onManualEthAddressChange={setManualEthAddress}
+          onBankUserSelect={setSelectedBankUser}
           onManualSubmit={handleManualSubmit}
         />
       )}

@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import BankNFTManager from "./BankNFTManager";
 import { QRCodeSVG } from "qrcode.react";
-import { generateEntityQRSession, registerEntitySession, verifyWalletResponse, type EntityQRSession } from "./utils/qrAuth";
+import { generateEntityQRSession, registerEntitySession, verifyWalletResponse, jwkToCompressed, getOnChainPublicKey, type EntityQRSession } from "./utils/qrAuth";
+import UserPicker, { type BankUser } from './components/UserPicker';
 import "./App.css";
 
 // Import contract address and ABI
@@ -33,9 +34,32 @@ type TabType = 'nft-bank' | 'zkp-issuer';
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabType>('nft-bank');
   const [account, setAccount] = useState<string>('');
+  const [entityUser, setEntityUser] = useState<any>(
+    JSON.parse(localStorage.getItem('entity_user') || 'null')
+  );
+
+  const handleLogout = () => {
+    localStorage.removeItem('entity_user');
+    window.location.href = '/login';
+  };
 
   useEffect(() => {
     checkWalletConnection();
+
+    // Fetch fresh entity data from the DB
+    const stored = JSON.parse(localStorage.getItem('entity_user') || 'null');
+    if (stored?.id) {
+      fetch(`http://localhost:8001/me.php?user_id=${stored.id}`)
+        .then(r => r.json())
+        .then(res => {
+          if (res.success) {
+            const updated = { ...stored, ...res.data };
+            localStorage.setItem('entity_user', JSON.stringify(updated));
+            setEntityUser(updated);
+          }
+        })
+        .catch(() => {}); // keep cached data on network error
+    }
   }, []);
 
   const checkWalletConnection = async () => {
@@ -111,8 +135,31 @@ export default function App() {
         marginBottom: '1rem',
         borderRadius: '12px 12px 0 0',
       }}>
-        <h1 style={{ margin: '0 0 1rem 0' }}>Bank Entity - ZeroID System</h1>
-        
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+          <h1 style={{ margin: 0 }}>{entityUser.entity_name} - ZeroID System</h1>
+          {entityUser && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.9rem' }}>
+              <span style={{ color: 'rgb(202, 165, 97)' }}>
+                Logged in as <strong>{entityUser.username}</strong>
+              </span>
+              <button
+                onClick={handleLogout}
+                style={{
+                  padding: '0.4rem 1rem',
+                  background: '#c0392b',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem',
+                }}
+              >
+                Logout
+              </button>
+            </div>
+          )}
+        </div>
+
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
           <button 
             style={tabStyle(activeTab === 'nft-bank')}
@@ -195,6 +242,10 @@ export default function App() {
 
 // Original ZKP Issuer component
 function ZKPIssuer() {
+  const entityUser = JSON.parse(localStorage.getItem('entity_user') || 'null');
+  const bankApiUrl: string = entityUser?.entity_api ?? 'http://localhost:8002/bank1_api.php';
+  const kycIssuer: string = entityUser?.entity_name || entityUser?.entity_did || 'did:zeroid:unknown';
+
   const [did, setDid] = useState("");
   const [kycExpiryDate, setKycExpiryDate] = useState<string>(() => {
     const d = new Date();
@@ -208,6 +259,9 @@ function ZKPIssuer() {
   const [account, setAccount] = useState("");
   const [showQRRequest, setShowQRRequest] = useState(false);
   const [entitySession, setEntitySession] = useState<EntityQRSession | null>(null);
+  const [selectedBankUser, setSelectedBankUser] = useState<BankUser | null>(null);
+  // Compressed 33-byte secp256k1/P-256 public key stored on-chain: { pkX (bytes32 hex), pkParity (bool) }
+  const [compressedPk, setCompressedPk] = useState<{ pkX: string; pkParity: boolean } | null>(null);
 
   useEffect(() => {
     checkWallet();
@@ -216,8 +270,7 @@ function ZKPIssuer() {
   // Poll relay server for wallet response
   useEffect(() => {
     if (!entitySession) return;
-    const { sessionId, challenge, entitySignature } = entitySession.qrPayload;
-    const { encryptionPrivateKey } = entitySession;
+    const { sessionId, challenge } = entitySession.qrPayload;
 
     const interval = setInterval(async () => {
       try {
@@ -226,11 +279,46 @@ function ZKPIssuer() {
 
         if (result.success && result.data) {
           try {
-            const { did, ethAddress } = await verifyWalletResponse(
-              result.data, sessionId, challenge, entitySignature, encryptionPrivateKey
+            const { did, ethAddress, publicKey } = await verifyWalletResponse(
+              result.data, sessionId, challenge, entitySession.secretKey
             );
+
+            // ── Blockchain public-key check ──────────────────────────────
+            let compressed: { pkX: string; pkParity: boolean } | null = null;
+            if (publicKey) {
+              try {
+                compressed = jwkToCompressed(JSON.parse(publicKey) as JsonWebKey);
+                const onChainHex = await getOnChainPublicKey(did, kycContractAddress!, KYCComplianceABI);
+                if (onChainHex && onChainHex !== '0x') {
+                  // Key already registered — compare x and parity
+                  const onChainParity = onChainHex.slice(2, 4) === '03';
+                  const onChainX     = onChainHex.slice(4).toLowerCase();
+                  if (
+                    onChainX !== compressed.pkX.slice(2).toLowerCase() ||
+                    onChainParity !== compressed.pkParity
+                  ) {
+                    alert(
+                      'Security error: the public key presented by the wallet does not match ' +
+                      'the key registered on the blockchain for this DID.\n\n' +
+                      'Possible key substitution attack — request rejected.'
+                    );
+                    setShowQRRequest(false);
+                    setEntitySession(null);
+                    return;
+                  }
+                  console.log('On-chain PK verified ✓');
+                } else {
+                  console.log('No on-chain PK yet — will be registered on first submission.');
+                }
+              } catch (pkErr: any) {
+                console.warn('Blockchain PK check skipped:', pkErr.message);
+              }
+            }
+
             setDid(did);
             if (ethAddress) console.log('Received eth address:', ethAddress);
+            if (publicKey)  { /* raw JWK kept in payload only — compressed form is in compressedPk */ }
+            if (compressed) setCompressedPk(compressed);
             setShowQRRequest(false);
             setEntitySession(null);
           } catch (verifyErr: any) {
@@ -251,6 +339,8 @@ function ZKPIssuer() {
       const session = await generateEntityQRSession();
       await registerEntitySession(session.relayRegistration);
       setEntitySession(session);
+      setSelectedBankUser(null);
+      setCompressedPk(null);
       setShowQRRequest(true);
     } catch (err: any) {
       alert('Failed to create QR session: ' + (err?.message ?? err));
@@ -286,6 +376,13 @@ function ZKPIssuer() {
       <p style={{ color: '#888', marginBottom: '1rem' }}>
         Generate zero-knowledge proofs for user DIDs
       </p>
+
+      <UserPicker
+        selectedUser={selectedBankUser}
+        onSelect={setSelectedBankUser}
+        label="Bank User"
+        apiUrl={bankApiUrl}
+      />
 
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
         <input
@@ -400,7 +497,30 @@ function ZKPIssuer() {
             try {
               setSubmitting(true);
               setError(null);
-              await submitProofToContract(did, zkProof, new Date(kycExpiryDate).getTime() / 1000);
+              // Public key is stored on-chain inside submitComplianceProof (first time)
+              // or was already verified against on-chain record during QR scan.
+              await submitProofToContract(
+                did,
+                zkProof,
+                kycIssuer,
+                new Date(kycExpiryDate).getTime() / 1000,
+                compressedPk?.pkX,
+                compressedPk?.pkParity,
+              );
+              // Update KYC flag in the bank DB for UI display
+              if (selectedBankUser) {
+                try {
+                  const res = await fetch(bankApiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'set_kyc', userId: selectedBankUser.id }),
+                  });
+                  const data = await res.json();
+                  if (!data.success) console.warn('set_kyc failed:', data.message);
+                } catch (kycErr) {
+                  console.warn('Failed to set KYC in bank DB:', kycErr);
+                }
+              }
               setSubmitSuccess(true);
             } catch (err) {
               setError(err instanceof Error ? err.message : "Failed to submit proof");
@@ -469,6 +589,7 @@ function ZKPIssuer() {
               onClick={() => {
                 setShowQRRequest(false);
                 setEntitySession(null);
+                setSelectedBankUser(null);
               }}
               style={{
                 position: 'absolute',
@@ -565,7 +686,7 @@ async function didToBigInt(did: string): Promise<bigint> {
 async function generatePlonkZKP(userDid: string) {
   const snarkjs = await import("snarkjs");
   const { buildPoseidon } = await import("circomlibjs");
-  const verificationKey = await import("../verification_key.json");
+  const verificationKey = await import("../zkp/verification_key.json");
 
   if (!userDid.startsWith("did:")) {
     throw new Error("Invalid DID format. Expected format: did:zeroid:xxxx");
@@ -581,8 +702,8 @@ async function generatePlonkZKP(userDid: string) {
   
   const { proof, publicSignals } = await snarkjs.plonk.fullProve(
     { DID: DID.toString(), status: status.toString(), commitment, r: r.toString() },
-    "/circuit_js/circuit.wasm",
-    "/circuit_final.zkey"
+    "/zkp/circuit_js/circuit.wasm",
+    "/zkp/circuit_final.zkey"
   );
 
   const res = await snarkjs.plonk.verify(verificationKey, publicSignals, proof);
@@ -596,7 +717,14 @@ async function generatePlonkZKP(userDid: string) {
   return { proof, publicSignals, commitment };
 }
 
-async function submitProofToContract(userDid: string, zkProof: any, expiryTimestamp: number) {
+async function submitProofToContract(
+  userDid: string,
+  zkProof: any,
+  kycIssuer: string,
+  expiryTimestamp: number,
+  pkX?: string,
+  pkParity?: boolean,
+) {
   if (!kycContractAddress || !KYCComplianceABI) {
     throw new Error("KYC contract not deployed. Please deploy it first.");
   }
@@ -637,11 +765,16 @@ async function submitProofToContract(userDid: string, zkProof: any, expiryTimest
     [proofArray]
   );
 
-  // Submit to contract
+  // Submit to contract — pkX/pkParity register the compressed public key on-chain.
+  // Pass ZeroHash on subsequent calls (key already on chain from first submission).
+  const { ZeroHash } = await import('ethers');
   const tx = await kycContract.submitComplianceProof(
     userDid,
     zkProof.commitment,
+    kycIssuer,
     Math.floor(expiryTimestamp),
+    pkX  ?? ZeroHash,   // bytes32 x-coordinate (0x00…00 = skip)
+    pkParity ?? false,  // parity prefix: true → 0x03, false → 0x02
     proofBytes,
     zkProof.publicSignals
   );

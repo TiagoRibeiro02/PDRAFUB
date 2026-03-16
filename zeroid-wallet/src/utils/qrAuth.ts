@@ -1,55 +1,16 @@
 /**
- * Wallet-side QR mutual authentication utilities.
+ * Wallet-side QR authentication utilities — symmetric secret approach.
  *
- * Protocol (SCRAM-like, adapted for QR/DID):
+ * The entity generates a fresh AES-GCM 256-bit secret and embeds it in the
+ * QR code (displayed locally).  The wallet's only job is to:
+ *   1. Verify the QR contains the expected fields and is still fresh.
+ *   2. Encrypt its identity data with the secret.
+ *   3. Post the encrypted blob to the relay.
  *
- *  Phase 1  Entity → Relay (entity side):
- *    Entity generates ephemeral ECDSA key pair (signing) and ECDH key pair
- *    (encryption), signs "sessionId:challenge:sessionTimestamp" and PUTs
- *    { sessionId, entityPublicKey, entitySignature, sessionTimestamp,
- *      entityEncryptionPublicKey } to relay.
- *    QR contains all of the above so the wallet can verify without trusting
- *    the relay alone.
- *
- *  Phase 2  Wallet verifies entity (this file — verifyEntityQR):
- *    a. Verify entitySignature with entityPublicKey from QR
- *       → entity holds the ephemeral signing private key, so it generated the QR.
- *    b. Cross-check entityPublicKey against relay registration (?verify=1)
- *       → MITM would need to control BOTH the QR display AND the relay simultaneously.
- *    c. Check sessionTimestamp freshness (5 min window).
- *
- *  Phase 2.5  Wallet builds pre-auth commitment (this file — buildPreAuth):
- *    The wallet generates a walletChallenge (random hex), then encrypts
- *    "walletChallenge:did" with the entity's ECDH public key (ECDH + AES-GCM).
- *    This blob is sent to the relay together with the Phase 3 response.
- *    → Lets the entity know the expected DID before evaluating ECDSA material.
- *    → Only the entity (holding the ECDH private key) can decrypt it.
- *
- *  Phase 3  Wallet → Entity (this file — buildWalletResponse):
- *    signedData = "entityChallenge:walletChallenge:sessionId:entitySig:ethAddress:did:...:walletTimestamp"
- *    Embedding walletChallenge inside the signature binds the pre-auth commitment
- *    to the signed response (prevents a split-commitment attack).
- *    ethAddress at index 4 is inside the signature — swapping it in transit is detected.
- *
- *  Phase 4  Entity verifies wallet (entity side):
- *    Decrypts pre-auth, checks walletChallenge + DID commitment match signedData,
- *    then checks challenge, sessionId, entitySig, timestamp and ECDSA signature.
+ * Because the secret is delivered via the locally-displayed QR, only a wallet
+ * that physically scanned that QR can produce a ciphertext the entity can
+ * decrypt — no ECDH key exchange or ECDSA signing required.
  */
-
-// ─── Shared type ────────────────────────────────────────────────────────────
-
-/**
- * Encrypted pre-auth payload sent by the wallet to the relay.
- * Only the entity (holding the ECDH private key) can decrypt it.
- */
-export interface EncryptedPreAuth {
-  /** Wallet's ephemeral ECDH P-256 public key used to derive the shared secret. */
-  walletEphemeralPublicKey: JsonWebKey;
-  /** AES-GCM IV (base64). */
-  iv: string;
-  /** AES-GCM ciphertext (base64) of the string "walletChallenge:did". */
-  ciphertext: string;
-}
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -110,173 +71,100 @@ export async function verifyECDSA(publicKeyJwk: JsonWebKey, data: string, b64Sig
   );
 }
 
-// ─── Phase 2: wallet verifies entity ────────────────────────────────────────
+// ─── Phase 1: wallet verifies entity QR ─────────────────────────────────────
 
 /**
- * Verifies the entity's QR authenticity before showing the share dialog.
+ * Validates the entity's QR payload before showing the share dialog.
+ * Checks that the required fields (`secret`, `challenge`, `sessionTimestamp`)
+ * are present and that the QR is still within the 5-minute freshness window.
  * Throws a user-visible Error on any failure.
  */
 export async function verifyEntityQR(scannedData: {
   sessionId: string;
   challenge: string;
-  entityPublicKey?: JsonWebKey;
-  entitySignature?: string;
   sessionTimestamp?: number;
-  entityEncryptionPublicKey?: JsonWebKey;
+  secret?: string;
 }): Promise<void> {
-  const { sessionId, challenge, entityPublicKey, entitySignature, sessionTimestamp, entityEncryptionPublicKey } = scannedData;
+  const { sessionId, challenge, sessionTimestamp, secret } = scannedData;
 
-  if (!entityPublicKey || !entitySignature || !sessionTimestamp || !entityEncryptionPublicKey) {
+  if (!sessionId || !challenge) {
     throw new Error(
-      'This QR code does not include entity authentication.\n\n' +
-      'Sharing refused to prevent impersonation attacks.\n' +
+      'This QR code is missing required session fields.\n' +
+      'Please ask the requesting entity to regenerate the QR.'
+    );
+  }
+
+  if (!secret) {
+    throw new Error(
+      'This QR code does not include an encryption secret.\n' +
       'Please ask the requesting entity to update their application.'
     );
   }
 
-  // 1. Verify entity self-signature over QR session data INCLUDING the ECDH encryption key.
-  //    Any swap of entityEncryptionPublicKey is detected here without trusting the relay.
-  const entitySigValid = await verifyECDSA(
-    entityPublicKey,
-    `${sessionId}:${challenge}:${sessionTimestamp}:${entityEncryptionPublicKey.x}:${entityEncryptionPublicKey.y}`,
-    entitySignature
-  ).catch(() => false);
-
-  if (!entitySigValid) {
-    throw new Error(
-      'Entity QR signature is invalid.\n' +
-      'The QR code may have been tampered with — sharing refused.'
-    );
+  if (!sessionTimestamp) {
+    throw new Error('This QR code is missing a session timestamp.');
   }
 
-  // 2. Cross-validate entityPublicKey against the relay registration.
-  //    A MITM attacker would need to simultaneously control both the QR display
-  //    and the relay to pass this check.
-  let relayData: any;
-  try {
-    const res = await fetch(
-      `http://localhost:8000/qr-relay.php?sessionId=${encodeURIComponent(sessionId)}&verify=1`
-    );
-    relayData = await res.json();
-  } catch {
-    throw new Error(
-      'Could not reach the relay server to verify entity identity.\n' +
-      'Check your connection and try again.'
-    );
-  }
-
-  if (!relayData.success || !relayData.entityPublicKey) {
-    throw new Error(
-      'Session not found on the relay server.\n' +
-      'The entity may not have registered this session, or it has expired.'
-    );
-  }
-
-  const rk  = relayData.entityPublicKey as JsonWebKey;
-  const rke = relayData.entityEncryptionPublicKey as JsonWebKey | null;
-
-  if (rk.kty !== entityPublicKey.kty ||
-      rk.crv !== entityPublicKey.crv ||
-      rk.x   !== entityPublicKey.x   ||
-      rk.y   !== entityPublicKey.y) {
-    throw new Error(
-      'Entity public key in QR does not match the relay registration.\n' +
-      'Possible man-in-the-middle attack — sharing refused.'
-    );
-  }
-
-  if (!rke ||
-      rke.kty !== entityEncryptionPublicKey.kty ||
-      rke.crv !== entityEncryptionPublicKey.crv ||
-      rke.x   !== entityEncryptionPublicKey.x   ||
-      rke.y   !== entityEncryptionPublicKey.y) {
-    throw new Error(
-      'Entity encryption key in QR does not match the relay registration.\n' +
-      'Possible man-in-the-middle attack — sharing refused.'
-    );
-  }
-
-  // 3. Freshness check (5-minute window)
   if (Math.abs(Date.now() - Number(sessionTimestamp)) > 5 * 60 * 1000) {
     throw new Error('This QR code has expired. Please ask the entity to generate a new one.');
   }
 }
 
-// ─── Phase 2.5: wallet builds encrypted pre-auth commitment ─────────────────
+/**
+ * Sign a canonical string with the user's DID private key file.
+ * Detects automatically whether the file is encrypted (lacks PEM headers).
+ * If encrypted, `password` must be provided.
+ */
+export async function signWalletPayload(
+  fileContent: string,
+  password: string | null,
+  canonicalData: string
+): Promise<string> {
+  const trimmed = fileContent.trim();
+  let pem: string;
+  if (trimmed.startsWith('-----BEGIN PRIVATE KEY-----')) {
+    pem = trimmed;
+  } else {
+    if (!password) throw new Error('This key file is encrypted — please enter your key password.');
+    pem = await decryptPrivateKey(trimmed, password);
+  }
+  const privateKey = await importPrivateKeyFromPEM(pem);
+  return signECDSA(privateKey, canonicalData);
+}
+
+// ─── Phase 2: wallet encrypts identity data with the QR secret ──────────────
 
 /**
- * Encrypts "walletChallenge:did" with the entity's ECDH public key (AES-GCM).
- * Send the returned { encryptedPreAuth, walletChallenge } to the relay POST and
- * pass walletChallenge into buildWalletResponse so the two are bound together.
+ * Imports the AES-GCM secret from the QR payload and encrypts the wallet's
+ * identity data.  Returns `{ iv, ciphertext }` ready to POST to the relay.
+ *
+ * The entity decrypts this blob using the same secret it generated — only the
+ * entity (and the wallet that scanned its local QR) ever knew that secret.
  */
-export async function buildPreAuth(
-  entityEncryptionPublicKey: JsonWebKey,
-  did: string
-): Promise<{ encryptedPreAuth: EncryptedPreAuth; walletChallenge: string }> {
-  // Wallet generates a fresh walletChallenge (32 hex bytes, no colons)
-  const wcBytes = new Uint8Array(32);
-  crypto.getRandomValues(wcBytes);
-  const walletChallenge = Array.from(wcBytes).map(b => b.toString(16).padStart(2, '0')).join('');
-
-  // Wallet's ephemeral ECDH key pair for this pre-auth only
-  const walletECDHKeyPair = await crypto.subtle.generateKey(
-    { name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey']
-  );
-  const walletEphemeralPublicKey = await crypto.subtle.exportKey('jwk', walletECDHKeyPair.publicKey) as JsonWebKey;
-  delete (walletEphemeralPublicKey as any).d;
-
-  // Import entity's ECDH public key and derive shared AES-GCM key
-  const entityEcdhPub = await crypto.subtle.importKey(
-    'jwk', entityEncryptionPublicKey,
-    { name: 'ECDH', namedCurve: 'P-256' }, false, []
-  );
-  const sharedKey = await crypto.subtle.deriveKey(
-    { name: 'ECDH', public: entityEcdhPub },
-    walletECDHKeyPair.privateKey,
-    { name: 'AES-GCM', length: 256 }, false, ['encrypt']
+export async function encryptWalletData(
+  secret: string,
+  payload: {
+    did: string;
+    ethAddress: string;
+    publicKey: string;
+    signature: string;
+    challenge: string;
+    sessionId: string;
+    walletTimestamp: number;
+  }
+): Promise<{ iv: string; ciphertext: string }> {
+  // Import the raw AES-GCM key from the base64-encoded secret in the QR
+  const rawKey = Uint8Array.from(atob(secret), c => c.charCodeAt(0));
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw', rawKey, { name: 'AES-GCM' }, false, ['encrypt']
   );
 
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  const plaintext = new TextEncoder().encode(`${walletChallenge}:${did}`);
-  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, sharedKey, plaintext);
+  const plaintext = new TextEncoder().encode(JSON.stringify(payload));
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, cryptoKey, plaintext);
 
   return {
-    walletChallenge,
-    encryptedPreAuth: {
-      walletEphemeralPublicKey,
-      iv:         ab2b64(iv.buffer as ArrayBuffer),
-      ciphertext: ab2b64(ct),
-    },
+    iv:         ab2b64(iv.buffer as ArrayBuffer),
+    ciphertext: ab2b64(ct),
   };
-}
-
-// ─── Phase 3: wallet builds signed response ──────────────────────────────────
-
-/**
- * Builds the wallet's signed response, binding it to the specific entity session
- * and to the pre-auth commitment via walletChallenge.
- *
- * signedData format: "entityChallenge:walletChallenge:sessionId:entitySig:ethAddress:did:...:walletTimestamp"
- *   entityChallenge  — bound to this entity request (anti-replay)
- *   walletChallenge  — binds the pre-auth commitment to this signed payload
- *   sessionId        — bound to this relay session
- *   entitySig        — binds wallet response to this entity (mutual auth)
- *   ethAddress       — ETH address at index 4 (no colons, DID stays unambiguous)
- *   did              — the wallet identity (may contain colons itself)
- *   walletTimestamp  — limits freshness window
- */
-export async function buildWalletResponse(
-  challenge: string,
-  sessionId: string,
-  entitySignature: string,
-  did: string,
-  ethAddress: string,
-  walletPrivKey: CryptoKey,
-  walletChallenge: string
-): Promise<{ signedData: string; signature: string }> {
-  const walletTimestamp = Date.now();
-  // ethAddress is at index 4 (no colons), DID occupies indices 5..n-1, timestamp is last.
-  const signedData = `${challenge}:${walletChallenge}:${sessionId}:${entitySignature}:${ethAddress}:${did}:${walletTimestamp}`;
-  const signature  = await signECDSA(walletPrivKey, signedData);
-  return { signedData, signature };
 }

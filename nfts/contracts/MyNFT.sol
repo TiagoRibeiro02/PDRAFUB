@@ -12,6 +12,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract MyNFT is ERC721URIStorage, Ownable {
     uint256 private _tokenIdCounter;
 
+    // Addresses that are allowed to execute bank/entity operations
+    mapping(address => bool) private _authorizedEntities;
+
     // Mapping from tokenId to DID owner
     mapping(uint256 => string) private _didOwners;
     
@@ -25,9 +28,34 @@ contract MyNFT is ERC721URIStorage, Ownable {
     event NFTPurchased(uint256 indexed tokenId, string indexed buyerDID, uint256 price);
     event DIDOwnershipTransferred(uint256 indexed tokenId, string previousDID, string newDID);
     event DIDLinked(string indexed did, address indexed ethAddress);
+    event EntityAuthorizationUpdated(address indexed entity, bool authorized);
+
+    modifier onlyAuthorizedEntity() {
+        require(_authorizedEntities[msg.sender], "Caller is not an authorized entity");
+        _;
+    }
 
     constructor() ERC721("MyNFT Collection", "MNFT") Ownable(msg.sender) {
         _tokenIdCounter = 0;
+        _authorizedEntities[msg.sender] = true;
+        emit EntityAuthorizationUpdated(msg.sender, true);
+    }
+
+    /**
+     * @dev Authorize or revoke an entity wallet address.
+     * Only contract owner can manage the allowlist.
+     */
+    function setEntityAuthorization(address entity, bool authorized) external onlyOwner {
+        require(entity != address(0), "Invalid entity address");
+        _authorizedEntities[entity] = authorized;
+        emit EntityAuthorizationUpdated(entity, authorized);
+    }
+
+    /**
+     * @dev Check if an address is authorized as an entity.
+     */
+    function isAuthorizedEntity(address entity) external view returns (bool) {
+        return _authorizedEntities[entity];
     }
 
     /**
@@ -36,7 +64,7 @@ contract MyNFT is ERC721URIStorage, Ownable {
      * @param price The price in wei (0 means not for sale)
      * @return The ID of the newly minted token
      */
-    function mintNFT(string memory tokenURI, uint256 price) public onlyOwner returns (uint256) {
+    function mintNFT(string memory tokenURI, uint256 price) public onlyAuthorizedEntity returns (uint256) {
         uint256 tokenId = _tokenIdCounter;
         _tokenIdCounter++;
         
@@ -88,9 +116,11 @@ contract MyNFT is ERC721URIStorage, Ownable {
         require(bytes(did).length > 0, "Invalid DID");
         require(ethAddress != address(0), "Invalid address");
         
-        // Allow linking if not yet linked, or if caller is owner (for admin updates)
-        require(_didToAddress[did] == address(0) || msg.sender == owner(), 
-                "DID already linked. Only owner can update.");
+        // Allow linking if not yet linked, or if caller is an authorized entity (for admin updates)
+        require(
+            _didToAddress[did] == address(0) || _authorizedEntities[msg.sender],
+            "DID already linked. Only authorized entity can update."
+        );
         
         _didToAddress[did] = ethAddress;
         emit DIDLinked(did, ethAddress);
@@ -128,7 +158,7 @@ contract MyNFT is ERC721URIStorage, Ownable {
      * @param recipientAddress The Ethereum address to transfer the NFT to
      * Links the DID to the address if not already linked (bank pays gas)
      */
-    function purchaseAndTransferNFT(uint256 tokenId, string memory buyerDID, address recipientAddress) public payable onlyOwner {
+    function purchaseAndTransferNFT(uint256 tokenId, string memory buyerDID, address recipientAddress) public payable onlyAuthorizedEntity {
         require(_ownerOf(tokenId) == owner(), "NFT not available from bank");
         require(_prices[tokenId] > 0, "NFT not for sale");
         require(msg.value >= _prices[tokenId], "Insufficient payment");

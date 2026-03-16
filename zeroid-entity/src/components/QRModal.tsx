@@ -1,16 +1,21 @@
 import { ethers } from 'ethers';
 import { QRCodeSVG } from 'qrcode.react';
 import type { EntityQRSession } from '../utils/qrAuth';
+import UserPicker, { type BankUser } from './UserPicker';
+import '../BankNFTManager.css';
 
 interface QRModalProps {
   qrPayload: EntityQRSession['qrPayload'] | null;
   purchasingTokenId: number | null;
   purchasingPrice: bigint | null;
+  bankApiUrl: string;
   manualDID: string;
   manualEthAddress: string;
+  selectedBankUser: BankUser | null;
   onClose: () => void;
   onManualDIDChange: (value: string) => void;
   onManualEthAddressChange: (value: string) => void;
+  onBankUserSelect: (user: BankUser | null) => void;
   onManualSubmit: () => void;
 }
 
@@ -18,13 +23,18 @@ export default function QRModal({
   qrPayload,
   purchasingTokenId,
   purchasingPrice,
+  bankApiUrl,
   manualDID,
   manualEthAddress,
+  selectedBankUser,
   onClose,
   onManualDIDChange,
   onManualEthAddressChange,
+  onBankUserSelect,
   onManualSubmit,
 }: QRModalProps) {
+  const canSubmit = manualDID.trim() && manualEthAddress.trim() && selectedBankUser !== null;
+
   return (
     <div className='qRequestDiv'>
       <div className='closeButtonDiv'>
@@ -41,22 +51,30 @@ export default function QRModal({
             {purchasingPrice && ` for ${ethers.formatEther(purchasingPrice)} ETH`}
           </p>
         )}
+
         <div className='qrdiv'>
           <QRCodeSVG
             value={qrPayload ? JSON.stringify(qrPayload) : ''}
             size={200}
           />
         </div>
-        <p className='waitingscan'>
-          Waiting for wallet response...
-        </p>
+
+        {manualDID ? (
+          <p className='responsereceived'>
+            ✓ Wallet response received
+          </p>
+        ) : (
+          <p className='waitingscan'>
+            Waiting for wallet response…
+          </p>
+        )}
 
         <div className='inputdiv'>
-          <h4 className='texth4'>Or enter manually:</h4>
+          <h4 className='texth4'>Identity details:</h4>
 
           <input
             type="text"
-            placeholder="User DID (e.g., did:zeroid:...)"
+            placeholder="User DID (e.g., did:zeroid: ...)"
             value={manualDID}
             onChange={(e) => onManualDIDChange(e.target.value)}
             className='didInput'
@@ -69,15 +87,27 @@ export default function QRModal({
               value={manualEthAddress}
               onChange={(e) => onManualEthAddressChange(e.target.value)}
               className='didInput'
+              style={{ marginTop: '0.5rem' }}
             />
           )}
 
+          {/* Bank user picker */}
+          <div style={{ marginTop: '1rem' }}>
+            <UserPicker
+              selectedUser={selectedBankUser}
+              onSelect={onBankUserSelect}
+              label="Select bank user to assign this NFT to"
+              apiUrl={bankApiUrl}
+            />
+          </div>
+
           <button
             onClick={onManualSubmit}
-            disabled={!manualDID.trim() || !manualEthAddress.trim()}
+            disabled={!canSubmit}
             className="buttonStyle submitManual"
+            style={{ marginTop: '1rem', opacity: canSubmit ? 1 : 0.5 }}
           >
-            Submit Manual Entry
+            Confirm Purchase
           </button>
         </div>
       </div>

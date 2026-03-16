@@ -6,6 +6,11 @@ import path from "path";
 async function main() {
   console.log("Deploying KYC Compliance System...\n");
 
+  const ENTITY_ADDRESSES = [
+    "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", // Bank1
+    "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", // Bank2
+  ];
+
   // Get the deployer
   const [deployer] = await ethers.getSigners();
   console.log("Deploying with account:", deployer.address);
@@ -26,6 +31,16 @@ async function main() {
   await kyc.waitForDeployment();
   const kycAddress = await kyc.getAddress();
   console.log("KYCCompliance deployed to:", kycAddress);
+
+  for (const entity of ENTITY_ADDRESSES) {
+    try {
+      const tx = await kyc.setIssuerAuthorization(entity, true);
+      await tx.wait();
+      console.log(`Authorized issuer wallet: ${entity}`);
+    } catch (error) {
+      console.warn(`Failed to authorize issuer ${entity}:`, error);
+    }
+  }
 
   // Save deployment info
   const deploymentInfo = {

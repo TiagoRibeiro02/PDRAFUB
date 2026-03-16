@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Html5QrcodeScanner } from "html5-qrcode";
 import NFTGallery from "./components/NFTGallery";
 import { verifyEntityQR, encryptWalletData, signWalletPayload } from "./utils/qrAuth";
+import "./Wallet.css";
 
 // Import contract address and ABI
 let contractAddress: string | undefined;
@@ -599,152 +600,48 @@ export default function Wallet() {
   };
 
   return (
-    <div style={{ 
-      padding: "clamp(0.75rem, 2vw, 1.5rem)", 
-      maxWidth: "1600px", 
-      margin: "0 auto",
-      width: "100%",
-      boxSizing: "border-box",
-      minHeight: "100vh",
-    }}>
+    <div className="wallet-page">
       {!identity ? (
-        <div 
-          style={{
-            margin: '0 auto',
-            padding: 'clamp(1.5rem, 3vw, 2.5rem)',
-            background: '#1a1a1a',
-            borderRadius: '12px',
-            textAlign: 'center',
-            border: '1px solid rgba(202, 165, 97, 0.3)',
-            transition: 'all 0.3s ease',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.border = '1px solid rgba(202, 165, 97, 1)';
-            e.currentTarget.style.boxShadow = '0 4px 16px rgba(202, 165, 97, 0.3)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.border = '1px solid rgba(202, 165, 97, 0.3)';
-            e.currentTarget.style.boxShadow = 'none';
-          }}
-        >
-          <h1 style={{ fontSize: 'clamp(1.5rem, 3vw, 2.5rem)', marginBottom: '1rem', color: "#ffffff" }}>ZeroID Wallet</h1>
-          {user && <p style={{ fontSize: 'clamp(1rem, 1.8vw, 1.2rem)', marginBottom: '1rem' }}>Welcome, {user.username}!</p>}
-          <p style={{ fontSize: 'clamp(0.95rem, 1.5vw, 1.1rem)', color: '#aaa', marginBottom: '2rem' }}>You don't have a DID yet.</p>
+        <div className="wallet-card">
+          <h1 className="wallet-title">ZeroID Wallet</h1>
+          {user && <p className="wallet-welcome">Welcome, {user.username}!</p>}
+          <p className="wallet-subtitle">You don't have a DID yet.</p>
           {error && (
-            <div
-              style={{
-                margin: '0 auto 1rem',
-                padding: '0.75rem 1rem',
-                maxWidth: '640px',
-                background: 'rgba(255, 0, 0, 0.12)',
-                border: '1px solid rgba(255, 70, 70, 0.4)',
-                borderRadius: '8px',
-                color: '#ffb0b0',
-                fontSize: '0.95rem',
-                wordBreak: 'break-word',
-              }}
-            >
+            <div className="wallet-error">
               {error}
             </div>
           )}
           <button 
             onClick={createIdentity} 
             disabled={loading}
-            style={{
-              padding: 'clamp(0.75rem, 1.5vw, 1rem) clamp(1.5rem, 3vw, 2.5rem)',
-              background: 'rgb(202, 165, 97)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              fontSize: 'clamp(1rem, 1.8vw, 1.2rem)',
-              fontWeight: 'bold',
-              transition: 'all 0.3s',
-              opacity: loading ? 0.6 : 1,
-            }}
-            onMouseEnter={(e) => {if (!loading) (e.target as HTMLButtonElement).style.background = 'rgb(180, 145, 77)'}}
-            onMouseLeave={(e) => {if (!loading) (e.target as HTMLButtonElement).style.background = 'rgb(202, 165, 97)'}}
+            className="wallet-btn-primary"
           >
             {loading ? "Creating DID..." : "Create DID"}
           </button>
         </div>
       ) : (
         <>
-          <h1 style={{textAlign:"center", margin: "1rem 0", color: "#ffffff"}}>ZeroID Wallet</h1>
+          <h1 className="wallet-main-title">ZeroID Wallet</h1>
           
           {/* Header with Welcome, DID, and Profile Button */}
-          <div 
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '2rem',
-              padding: 'clamp(1rem, 3vw, 2rem)',
-              background: '#1a1a1a',
-              borderRadius: '12px',
-              flexWrap: 'wrap',
-              gap: '1rem',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-              border: '1px solid rgba(202, 165, 97, 0.3)',
-              transition: 'all 0.3s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.border = '1px solid rgba(202, 165, 97, 1)';
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(202, 165, 97, 0.3)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.border = '1px solid rgba(202, 165, 97, 0.3)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
-            }}
-          >
-            <div style={{ flex: 1, minWidth: '250px' }}>
-              {user && <p style={{ margin: 0, fontSize: 'clamp(1rem, 2vw, 1.3rem)' }}>Welcome, <strong>{user.username}</strong>!</p>}
-              <div style={{ marginTop: '0.75rem' }}>
-                <strong style={{ fontSize: 'clamp(0.85rem, 1.5vw, 1rem)', color: 'rgb(202, 165, 97)' }}>DID: </strong>
-                <span style={{ 
-                  fontSize: 'clamp(0.75rem, 1.3vw, 0.95rem)', 
-                  fontFamily: 'monospace', 
-                  color: '#fff',
-                  wordBreak: 'break-all',
-                }}>{identity.did}</span>
+          <div className="wallet-header">
+            <div className="wallet-header-info">
+              {user && <p className="wallet-header-welcome">Welcome, <strong>{user.username}</strong>!</p>}
+              <div className="wallet-did-row">
+                <strong className="wallet-did-label">DID: </strong>
+                <span className="wallet-did-value">{identity.did}</span>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <div className="wallet-header-actions">
               <button
                 onClick={() => navigate('/profile')}
-                style={{
-                  padding: 'clamp(0.75rem, 1.5vw, 1rem) clamp(1.25rem, 2.5vw, 2rem)',
-                  background: 'rgb(202, 165, 97)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: 'clamp(0.95rem, 1.5vw, 1.1rem)',
-                  fontWeight: 'bold',
-                  transition: 'all 0.3s',
-                  whiteSpace: 'nowrap',
-                }}
-                onMouseEnter={(e) => {(e.target as HTMLButtonElement).style.background = 'rgb(180, 145, 77)'}}
-                onMouseLeave={(e) => {(e.target as HTMLButtonElement).style.background = 'rgb(202, 165, 97)'}}
+                className="wallet-btn-header"
               >
                 View Profile
               </button>
               <button
                 onClick={() => setShowQRScanner(true)}
-                style={{
-                  padding: 'clamp(0.75rem, 1.5vw, 1rem) clamp(1.25rem, 2.5vw, 2rem)',
-                  background: 'rgb(202, 165, 97)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: 'clamp(0.95rem, 1.5vw, 1.1rem)',
-                  fontWeight: 'bold',
-                  transition: 'all 0.3s',
-                  whiteSpace: 'nowrap',
-                }}
-                onMouseEnter={(e) => {(e.target as HTMLButtonElement).style.background = 'rgb(180, 145, 77)'}}
-                onMouseLeave={(e) => {(e.target as HTMLButtonElement).style.background = 'rgb(202, 165, 97)'}}
+                className="wallet-btn-header"
               >
                 Share via QR
               </button>
@@ -752,56 +649,25 @@ export default function Wallet() {
           </div>
 
           {/* NFT Gallery Section */}
-          <div style={{ marginTop: '2rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-              <h3 style={{ margin: 0, fontSize: 'clamp(1.3rem, 2.5vw, 1.8rem)' }}>My Assets</h3>
+          <div className="wallet-nft-section">
+            <div className="wallet-assets-header">
+              <h3 className="wallet-assets-title">My Assets</h3>
               <div 
-                style={{ 
-                  position: 'relative',
-                  display: 'inline-block',
-                }}
+                className="wallet-tooltip-wrap"
                 onMouseEnter={() => setShowInfoTooltip(true)}
                 onMouseLeave={() => setShowInfoTooltip(false)}
               >
                 <button
                   onClick={() => setShowInfoTooltip(!showInfoTooltip)}
-                  style={{
-                    background: 'rgb(202, 165, 97)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '50%',
-                    width: 'clamp(28px, 3vw, 36px)',
-                    height: 'clamp(32px, 3vw, 40px)',
-                    fontSize: 'clamp(14px, 1.5vw, 18px)',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'all 0.3s',
-                  }}
+                  className="wallet-info-btn"
                   aria-label="Info about getting NFTs"
-                  onMouseEnter={(e) => {(e.target as HTMLButtonElement).style.background = 'rgb(180, 145, 77)'}}
-                  onMouseLeave={(e) => {(e.target as HTMLButtonElement).style.background = 'rgb(202, 165, 97)'}}
                 >
                   !
                 </button>
                 {showInfoTooltip && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '40px',
-                    left: '0',
-                    background: '#fef3cd',
-                    color: '#856404',
-                    padding: 'clamp(0.75rem, 2vw, 1.25rem)',
-                    borderRadius: '10px',
-                    boxShadow: '0 6px 16px rgba(0,0,0,0.4)',
-                    zIndex: 1000,
-                    minWidth: '280px',
-                    maxWidth: 'min(500px, 90vw)',
-                  }}>
-                    <h4 style={{ margin: '0 0 0.5rem 0', fontSize: 'clamp(0.95rem, 1.5vw, 1.1rem)' }}>How to Get Assets</h4>
-                    <p style={{ margin: 0, fontSize: 'clamp(0.85rem, 1.3vw, 0.95rem)' }}>
+                  <div className="wallet-tooltip">
+                    <h4 className="wallet-tooltip-title">How to Get Assets</h4>
+                    <p className="wallet-tooltip-text">
                       To purchase assets, visit your bank and provide them with your DID. 
                       The bank will purchase assets on your behalf and link them to your DID.
                       Your assets will appear here automatically.
@@ -811,65 +677,21 @@ export default function Wallet() {
               </div>
             </div>
             {!contractAddress || !MyNFTABI ? (
-              <div 
-                style={{ 
-                  padding: "clamp(1.5rem, 3vw, 2.5rem)", 
-                  textAlign: "center", 
-                  color: "#888",
-                  background: '#1a1a1a',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(202, 165, 97, 0.3)',
-                  transition: 'all 0.3s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.border = '1px solid rgba(202, 165, 97, 1)';
-                  e.currentTarget.style.boxShadow = '0 4px 16px rgba(202, 165, 97, 0.3)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.border = '1px solid rgba(202, 165, 97, 0.3)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              >
-                <h4 style={{ fontSize: 'clamp(1.1rem, 2vw, 1.4rem)' }}>NFT Contract Not Available</h4>
-                <p style={{ fontSize: 'clamp(0.85rem, 1.3vw, 1rem)', marginTop: "0.75rem" }}>
+              <div className="wallet-contract-box">
+                <h4 className="wallet-contract-title">NFT Contract Not Available</h4>
+                <p className="wallet-contract-text">
                   Contract files not found. Please ensure the MyNFT.json file is copied to:
                 </p>
-                <code style={{ 
-                  background: '#0a0a0a', 
-                  padding: 'clamp(0.5rem, 1.5vw, 0.75rem)', 
-                  borderRadius: '6px', 
-                  display: 'block', 
-                  margin: '1rem 0',
-                  fontSize: 'clamp(0.75rem, 1.2vw, 0.9rem)',
-                }}>
+                <code className="wallet-contract-code">
                   zeroid-wallet/src/contracts/MyNFT.json
                 </code>
               </div>
             ) : (
               <>
                 {nftCount === 0 && (
-                  <div 
-                    style={{
-                      background: '#fef3cd',
-                      padding: 'clamp(1rem, 2vw, 1.5rem)',
-                      borderRadius: '12px',
-                      marginBottom: '1.5rem',
-                      color: '#856404',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                      border: '1px solid rgb(202, 165, 97)',
-                      transition: 'all 0.3s ease',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.border = '1px solid rgb(180, 145, 77)';
-                      e.currentTarget.style.boxShadow = '0 4px 16px rgb(202, 165, 97)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.border = '1px solid rgb(202, 165, 97)';
-                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-                    }}
-                  >
-                    <h4 style={{ margin: '0 0 0.75rem 0', fontSize: 'clamp(1rem, 1.8vw, 1.2rem)' }}>How to Get Assets</h4>
-                    <p style={{ margin: 0, fontSize: 'clamp(0.85rem, 1.3vw, 0.95rem)', lineHeight: '1.6' }}>
+                  <div className="wallet-help-box">
+                    <h4 className="wallet-help-title">How to Get Assets</h4>
+                    <p className="wallet-help-text">
                       To purchase Assets, visit your bank and provide them with your DID. 
                       The bank will purchase Assets on your behalf and link them to your DID.
                       Your Assets will appear here automatically.
@@ -890,19 +712,12 @@ export default function Wallet() {
 
       {/* Entity verification loading overlay */}
       {verifyingEntity && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.85)', display: 'flex',
-          alignItems: 'center', justifyContent: 'center', zIndex: 1002
-        }}>
-          <div style={{
-            background: '#1a1a1a', padding: '2rem', borderRadius: '12px',
-            textAlign: 'center', border: '2px solid rgb(202, 165, 97)'
-          }}>
-            <p style={{ color: 'rgb(202, 165, 97)', fontSize: '1.1rem', margin: 0 }}>
+        <div className="wallet-overlay wallet-overlay-verify">
+          <div className="wallet-verify-box">
+            <p className="wallet-verify-title">
               Verifying entity identity…
             </p>
-            <p style={{ color: '#888', fontSize: '0.9rem', marginTop: '0.5rem' }}>
+            <p className="wallet-verify-subtitle">
               Checking signature and relay registration
             </p>
           </div>
@@ -911,120 +726,58 @@ export default function Wallet() {
 
       {/* QR Scanner Modal */}
       {showQRScanner && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.8)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            background: '#1a1a1a',
-            padding: '2rem',
-            borderRadius: '12px',
-            maxWidth: '600px',
-            width: '90%',
-            position: 'relative',
-            border: '2px solid #333'
-          }}>
+        <div className="wallet-overlay wallet-overlay-modal">
+          <div className="wallet-modal">
             <button
               onClick={() => setShowQRScanner(false)}
-              style={{
-                position: 'absolute',
-                top: '1rem',
-                right: '1rem',
-                background: 'transparent',
-                border: 'none',
-                color: '#888',
-                fontSize: '1.5rem',
-                cursor: 'pointer'
-              }}
+              className="wallet-modal-close"
             >
               ✕
             </button>
-            <h3 style={{ marginTop: 0 }}>Scan QR Code</h3>
-            <p style={{ color: '#888', marginBottom: '1.5rem' }}>
+            <h3 className="wallet-modal-title">Scan QR Code</h3>
+            <p className="wallet-modal-subtitle">
               Scan a QR code from an entity requesting your DID
             </p>
-            <div id="qr-reader" style={{ width: '100%' }}></div>
+            <div id="qr-reader"></div>
           </div>
         </div>
       )}
 
       {/* Share Confirmation Dialog */}
       {showShareConfirm && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.8)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1001
-        }}>
-          <div style={{
-            background: '#1a1a1a',
-            padding: '2rem',
-            borderRadius: '12px',
-            maxWidth: '500px',
-            width: '90%',
-            border: '2px solid rgb(202, 165, 97)'
-          }}>
-            <h3 style={{ marginTop: 0, color: 'rgb(202, 165, 97)' }}>Share Your Identity?</h3>
-            <p style={{ color: '#ccc', marginBottom: '1rem' }}>
+        <div className="wallet-overlay wallet-overlay-confirm">
+          <div className="wallet-confirm-modal">
+            <h3 className="wallet-confirm-title">Share Your Identity?</h3>
+            <p className="wallet-confirm-text">
               An entity is requesting your signed identity. Your DID document will be
               cryptographically signed to prove ownership and prevent replay attacks.
             </p>
 
             {/* Identity summary */}
-            <div style={{
-              background: '#0a0a0a',
-              padding: '1rem',
-              borderRadius: '8px',
-              marginBottom: '1.5rem',
-              border: '1px solid #333'
-            }}>
-              <p style={{ margin: '0.5rem 0', color: '#fff', wordBreak: 'break-all' }}>
+            <div className="wallet-identity-summary">
+              <p className="wallet-summary-line wallet-summary-line-break">
                 <strong>DID:</strong> {identity?.did}
               </p>
-              <p style={{ margin: '0.5rem 0', color: '#fff' }}>
+              <p className="wallet-summary-line">
                 <strong>Ethereum Address:</strong> {user?.eth_address || 'Not available'}
               </p>
               {scannedData?.entityName && (
-                <p style={{ margin: '0.5rem 0', color: 'rgb(202, 165, 97)' }}>
+                <p className="wallet-summary-line wallet-summary-line-entity">
                   <strong>Requesting entity:</strong> {scannedData.entityName}
                 </p>
               )}
             </div>
 
             {/* Key file drop zone */}
-            <div style={{ marginBottom: '1.5rem' }}>
-              <p style={{ color: '#aaa', margin: '0 0 0.5rem', fontSize: '0.85rem' }}>
+            <div className="wallet-key-block">
+              <p className="wallet-key-label">
                 Drop your DID private key file to sign:
               </p>
               <div
                 onDragOver={e => e.preventDefault()}
                 onDrop={handleKeyFileDrop}
                 onClick={() => (document.getElementById('wlt-key-input') as HTMLInputElement)?.click()}
-                style={{
-                  border: `2px dashed ${keyFileContent ? '#4CAF50' : '#555'}`,
-                  borderRadius: '8px',
-                  padding: '0.75rem 1rem',
-                  textAlign: 'center',
-                  cursor: 'pointer',
-                  background: keyFileContent ? '#0a2a0a' : '#111',
-                  color: keyFileContent ? '#4CAF50' : '#888',
-                  fontSize: '0.9rem',
-                  userSelect: 'none',
-                }}
+                className={`wallet-key-dropzone ${keyFileContent ? 'loaded' : ''}`}
               >
                 {keyFileContent
                   ? `✓ Key loaded${keyIsEncrypted ? ' (encrypted)' : ''}`
@@ -1033,7 +786,7 @@ export default function Wallet() {
                   id="wlt-key-input"
                   type="file"
                   accept=".key,.enc"
-                  style={{ display: 'none' }}
+                  className="wallet-key-input"
                   onChange={handleKeyFileSelect}
                 />
               </div>
@@ -1043,51 +796,23 @@ export default function Wallet() {
                   placeholder="Key password"
                   value={keyPassword}
                   onChange={e => setKeyPassword(e.target.value)}
-                  style={{
-                    width: '100%',
-                    marginTop: '0.5rem',
-                    padding: '0.5rem 0.75rem',
-                    background: '#1a1a1a',
-                    border: '1px solid #555',
-                    color: 'white',
-                    borderRadius: '6px',
-                    boxSizing: 'border-box',
-                  }}
+                  className="wallet-password-input"
                 />
               )}
             </div>
 
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+            <div className="wallet-actions-row">
               <button
                 onClick={handleShareCancel}
                 disabled={sending}
-                style={{
-                  padding: '0.75rem 1.5rem',
-                  background: '#333',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: sending ? 'not-allowed' : 'pointer',
-                  fontSize: '1rem',
-                  fontWeight: 'bold',
-                  opacity: sending ? 0.5 : 1
-                }}
+                className="wallet-btn-cancel"
               >
                 Cancel
               </button>
               <button
                 onClick={handleShareConfirm}
                 disabled={sending || !keyFileContent || (keyIsEncrypted && !keyPassword)}
-                style={{
-                  padding: '0.75rem 1.5rem',
-                  background: (sending || !keyFileContent || (keyIsEncrypted && !keyPassword)) ? '#666' : 'rgb(202, 165, 97)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: (sending || !keyFileContent || (keyIsEncrypted && !keyPassword)) ? 'not-allowed' : 'pointer',
-                  fontSize: '1rem',
-                  fontWeight: 'bold'
-                }}
+                className="wallet-btn-share"
               >
                 {sending ? 'Signing & Sharing...' : 'Sign & Share'}
               </button>

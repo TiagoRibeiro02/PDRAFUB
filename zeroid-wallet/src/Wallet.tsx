@@ -37,29 +37,43 @@ interface IdentityData {
 }
 
 async function getQuantumRandomUUID(): Promise<string> {
+  let timeoutId: number | undefined;
+
   try {
-    // Fetch 16 random bytes via Vite proxy
-    const response = await fetch(
-      "/api/quantum?length=16&type=uint8"
-    );
+    console.log("Fetching quantum random data for UUID generation...");
+    // Fetch 16 random bytes via Vite proxy with timeout fallback
+    const controller = new AbortController();
+    timeoutId = window.setTimeout(() => controller.abort(), 6000);
+
+    const response = await fetch("/api/quantum?length=16&type=uint8", {
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`QRNG request failed (${response.status} ${response.statusText})`);
+    }
+
     const data = await response.json();
-    
-    if (!data.success || !data.data) {
+
+    if (!data?.success || !Array.isArray(data.data) || data.data.length < 16) {
       throw new Error("Failed to get quantum random data");
     }
 
-    // Convert the 16 random bytes to UUID format (8-4-4-4-12)
-    const bytes = data.data;
-    const hex = bytes.map((b: number) => b.toString(16).padStart(2, "0")).join("");
-    //return hex;
-    
-    // Format as UUID: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
-    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-${(
-      (parseInt(hex.slice(16, 18), 16) & 0x3f) | 0x80
-    ).toString(16)}${hex.slice(18, 20)}-${hex.slice(20, 32)}`;
+    // Convert the first 16 random bytes to UUID v4 format (8-4-4-4-12)
+    const bytes = new Uint8Array(data.data.slice(0, 16));
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+
+    const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
   } catch (error) {
-    console.error("Failed to get quantum random UUID, falling back to crypto.randomUUID():", error);
+    console.warn("Failed to get quantum random UUID, falling back to crypto.randomUUID():", error);
     return crypto.randomUUID();
+  } finally {
+    if (timeoutId !== undefined) {
+      window.clearTimeout(timeoutId);
+    }
   }
 }
 
@@ -555,6 +569,10 @@ export default function Wallet() {
         publicKeyJwk: id.publicKeyJwk,
       });
 
+      // Clear loading immediately after successful persistence/state update.
+      // Any dialogs/download prompts below should not keep the button in "Creating DID...".
+      setLoading(false);
+
       // Download DID private key
       downloadPrivateKey(id.privateKeyRaw, id.did);
 
@@ -593,7 +611,6 @@ export default function Wallet() {
       {!identity ? (
         <div 
           style={{
-            maxWidth: '600px',
             margin: '0 auto',
             padding: 'clamp(1.5rem, 3vw, 2.5rem)',
             background: '#1a1a1a',
@@ -614,6 +631,23 @@ export default function Wallet() {
           <h1 style={{ fontSize: 'clamp(1.5rem, 3vw, 2.5rem)', marginBottom: '1rem', color: "#ffffff" }}>ZeroID Wallet</h1>
           {user && <p style={{ fontSize: 'clamp(1rem, 1.8vw, 1.2rem)', marginBottom: '1rem' }}>Welcome, {user.username}!</p>}
           <p style={{ fontSize: 'clamp(0.95rem, 1.5vw, 1.1rem)', color: '#aaa', marginBottom: '2rem' }}>You don't have a DID yet.</p>
+          {error && (
+            <div
+              style={{
+                margin: '0 auto 1rem',
+                padding: '0.75rem 1rem',
+                maxWidth: '640px',
+                background: 'rgba(255, 0, 0, 0.12)',
+                border: '1px solid rgba(255, 70, 70, 0.4)',
+                borderRadius: '8px',
+                color: '#ffb0b0',
+                fontSize: '0.95rem',
+                wordBreak: 'break-word',
+              }}
+            >
+              {error}
+            </div>
+          )}
           <button 
             onClick={createIdentity} 
             disabled={loading}

@@ -66,9 +66,6 @@ export default function App() {
           <h1 style={{ margin: 0, color: 'rgb(202,165,97)' }}>
             {issuerUser.issuer_name || 'ZeroID Issuer'} — Asset Portal
           </h1>
-          <p style={{ margin: '0.25rem 0 0', color: '#888', fontSize: '0.85rem' }}>
-            {issuerUser.issuer_did || 'Issuer DID not set'}
-          </p>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -100,7 +97,6 @@ export default function App() {
       ) : (
         <div style={{ padding: '3rem', textAlign: 'center', color: '#888' }}>
           <h2>Contract Not Found</h2>
-          <p>Copy the contract JSON files from <code>nfts/frontend/src/contracts/</code> into <code>zeroid-issuer/src/contracts/</code>.</p>
         </div>
       )}
     </div>

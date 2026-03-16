@@ -307,7 +307,7 @@ php -S localhost:8003 > /tmp/php-issuer-backend.log 2>&1 &
 PHP_ISSUER_PID=$!
 cd ../..
 sleep 2
-echo "PHP issuer backend running on :8003 (PID: $PHP_ISSUER_PID)"
+echo "PHP issuer backend running (PID: $PHP_ISSUER_PID)"
 echo ""
 
 echo "================================================"

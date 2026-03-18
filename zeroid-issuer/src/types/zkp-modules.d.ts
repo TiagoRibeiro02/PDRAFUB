@@ -19,3 +19,5 @@ declare module 'circomlibjs' {
     F: { toString: (value: any) => string };
   }>;
 }
+
+declare module '*.css';

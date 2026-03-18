@@ -53,6 +53,42 @@
   flex-wrap: wrap;
 }
 
+.issuer-add-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 0.75rem;
+}
+
+.issuer-input,
+.issuer-textarea {
+  background: #111;
+  border: 1px solid #333;
+  color: #ddd;
+  border-radius: 6px;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.9rem;
+}
+
+.issuer-input:focus,
+.issuer-textarea:focus {
+  outline: none;
+  border-color: rgb(202, 165, 97);
+}
+
+.issuer-textarea {
+  grid-column: 1 / -1;
+  resize: vertical;
+}
+
+.issuer-add-form button {
+  justify-self: start;
+}
+
 /* ── Buttons ────────────────────────────────────────────────────────────── */
 .btn {
   padding: 0.6rem 1.2rem;
@@ -201,6 +237,18 @@
   border-radius: 6px;
   color: #ff6b6b;
   padding: 0.75rem 1rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.success-bar {
+  background: #1a2a1a;
+  border: 1px solid #4CAF50;
+  border-radius: 6px;
+  color: #7bd67f;
+  padding: 0.75rem 1rem;
+  margin-top: 1rem;
   margin-bottom: 1rem;
   font-size: 0.9rem;
 }

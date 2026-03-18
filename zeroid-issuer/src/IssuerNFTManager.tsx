@@ -59,6 +59,13 @@ export default function IssuerNFTManager({
   const [selectedNFT, setSelectedNFT]     = useState<NFTItem | null>(null);
   const [ethEurRate, setEthEurRate]       = useState<number | null>(null);
   const [showAllIssuers, setShowAllIssuers] = useState(false);
+  const [assetName, setAssetName] = useState('');
+  const [assetDescription, setAssetDescription] = useState('');
+  const [assetImageUrl, setAssetImageUrl] = useState('');
+  const [assetType, setAssetType] = useState('');
+  const [assetPriceEth, setAssetPriceEth] = useState('');
+  const [submittingAsset, setSubmittingAsset] = useState(false);
+  const [assetSuccess, setAssetSuccess] = useState('');
 
   useEffect(() => {
     checkWallet();
@@ -231,6 +238,83 @@ export default function IssuerNFTManager({
     }
   };
 
+  const handleAddAsset = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setAssetSuccess('');
+    setError('');
+
+    if (!contractAddress || !contractABI) {
+      setError('Contract not configured');
+      return;
+    }
+
+    const trimmedName = assetName.trim();
+    const trimmedDescription = assetDescription.trim();
+    const trimmedImage = assetImageUrl.trim();
+    const trimmedType = assetType.trim();
+    const trimmedPrice = assetPriceEth.trim();
+
+    if (!trimmedName || !trimmedDescription || !trimmedImage || !trimmedPrice) {
+      setError('Please fill name, description, image URL, and price');
+      return;
+    }
+
+    let priceWei: bigint;
+    try {
+      priceWei = ethers.parseEther(trimmedPrice);
+    } catch {
+      setError('Invalid price format. Use a numeric ETH value (e.g. 0.75).');
+      return;
+    }
+
+    if (priceWei <= 0n) {
+      setError('Price must be greater than 0 ETH.');
+      return;
+    }
+
+    try {
+      setSubmittingAsset(true);
+      const provider = new ethers.BrowserProvider((window as unknown as { ethereum: any }).ethereum);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(contractAddress, contractABI as ethers.InterfaceAbi, signer);
+
+      const metadata = {
+        name: trimmedName,
+        description: trimmedDescription,
+        image: trimmedImage,
+        issuer: issuerDid,
+        issuer_name: issuerName,
+        asset_type: trimmedType,
+        attributes: [
+          { trait_type: 'Asset Type', value: trimmedType || 'Unspecified' },
+          { trait_type: 'Issuer', value: issuerName || issuerDid || 'Unknown Issuer' },
+        ],
+      };
+
+      const tokenURI = `data:application/json;base64,${btoa(unescape(encodeURIComponent(JSON.stringify(metadata))))}`;
+
+      const tx = await contract.mintNFT(tokenURI, priceWei);
+      await tx.wait();
+
+      setAssetName('');
+      setAssetDescription('');
+      setAssetImageUrl('');
+      setAssetType('');
+      setAssetPriceEth('');
+      setAssetSuccess('Asset created and listed successfully.');
+      await loadNFTs();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes('Caller is not an authorized entity')) {
+        setError('This wallet is not authorized to mint assets. Ask the contract owner to authorize it.');
+      } else {
+        setError('Failed to create asset: ' + msg);
+      }
+    } finally {
+      setSubmittingAsset(false);
+    }
+  };
+
   // Sold assets should always be scoped to this issuer.
   const myPurchased = issuerDid
     ? purchased.filter(n => n.issuer === issuerDid)
@@ -277,6 +361,62 @@ export default function IssuerNFTManager({
           Show available assets from all issuers
         </label>
       </div>
+
+      <section className="issuer-section">
+        <h2>Add New Asset</h2>
+        <p className="issuer-section-hint">
+          Mint a new physical asset NFT to the bank inventory and list it for sale.
+        </p>
+
+        <form className="issuer-add-form" onSubmit={handleAddAsset}>
+          <input
+            className="issuer-input"
+            type="text"
+            placeholder="Asset name"
+            value={assetName}
+            onChange={e => setAssetName(e.target.value)}
+            disabled={submittingAsset}
+          />
+          <input
+            className="issuer-input"
+            type="text"
+            placeholder="Asset type (optional)"
+            value={assetType}
+            onChange={e => setAssetType(e.target.value)}
+            disabled={submittingAsset}
+          />
+          <input
+            className="issuer-input"
+            type="url"
+            placeholder="Image URL"
+            value={assetImageUrl}
+            onChange={e => setAssetImageUrl(e.target.value)}
+            disabled={submittingAsset}
+          />
+          <input
+            className="issuer-input"
+            type="text"
+            inputMode="decimal"
+            placeholder="Price in ETH (e.g. 0.75)"
+            value={assetPriceEth}
+            onChange={e => setAssetPriceEth(e.target.value)}
+            disabled={submittingAsset}
+          />
+          <textarea
+            className="issuer-textarea"
+            placeholder="Description"
+            value={assetDescription}
+            onChange={e => setAssetDescription(e.target.value)}
+            rows={3}
+            disabled={submittingAsset}
+          />
+          <button className="btn btn-gold" type="submit" disabled={submittingAsset}>
+            {submittingAsset ? 'Creating…' : 'Create Asset'}
+          </button>
+        </form>
+
+        {assetSuccess && <div className="success-bar">{assetSuccess}</div>}
+      </section>
 
       {error && <div className="error-bar">{error}</div>}
 

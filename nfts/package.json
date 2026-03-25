@@ -9,12 +9,17 @@
     "mint": "hardhat run scripts/mint.ts --network localhost",
     "node": "hardhat node",
     "test": "hardhat test",
-    "dev": "cd frontend && npm run dev"
+    "dev": "cd frontend && npm run dev",
+    "benchmark:zkp": "hardhat run --no-compile --network sepolia scripts/benchmark-zkp.js",
+    "benchmark:nft-gas": "hardhat run --no-compile --network sepolia scripts/benchmark-nft-gas.js",
+    "benchmark:zkp:local": "hardhat run --no-compile scripts/benchmark-zkp.js",
+    "benchmark:nft-gas:local": "hardhat run --no-compile scripts/benchmark-nft-gas.js"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@types/node": "^20.0.0",
     "hardhat": "^2.19.0",
+    "solc": "^0.8.28",
     "ts-node": "^10.9.0",
     "typescript": "^5.0.0"
   },

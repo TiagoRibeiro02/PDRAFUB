@@ -2,11 +2,12 @@ import type { NFTListing } from '../BankNFTManager';
 
 interface PurchasedNFTCardProps {
   nft: NFTListing;
+  onClick: () => void;
 }
 
-export default function PurchasedNFTCard({ nft }: PurchasedNFTCardProps) {
+export default function PurchasedNFTCard({ nft, onClick }: PurchasedNFTCardProps) {
   return (
-    <div className="cardStyle">
+    <div className="cardStyle" onClick={onClick} title="Click to view details" style={{ cursor: 'pointer' }}>
       {nft.image && <img src={nft.image} alt={nft.name} className="imageStyle" />}
       <h4 className='nftName'>{nft.name}</h4>
       <p className='nftDescription'>{nft.description}</p>

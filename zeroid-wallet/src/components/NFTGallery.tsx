@@ -112,6 +112,7 @@ export default function NFTGallery({ userDid, contractAddress, contractABI, onNF
             metadata: {
               image:               metadata.image || '',
               description:         metadata.description || '',
+              attributes:          Array.isArray(metadata.attributes) ? metadata.attributes : [],
               complianceTimestamp: complianceTimestamp > 0 ? complianceTimestamp : undefined,
               kycExpiryTimestamp:  kycExpiryDate > 0 ? kycExpiryDate : undefined,
               kycIssuer:           kycIssuer || undefined,

@@ -10,42 +10,19 @@ interface Props {
   onClose: () => void;
 }
 
-const OVERLAY: React.CSSProperties = {
-  position: 'fixed', inset: 0,
-  background: 'rgba(0,0,0,0.85)',
-  display: 'flex', alignItems: 'center', justifyContent: 'center',
-  zIndex: 1000, padding: '1rem',
-};
-
-const PANEL: React.CSSProperties = {
-  background: '#1a1a1a',
-  border: '1px solid #333',
-  borderRadius: '12px',
-  width: '100%',
-  maxWidth: '600px',
-  maxHeight: '90vh',
-  overflowY: 'auto',
-  padding: '2rem',
-  position: 'relative',
-};
-
-function Field({ label, value }: { label: string; value: React.ReactNode }) {
+function Field({ label, value, valueStyle }: { label: string; value: React.ReactNode; valueStyle?: React.CSSProperties }) {
   return (
-    <div style={{ marginBottom: '0.75rem' }}>
-      <div style={{ fontSize: '0.75rem', color: '#666', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.2rem' }}>
-        {label}
-      </div>
-      <div style={{ color: '#ddd', fontSize: '0.9rem', wordBreak: 'break-all' }}>{value}</div>
+    <div className="detail-field">
+      <div className="detail-label">{label}</div>
+      <div className="detail-value" style={valueStyle}>{value}</div>
     </div>
   );
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ marginBottom: '1.5rem' }}>
-      <h3 style={{ color: 'rgb(202,165,97)', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 0.75rem' }}>
-        {title}
-      </h3>
+    <div className="detail-section">
+      <h3>{title}</h3>
       {children}
     </div>
   );
@@ -53,85 +30,119 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export default function NFTDetailModal({ nft, ethEurRate, kycContractAddress, kycContractABI, onClose }: Props) {
   const [showTransfer, setShowTransfer] = useState(false);
+  const isPurchased = Boolean(nft.didOwner);
   const approxEur = ethEurRate !== null
     ? (parseFloat(nft.price) * ethEurRate).toLocaleString('pt-PT', { maximumFractionDigits: 2 })
     : null;
-
-  const metaKeys = Object.keys(nft.metadata).filter(
-    k => !['name', 'description', 'image', 'issuer', 'issuer_name'].includes(k)
-  );
+  const attributes = Array.isArray(nft.metadata?.attributes)
+    ? (nft.metadata.attributes as Array<{ trait_type?: string; value?: unknown }>)
+    : [];
+  const getAttribute = (traitType: string): string => {
+    const attr = attributes.find((a) => a.trait_type === traitType);
+    return attr ? String(attr.value ?? '') : '';
+  };
+  const documentType = getAttribute('Document Type');
+  const documentNumber = getAttribute('Document Number');
 
   return (
     <>
-      <div style={OVERLAY} onClick={onClose}>
-        <div style={PANEL} onClick={e => e.stopPropagation()}>
-          {/* Close button */}
-          <button
-            onClick={onClose}
-            style={{
-              position: 'absolute', top: '1rem', right: '1rem',
-              background: 'transparent', border: 'none', color: '#888',
-              fontSize: '1.4rem', cursor: 'pointer', lineHeight: 1,
-            }}
-          >✕</button>
-
-          <h2 style={{ margin: '0 0 1.5rem', color: 'white' }}>Asset Details</h2>
+      <div className="detail-panel detail-panel-modal">
+          <div className="detail-panel-header">
+            <h2 className="detail-panel-title">Asset Details</h2>
+            <button
+              className="close-button"
+              onClick={onClose}
+            >x</button>
+          </div>
 
           {/* Image */}
           {nft.image && (
-            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
               <img src={nft.image} alt={nft.name}
-                style={{ maxWidth: '100%', maxHeight: '220px', objectFit: 'contain', borderRadius: '8px' }} />
+                className="detailimage" />
             </div>
           )}
 
-          {/* Asset info */}
-          <Section title="Asset">
+          <Section title="Identity Information">
             <Field label="Name"        value={nft.name} />
-            <Field label="Description" value={nft.description || '—'} />
-            <Field label="Token ID"    value={`#${nft.tokenId}`} />
-            <Field label="Price"       value={`${nft.price} ETH`} />
-            {approxEur && <Field label="Approx. Value" value={`€${approxEur}`} />}
-            {nft.issuerName && <Field label="Issuer" value={nft.issuerName} />}
-            {nft.issuer     && <Field label="Issuer DID" value={nft.issuer} />}
+            <Field label="Owner DID" value={isPurchased ? nft.didOwner : 'Not purchased yet'} />
           </Section>
 
-          {/* Ownership */}
-          <Section title="Ownership">
-            <Field label="Owner DID" value={nft.didOwner} />
-            <Field label="KYC / AML Status" value={
-              <span style={{ color: nft.isCompliant ? '#4CAF50' : '#ff6b6b', fontWeight: 'bold' }}>
-                {nft.isCompliant ? '✓ Verified and Compliant' : '✕ Not Verified'}
-              </span>
-            } />
-            {nft.complianceTimestamp && nft.complianceTimestamp > 0 && (
+          {(documentType || documentNumber || nft.issuerName || nft.issuer) && (
+            <Section title="Document Information">
+              {documentType && <Field label="Document Type" value={documentType} />}
+              {documentNumber && <Field label="Document Number" value={documentNumber} />}
+              {nft.issuerName && <Field label="Issuer" value={nft.issuerName} />}
+              {nft.issuer && <Field label="Issuer DID" value={nft.issuer} />}
+            </Section>
+          )}
+
+          <Section title="NFT Details">
+            <Field label="Token ID" value={nft.tokenId} />
+            <Field label="Price" value={`${nft.price} ETH${approxEur ? ` (≈ €${approxEur})` : ''}`} />
+            <Field label="Status" value={isPurchased ? 'Purchased' : 'Listed for sale in bank inventory'} />
+            <Field
+              label="KYC/AML Compliance Status"
+              value={isPurchased
+                ? (nft.isCompliant ? 'Verified and Compliant' : 'Not Verified')
+                : 'Not applicable until purchase'}
+              valueStyle={{ color: !isPurchased ? '#888' : (nft.isCompliant ? '#4CAF50' : '#ff6b6b') }}
+            />
+            {isPurchased && nft.complianceTimestamp && nft.complianceTimestamp > 0 && (
               <Field label="KYC Date" value={new Date(nft.complianceTimestamp * 1000).toLocaleString()} />
             )}
-            {nft.kycExpiryTimestamp && nft.kycExpiryTimestamp > 0 && (
-              <Field label="KYC Expiry" value={new Date(nft.kycExpiryTimestamp * 1000).toLocaleString()} />
+            {isPurchased && nft.kycExpiryTimestamp && nft.kycExpiryTimestamp > 0 && (
+              <Field label="KYC Expiry Date" value={new Date(nft.kycExpiryTimestamp * 1000).toLocaleString()} />
             )}
-            {nft.kycIssuer && <Field label="KYC Issuer" value={nft.kycIssuer} />}
+            {isPurchased && nft.kycIssuer && <Field label="KYC Issuer" value={nft.kycIssuer} />}
           </Section>
 
+          {nft.description && (
+            <Section title="Description">
+              <div className="detail-field">
+                <div className="detail-value">{nft.description}</div>
+              </div>
+            </Section>
+          )}
+
+          {attributes.length > 0 && (
+            <Section title="Attributes">
+              {attributes.map((attr, index) => (
+                <Field
+                  key={`${String(attr.trait_type ?? 'attribute')}-${index}`}
+                  label={attr.trait_type || `Attribute ${index + 1}`}
+                  value={String(attr.value ?? '—')}
+                />
+              ))}
+            </Section>
+          )}
+
           {/* Physical Transfer button */}
-          <div style={{ borderTop: '1px solid #333', paddingTop: '1.5rem', marginTop: '0.5rem' }}>
-            <p style={{ color: '#888', fontSize: '0.85rem', marginBottom: '1rem' }}>
-              To hand over the physical asset to the owner, you must verify they hold the private key
-              corresponding to the DID registered on the blockchain.
-            </p>
-            <button
-              onClick={() => setShowTransfer(true)}
-              style={{
-                width: '100%', padding: '0.85rem',
-                background: 'rgb(202,165,97)', color: 'white',
-                border: 'none', borderRadius: '8px',
-                cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem',
-              }}
-            >
-              Physical Transfer →
-            </button>
-          </div>
-        </div>
+          {isPurchased ? (
+            <div className="detail-section" style={{ borderTop: '1px solid #333', paddingTop: '1.5rem', marginTop: '0.5rem' }}>
+              <p style={{ color: '#888', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                To hand over the physical asset to the owner, you must verify they hold the private key
+                corresponding to the DID registered on the blockchain.
+              </p>
+              <button
+                onClick={() => setShowTransfer(true)}
+                style={{
+                  width: '100%', padding: '0.85rem',
+                  background: 'rgb(202,165,97)', color: 'white',
+                  border: 'none', borderRadius: '8px',
+                  cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem',
+                }}
+              >
+                Physical Transfer →
+              </button>
+            </div>
+          ) : (
+            <div className="detail-section" style={{ borderTop: '1px solid #333', paddingTop: '1.5rem', marginTop: '0.5rem' }}>
+              <p style={{ color: '#888', fontSize: '0.85rem', marginBottom: 0 }}>
+                Physical transfer actions become available after this asset is purchased and assigned to an owner DID.
+              </p>
+            </div>
+          )}
       </div>
 
       {showTransfer && (

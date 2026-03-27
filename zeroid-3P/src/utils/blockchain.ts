@@ -87,6 +87,7 @@ export async function fetchAllNFTs(
             metadata: {
               description: metadata.description,
               image: metadata.image,
+              attributes: Array.isArray(metadata.attributes) ? metadata.attributes : [],
               complianceTimestamp: complianceTimestamp > 0 ? complianceTimestamp : undefined,
               kycExpiryTimestamp: kycExpiryTimestamp > 0 ? kycExpiryTimestamp : undefined,
               complianceCommitment: complianceCommitment || undefined,

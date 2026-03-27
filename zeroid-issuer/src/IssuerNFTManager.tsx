@@ -420,79 +420,83 @@ export default function IssuerNFTManager({
 
       {error && <div className="error-bar">{error}</div>}
 
-      {/* ── PURCHASED / SOLD NFTs ─────────────────────────────────────── */}
-      <section className="issuer-section">
-        <h2>
-          Sold Assets ({myPurchased.length})
-          {issuerDid && (
-            <span style={{ color: '#888', fontSize: '0.75rem', marginLeft: '0.5rem' }}>
-              — {issuerName}
-            </span>
-          )}
-        </h2>
-        <p className="issuer-section-hint">
-          Physical assets that have been purchased and assigned to a user DID.
-          Click any card to view details and manage physical delivery.
-        </p>
+      <div className="main-content">
+        <div className={`nft-list-container ${selectedNFT ? 'with-detail' : ''}`}>
+          {/* ── PURCHASED / SOLD NFTs ─────────────────────────────────────── */}
+          <section className="issuer-section">
+            <h2>
+              Sold Assets ({myPurchased.length})
+              {issuerDid && (
+                <span style={{ color: '#888', fontSize: '0.75rem', marginLeft: '0.5rem' }}>
+                  — {issuerName}
+                </span>
+              )}
+            </h2>
+            <p className="issuer-section-hint">
+              Physical assets that have been purchased and assigned to a user DID.
+              Click any card to view details and manage physical delivery.
+            </p>
 
-        {loading && myPurchased.length === 0 ? (
-          <div className="empty-state">Loading…</div>
-        ) : myPurchased.length === 0 ? (
-          <div className="empty-state">No sold assets yet.</div>
-        ) : (
-          <div className="nft-grid">
-            {myPurchased.map(nft => (
-              <IssuedNFTCard
-                key={nft.tokenId}
-                nft={nft}
-                onClick={() => setSelectedNFT(nft)}
-              />
-            ))}
-          </div>
+            {loading && myPurchased.length === 0 ? (
+              <div className="empty-state">Loading…</div>
+            ) : myPurchased.length === 0 ? (
+              <div className="empty-state">No sold assets yet.</div>
+            ) : (
+              <div className="nft-grid">
+                {myPurchased.map(nft => (
+                  <IssuedNFTCard
+                    key={nft.tokenId}
+                    nft={nft}
+                    onClick={() => setSelectedNFT(nft)}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* ── AVAILABLE / TO-BE-BOUGHT NFTs ────────────────────────────── */}
+          <section className="issuer-section">
+            <h2>
+              Available Assets ({myAvailable.length})
+              {!showAllIssuers && issuerDid && (
+                <span style={{ color: '#888', fontSize: '0.75rem', marginLeft: '0.5rem' }}>
+                  — {issuerName}
+                </span>
+              )}
+            </h2>
+            <p className="issuer-section-hint">
+              Assets listed for sale, awaiting a buyer. Sold via the bank portal.
+            </p>
+
+            {loading && myAvailable.length === 0 ? (
+              <div className="empty-state">Loading…</div>
+            ) : myAvailable.length === 0 ? (
+              <div className="empty-state">No assets currently listed for sale.</div>
+            ) : (
+              <div className="nft-grid">
+                {myAvailable.map(nft => (
+                  <AvailableNFTCard
+                    key={nft.tokenId}
+                    nft={nft}
+                    ethEurRate={ethEurRate}
+                    onClick={() => setSelectedNFT(nft)}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+
+        {selectedNFT && (
+          <NFTDetailModal
+            nft={selectedNFT}
+            ethEurRate={ethEurRate}
+            kycContractAddress={kycContractAddress}
+            kycContractABI={kycContractABI}
+            onClose={() => setSelectedNFT(null)}
+          />
         )}
-      </section>
-
-      {/* ── AVAILABLE / TO-BE-BOUGHT NFTs ────────────────────────────── */}
-      <section className="issuer-section">
-        <h2>
-          Available Assets ({myAvailable.length})
-          {!showAllIssuers && issuerDid && (
-            <span style={{ color: '#888', fontSize: '0.75rem', marginLeft: '0.5rem' }}>
-              — {issuerName}
-            </span>
-          )}
-        </h2>
-        <p className="issuer-section-hint">
-          Assets listed for sale, awaiting a buyer. Sold via the bank portal.
-        </p>
-
-        {loading && myAvailable.length === 0 ? (
-          <div className="empty-state">Loading…</div>
-        ) : myAvailable.length === 0 ? (
-          <div className="empty-state">No assets currently listed for sale.</div>
-        ) : (
-          <div className="nft-grid">
-            {myAvailable.map(nft => (
-              <AvailableNFTCard
-                key={nft.tokenId}
-                nft={nft}
-                ethEurRate={ethEurRate}
-              />
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* ── DETAIL MODAL ─────────────────────────────────────────────── */}
-      {selectedNFT && (
-        <NFTDetailModal
-          nft={selectedNFT}
-          ethEurRate={ethEurRate}
-          kycContractAddress={kycContractAddress}
-          kycContractABI={kycContractABI}
-          onClose={() => setSelectedNFT(null)}
-        />
-      )}
+      </div>
     </div>
   );
 }

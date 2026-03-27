@@ -3,9 +3,10 @@ import type { NFTItem } from '../IssuerNFTManager';
 interface Props {
   nft: NFTItem;
   ethEurRate: number | null;
+  onClick: () => void;
 }
 
-export default function AvailableNFTCard({ nft, ethEurRate }: Props) {
+export default function AvailableNFTCard({ nft, ethEurRate, onClick }: Props) {
   const eurPrice = ethEurRate !== null
     ? (parseFloat(nft.price) * ethEurRate).toLocaleString('pt-PT', {
         minimumFractionDigits: 2,
@@ -14,7 +15,7 @@ export default function AvailableNFTCard({ nft, ethEurRate }: Props) {
     : null;
 
   return (
-    <div className="nft-card" style={{ cursor: 'default' }}>
+    <div className="nft-card" onClick={onClick} title="Click to view details">
       {nft.image
         ? <img src={nft.image} alt={nft.name} className="nft-card-img" />
         : <div className="nft-card-img-placeholder">💎</div>
@@ -39,6 +40,10 @@ export default function AvailableNFTCard({ nft, ethEurRate }: Props) {
             Issuer: {nft.issuerName || nft.issuer}
           </div>
         )}
+
+        <div style={{ marginTop: '0.6rem', fontSize: '0.75rem', color: '#555' }}>
+          Click to view details →
+        </div>
       </div>
     </div>
   );

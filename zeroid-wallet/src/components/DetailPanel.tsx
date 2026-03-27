@@ -171,6 +171,9 @@ const DetailPanel: React.FC<DetailPanelProps> = ({ nft, onClose }) => {
   const complianceTimestamp = nft.metadata?.complianceTimestamp as number | undefined;
   const kycExpiryTimestamp = nft.metadata?.kycExpiryTimestamp as number | undefined;
   const kycIssuer = nft.metadata?.kycIssuer as string | undefined;
+  const attributes = Array.isArray(nft.metadata?.attributes)
+    ? (nft.metadata?.attributes as Array<{ trait_type?: string; value?: unknown }>)
+    : [];
   const [showSignModal, setShowSignModal] = useState(false);
 
   return (
@@ -278,6 +281,18 @@ const DetailPanel: React.FC<DetailPanelProps> = ({ nft, onClose }) => {
           <div className="detail-field">
             <div className="detail-value">{nft.metadata.description}</div>
           </div>
+        </div>
+      )}
+
+      {attributes.length > 0 && (
+        <div className="detail-section">
+          <h3>Attributes</h3>
+          {attributes.map((attr, index) => (
+            <div className="detail-field" key={`${String(attr.trait_type ?? 'attribute')}-${index}`}>
+              <div className="detail-label">{attr.trait_type || `Attribute ${index + 1}`}</div>
+              <div className="detail-value">{String(attr.value ?? '—')}</div>
+            </div>
+          ))}
         </div>
       )}
 

@@ -5,6 +5,7 @@ import { generateEntityQRSession, registerEntitySession, verifyWalletResponse, j
 import './BankNFTManager.css';
 import AvailableNFTCard from './components/AvailableNFTCard';
 import PurchasedNFTCard from './components/PurchasedNFTCard';
+import NFTDetailModal from './components/NFTDetailModal';
 import QRModal from './components/QRModal';
 import { type BankUser } from './components/UserPicker';
 
@@ -33,6 +34,7 @@ export interface NFTListing {
   name: string;
   description: string;
   image: string;
+  metadata?: { [key: string]: unknown };
   price: string;
   priceWei: bigint;
   didOwner: string;
@@ -66,6 +68,7 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
   const [manualDID, setManualDID] = useState('');
   const [manualEthAddress, setManualEthAddress] = useState('');
   const [selectedBankUser, setSelectedBankUser] = useState<BankUser | null>(null);
+  const [selectedNFT, setSelectedNFT] = useState<NFTListing | null>(null);
   // Compressed public key (pkX + pkParity) verified against blockchain during QR scan
   const [compressedPk, setCompressedPk] = useState<{ pkX: string; pkParity: boolean } | null>(null);
 
@@ -265,6 +268,7 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
             name: metadata.name || `NFT #${tokenId}`,
             description: metadata.description || '',
             image: metadata.image || '',
+            metadata,
             price: ethers.formatEther(price),
             priceWei: price,
             didOwner
@@ -305,6 +309,7 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
               name: metadata.name || `NFT #${i}`,
               description: metadata.description || '',
               image: metadata.image || '',
+              metadata,
               price: ethers.formatEther(price),
               priceWei: price,
               didOwner
@@ -522,49 +527,62 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
         </p>
       </div>
 
-      {/* Available NFTs */}
-      <section className='nftSection'>
-        <h2 className='titleStyle2smaller'>Available NFTs ({available.length})</h2>
-        <p className='medium'>
-          Purchase these NFTs for users by entering their DID. The bank pays with MetaMask.
-        </p>
-        {available.length === 0 ? (
-          <div className='notAvailableStyle'>
-            No NFTs available.
-          </div>
-        ) : (
-          <div className='purchaseDiv'>
-            {available.map(nft => (
-              <AvailableNFTCard
-                key={nft.tokenId}
-                nft={nft}
-                loading={loading}
-                ethEurRate={ethEurRate}
-                onPurchase={purchaseForUser}
-              />
-            ))}
-          </div>
-        )}
-      </section>
+      <div className="main-content">
+        <div className={`nft-list-container ${selectedNFT ? 'with-detail' : ''}`}>
+          {/* Available NFTs */}
+          <section className='nftSection'>
+            <h2 className='titleStyle2smaller'>Available NFTs ({available.length})</h2>
+            <p className='medium'>
+              Purchase these NFTs for users by entering their DID. The bank pays with MetaMask.
+            </p>
+            {available.length === 0 ? (
+              <div className='notAvailableStyle'>
+                No NFTs available.
+              </div>
+            ) : (
+              <div className='purchaseDiv'>
+                {available.map(nft => (
+                  <AvailableNFTCard
+                    key={nft.tokenId}
+                    nft={nft}
+                    loading={loading}
+                    ethEurRate={ethEurRate}
+                    onPurchase={purchaseForUser}
+                    onViewDetails={setSelectedNFT}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
 
-      {/* Purchased NFTs */}
-      <section>
-        <h2 className='titleStyle'>Purchased NFTs ({purchased.length})</h2>
-        <p className='medium'>
-          NFTs that have been purchased and assigned to user DIDs.
-        </p>
-        {purchased.length === 0 ? (
-          <div className='notAvailableStyle'>
-            No NFTs have been purchased yet.
-          </div>
-        ) : (
-          <div className='purchaseDiv'>
-            {purchased.map(nft => (
-              <PurchasedNFTCard key={nft.tokenId} nft={nft} />
-            ))}
-          </div>
+          {/* Purchased NFTs */}
+          <section>
+            <h2 className='titleStyle'>Purchased NFTs ({purchased.length})</h2>
+            <p className='medium'>
+              NFTs that have been purchased and assigned to user DIDs.
+            </p>
+            {purchased.length === 0 ? (
+              <div className='notAvailableStyle'>
+                No NFTs have been purchased yet.
+              </div>
+            ) : (
+              <div className='purchaseDiv'>
+                {purchased.map(nft => (
+                  <PurchasedNFTCard key={nft.tokenId} nft={nft} onClick={() => setSelectedNFT(nft)} />
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+
+        {selectedNFT && (
+          <NFTDetailModal
+            nft={selectedNFT}
+            ethEurRate={ethEurRate}
+            onClose={() => setSelectedNFT(null)}
+          />
         )}
-      </section>
+      </div>
 
       {/* QR Code Request Modal */}
       {showQRRequest && (

@@ -3,9 +3,12 @@ import "@nomicfoundation/hardhat-toolbox";
 
 const sepoliaRpcUrl = process.env.SEPOLIA_RPC_URL || "";
 const privateKey = process.env.PRIVATE_KEY || "";
+const normalizedPrivateKey = privateKey.trim().replace(/^0x/, "");
+const hasValidSepoliaConfig =
+  sepoliaRpcUrl.trim().length > 0 && /^[0-9a-fA-F]{64}$/.test(normalizedPrivateKey);
 
-const sepoliaAccounts = privateKey
-  ? [privateKey.startsWith("0x") ? privateKey : `0x${privateKey}`]
+const sepoliaAccounts = hasValidSepoliaConfig
+  ? [`0x${normalizedPrivateKey}`]
   : [];
 
 const config: HardhatUserConfig = {

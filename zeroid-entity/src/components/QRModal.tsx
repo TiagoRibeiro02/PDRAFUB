@@ -61,7 +61,7 @@ export default function QRModal({
 
         {manualDID ? (
           <p className='responsereceived'>
-            ✓ Wallet response received
+            Wallet response received
           </p>
         ) : (
           <p className='waitingscan'>

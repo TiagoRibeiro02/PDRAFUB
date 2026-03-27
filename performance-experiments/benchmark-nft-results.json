@@ -1,0 +1,63 @@
+{
+  "updatedAt": "2026-03-26T14:27:25.154Z",
+  "totalRuns": 3,
+  "runs": [
+    {
+      "generatedAt": "2026-03-26T10:30:43.351Z",
+      "network": "sepolia",
+      "benchmarkPriceWei": "1000000000000000",
+      "benchmarkPriceEth": "0.001",
+      "contract": {
+        "name": "MyNFT",
+        "address": "0x3c5B4b2511365C535e6b91a9E3FF028Ad05c0d66",
+        "deployGas": "4174547"
+      },
+      "functions": {
+        "setEntityAuthorization": "48398",
+        "mintNFT": "214979",
+        "purchaseNFT": "63657",
+        "linkDIDToAddress": "48625",
+        "transferToDID": "33651",
+        "purchaseAndTransferNFT": "120345"
+      }
+    },
+    {
+      "generatedAt": "2026-03-26T11:54:00.990Z",
+      "network": "sepolia",
+      "benchmarkPriceWei": "1000000000000000",
+      "benchmarkPriceEth": "0.001",
+      "contract": {
+        "name": "MyNFT",
+        "address": "0x0C9c5214918d75e20814bf257A3989CB18e751AB",
+        "deployGas": "4174547"
+      },
+      "functions": {
+        "setEntityAuthorization": "48398",
+        "mintNFT": "214979",
+        "purchaseNFT": "63657",
+        "linkDIDToAddress": "48625",
+        "transferToDID": "33651",
+        "purchaseAndTransferNFT": "120345"
+      }
+    },
+    {
+      "generatedAt": "2026-03-26T14:26:00.947Z",
+      "network": "sepolia",
+      "benchmarkPriceWei": "1000000000000000",
+      "benchmarkPriceEth": "0.001",
+      "contract": {
+        "name": "MyNFT",
+        "address": "0x0c310A53fE85b96Ea79db51c30214664749458E3",
+        "deployGas": "4174547"
+      },
+      "functions": {
+        "setEntityAuthorization": "48398",
+        "mintNFT": "214979",
+        "purchaseNFT": "63657",
+        "linkDIDToAddress": "48625",
+        "transferToDID": "33651",
+        "purchaseAndTransferNFT": "120345"
+      }
+    }
+  ]
+}

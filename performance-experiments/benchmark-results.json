@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-03-25T19:44:38.537Z",
-  "totalRuns": 6,
+  "updatedAt": "2026-03-26T14:23:13.015Z",
+  "totalRuns": 9,
   "runs": [
     {
       "generatedAt": "2026-03-24T18:16:19.165Z",
@@ -256,6 +256,135 @@
             "kyc": "0xc2baF354bEba3580e9fEeBe28acd51b30B9f6410",
             "verifyProofTxGas": "238628",
             "submitComplianceProofGas": "438957"
+          }
+        ]
+      }
+    },
+    {
+      "generatedAt": "2026-03-26T10:14:50.658Z",
+      "timings": {
+        "plonk": {
+          "proofGenerationMs": 1172.47,
+          "verificationMs": 403.96
+        },
+        "fflonk": {
+          "proofGenerationMs": 1318.92,
+          "verificationMs": 428.97
+        },
+        "groth16": {
+          "proofGenerationMs": 488.76,
+          "verificationMs": 432.41
+        }
+      },
+      "gas": {
+        "generatedAt": "2026-03-26T10:14:50.541Z",
+        "results": [
+          {
+            "protocol": "PLONK",
+            "adapter": "0xeea790c1Cc7152417928005131eac0A74Bc60147",
+            "kyc": "0x8Ccd4Fe85d4260bD7c83Fc3a32f98A644C7A1BE3",
+            "verifyProofTxGas": "308330",
+            "submitComplianceProofGas": "508265"
+          },
+          {
+            "protocol": "FFLONK",
+            "adapter": "0x68953014Db1868BA4C74e4C493eAd831fAA1c76d",
+            "kyc": "0xA147C21af7f830194e9f8D6855BC2f557f28Cb16",
+            "verifyProofTxGas": "230979",
+            "submitComplianceProofGas": "430305"
+          },
+          {
+            "protocol": "GROTH16",
+            "adapter": "0xA6f30463055C2517ACB266CfCc35a52E9093CB40",
+            "kyc": "0x03F018e58A06F6C8B0B632b055E397C544AA5177",
+            "verifyProofTxGas": "238640",
+            "submitComplianceProofGas": "438969"
+          }
+        ]
+      }
+    },
+    {
+      "generatedAt": "2026-03-26T12:00:25.032Z",
+      "timings": {
+        "plonk": {
+          "proofGenerationMs": 1125.18,
+          "verificationMs": 412.58
+        },
+        "fflonk": {
+          "proofGenerationMs": 1339.19,
+          "verificationMs": 409.66
+        },
+        "groth16": {
+          "proofGenerationMs": 488.31,
+          "verificationMs": 428.81
+        }
+      },
+      "gas": {
+        "generatedAt": "2026-03-26T12:00:24.891Z",
+        "results": [
+          {
+            "protocol": "PLONK",
+            "adapter": "0x9ba95ABc9fEfdf9B4e7028b775B40e90ef2ed729",
+            "kyc": "0xC48d25822423599dE60f5149d0C38E19356e2f56",
+            "verifyProofTxGas": "306412",
+            "submitComplianceProofGas": "506333"
+          },
+          {
+            "protocol": "FFLONK",
+            "adapter": "0x3586EaC13Cdb08390f5a7EB084f6FdAE30D81B49",
+            "kyc": "0x95d7028B92996c87421D5B636911B2D119ccA72D",
+            "verifyProofTxGas": "231027",
+            "submitComplianceProofGas": "430353"
+          },
+          {
+            "protocol": "GROTH16",
+            "adapter": "0xa24064F324269d1e07a0e5148B0bAAf2D75e7324",
+            "kyc": "0x7EB86660Ec51A254c7b3aa6Be3b5B362c77D098e",
+            "verifyProofTxGas": "238652",
+            "submitComplianceProofGas": "438981"
+          }
+        ]
+      }
+    },
+    {
+      "generatedAt": "2026-03-26T14:23:13.014Z",
+      "timings": {
+        "plonk": {
+          "proofGenerationMs": 1157.25,
+          "verificationMs": 404
+        },
+        "fflonk": {
+          "proofGenerationMs": 1324.63,
+          "verificationMs": 409.48
+        },
+        "groth16": {
+          "proofGenerationMs": 491.68,
+          "verificationMs": 418.68
+        }
+      },
+      "gas": {
+        "generatedAt": "2026-03-26T14:23:12.907Z",
+        "results": [
+          {
+            "protocol": "PLONK",
+            "adapter": "0xBB4C451e58aC1D8c1B17D66ec6A69e3c4BD79024",
+            "kyc": "0xd46888EA71999011E703fF4e6a6B683CE360de43",
+            "verifyProofTxGas": "310212",
+            "submitComplianceProofGas": "510163"
+          },
+          {
+            "protocol": "FFLONK",
+            "adapter": "0xEb3Fd6cAa8736Ce190d27fdE73b2B05B3c72F051",
+            "kyc": "0x380c85b6ee3e55d2c065a856C1A3FaA452Fc5cd0",
+            "verifyProofTxGas": "231015",
+            "submitComplianceProofGas": "430341"
+          },
+          {
+            "protocol": "GROTH16",
+            "adapter": "0xe50B59eC10593a63A95a5A698F2f601A7c92d0C8",
+            "kyc": "0x5B9BF5BdA73FA08f39AAA118c336220f7A061E7F",
+            "verifyProofTxGas": "238652",
+            "submitComplianceProofGas": "438981"
           }
         ]
       }

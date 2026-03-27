@@ -5,7 +5,7 @@ import { resolve } from "path";
 const repoRoot = resolve(process.cwd(), "..");
 const perfRoot = resolve(process.cwd());
 const nftsDir = resolve(repoRoot, "nfts");
-const resultsPath = resolve(perfRoot, "benchmark-results.json");
+const resultsPath = resolve(perfRoot, "benchmark-nft-results.json");
 
 function loadEnvFromNfts() {
   const envPath = resolve(nftsDir, ".env");
@@ -82,7 +82,6 @@ function loadExistingResults() {
       updatedAt: new Date().toISOString(),
       totalRuns: 0,
       runs: [],
-      nftGasRuns: [],
     };
   }
 
@@ -94,7 +93,14 @@ function loadExistingResults() {
         updatedAt: new Date().toISOString(),
         totalRuns: parsed.length,
         runs: parsed,
-        nftGasRuns: [],
+      };
+    }
+
+    if (Array.isArray(parsed?.nftGasRuns)) {
+      return {
+        updatedAt: parsed.updatedAt || new Date().toISOString(),
+        totalRuns: parsed.nftGasRuns.length,
+        runs: parsed.nftGasRuns,
       };
     }
 
@@ -102,14 +108,12 @@ function loadExistingResults() {
       updatedAt: parsed.updatedAt || new Date().toISOString(),
       totalRuns: parsed.totalRuns || (Array.isArray(parsed.runs) ? parsed.runs.length : 0),
       runs: Array.isArray(parsed.runs) ? parsed.runs : [],
-      nftGasRuns: Array.isArray(parsed.nftGasRuns) ? parsed.nftGasRuns : [],
     };
   } catch {
     return {
       updatedAt: new Date().toISOString(),
       totalRuns: 0,
       runs: [],
-      nftGasRuns: [],
     };
   }
 }
@@ -122,16 +126,16 @@ function main() {
 
   const existing = loadExistingResults();
   const report = {
-    ...existing,
     updatedAt: new Date().toISOString(),
-    nftGasRuns: [...existing.nftGasRuns, nftGasRun],
+    totalRuns: existing.runs.length + 1,
+    runs: [...existing.runs, nftGasRun],
   };
 
   writeFileSync(resultsPath, JSON.stringify(report, null, 2));
 
   console.log("\n=== NFT GAS BENCHMARK SUMMARY ===");
   console.log(JSON.stringify(nftGasRun, null, 2));
-  console.log(`\nTotal stored NFT gas runs: ${report.nftGasRuns.length}`);
+  console.log(`\nTotal stored NFT gas runs: ${report.totalRuns}`);
   console.log(`\nSaved report to: ${resultsPath}`);
 }
 

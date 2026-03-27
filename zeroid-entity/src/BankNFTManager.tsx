@@ -579,6 +579,8 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
           <NFTDetailModal
             nft={selectedNFT}
             ethEurRate={ethEurRate}
+            loading={loading}
+            onPurchase={purchaseForUser}
             onClose={() => setSelectedNFT(null)}
           />
         )}

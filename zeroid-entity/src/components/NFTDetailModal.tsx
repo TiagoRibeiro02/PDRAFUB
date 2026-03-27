@@ -3,6 +3,8 @@ import type { NFTListing } from '../BankNFTManager';
 interface NFTDetailModalProps {
   nft: NFTListing;
   ethEurRate: number | null;
+  loading: boolean;
+  onPurchase: (tokenId: number, priceWei: bigint) => void;
   onClose: () => void;
 }
 
@@ -15,7 +17,7 @@ function Field({ label, value, valueStyle }: { label: string; value: React.React
   );
 }
 
-export default function NFTDetailModal({ nft, ethEurRate, onClose }: NFTDetailModalProps) {
+export default function NFTDetailModal({ nft, ethEurRate, loading, onPurchase, onClose }: NFTDetailModalProps) {
   const approxEur = ethEurRate !== null
     ? (parseFloat(nft.price) * ethEurRate).toLocaleString('pt-PT', { maximumFractionDigits: 2 })
     : null;
@@ -108,6 +110,19 @@ export default function NFTDetailModal({ nft, ethEurRate, onClose }: NFTDetailMo
                 value={String(attr.value ?? '—')}
               />
             ))}
+          </div>
+        )}
+
+        {!isPurchased && (
+          <div className="detail-section" style={{ borderTop: '1px solid #333', paddingTop: '1.25rem', marginTop: '0.5rem' }}>
+            <button
+              onClick={() => onPurchase(nft.tokenId, nft.priceWei)}
+              disabled={loading}
+              className="ui-btn ui-btn-gold purchase"
+              style={{ width: '100%' }}
+            >
+              Purchase for User
+            </button>
           </div>
         )}
     </div>

@@ -507,6 +507,7 @@
     border-radius: 12px;
     overflow-y: auto;
     padding: var(--page-padding);
+    margin-top: clamp(5.5rem, 9vw, 13rem);
     animation: slideIn 0.3s ease;
     min-width: 320px;
 }
@@ -610,6 +611,7 @@
 
     .detail-panel.detail-panel-modal {
         flex: 1;
+        margin-top: 0;
         border-left: none;
         border-top: 1px solid rgb(202, 165, 97, 0.5);
         border-right: none;

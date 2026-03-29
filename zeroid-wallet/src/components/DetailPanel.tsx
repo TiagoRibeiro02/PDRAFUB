@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { NFTData } from './types';
 import { signWalletPayload } from '../utils/qrAuth';
 
@@ -175,6 +175,31 @@ const DetailPanel: React.FC<DetailPanelProps> = ({ nft, onClose }) => {
     ? (nft.metadata?.attributes as Array<{ trait_type?: string; value?: unknown }>)
     : [];
   const [showSignModal, setShowSignModal] = useState(false);
+  const [ethEurRate, setEthEurRate] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch('https://api.binance.com/api/v3/ticker/price?symbol=ETHEUR')
+      .then((r) => r.json())
+      .then((d) => {
+        const parsed = parseFloat(d?.price);
+        if (!cancelled && Number.isFinite(parsed) && parsed > 0) {
+          setEthEurRate(parsed);
+        }
+      })
+      .catch(() => {
+        // Keep EUR hidden if rate cannot be fetched.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const approxEur = ethEurRate !== null
+    ? (parseFloat(nft.price) * ethEurRate).toLocaleString('pt-PT', { maximumFractionDigits: 2 })
+    : null;
 
   return (
     <div className="detail-panel">
@@ -240,6 +265,10 @@ const DetailPanel: React.FC<DetailPanelProps> = ({ nft, onClose }) => {
         <div className="detail-field">
           <div className="detail-label">Token ID</div>
           <div className="detail-value">{nft.tokenId}</div>
+        </div>
+        <div className="detail-field">
+          <div className="detail-label">Price</div>
+          <div className="detail-value">{nft.price} ETH{approxEur ? ` (≈ €${approxEur})` : ''}</div>
         </div>
         <div className="detail-field">
           <div className="detail-label">Owner Address</div>

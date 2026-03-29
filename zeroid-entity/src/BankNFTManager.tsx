@@ -41,6 +41,7 @@ export interface NFTListing {
   isCompliant?: boolean;
   complianceTimestamp?: number;
   complianceCommitment?: string;
+  kycIssuer?: string;
 }
 
 interface BankNFTManagerProps {
@@ -192,20 +193,21 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
         provider
       );
 
-      const complianceMap: {[did: string]: {isCompliant: boolean, timestamp: number, expiryDate: number, commitment: string}} = {};
+      const complianceMap: {[did: string]: {isCompliant: boolean, timestamp: number, expiryDate: number, commitment: string, issuer: string}} = {};
 
       for (const did of dids) {
         try {
-          const [isCompliant, timestamp, expiryDate, commitment] = await kycContract.checkCompliance(did);
+          const [isCompliant, timestamp, expiryDate, commitment, issuerVal] = await kycContract.checkCompliance(did);
           complianceMap[did] = {
             isCompliant,
             timestamp: Number(timestamp),
             expiryDate: Number(expiryDate),
-            commitment
+            commitment,
+            issuer: issuerVal || ''
           };
         } catch (err) {
           console.error(`Error checking compliance for ${did}:`, err);
-          complianceMap[did] = { isCompliant: false, timestamp: 0, expiryDate: 0, commitment: '' };
+          complianceMap[did] = { isCompliant: false, timestamp: 0, expiryDate: 0, commitment: '', issuer: '' };
         }
       }
 
@@ -218,6 +220,7 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
           nft.isCompliant = compliance.isCompliant;
           nft.complianceTimestamp = compliance.timestamp;
           nft.complianceCommitment = compliance.commitment;
+          nft.kycIssuer = compliance.issuer;
         }
       });
     } catch (err) {
@@ -284,6 +287,23 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
       const totalSupply = await contract.totalSupply();
       const purchasedData: NFTListing[] = [];
       const didsToCheck: string[] = [];
+      const soldPriceByTokenId = new Map<number, bigint>();
+
+      // In this contract getPrice(tokenId) becomes 0 after purchase.
+      // Recover historical paid price from NFTPurchased events.
+      try {
+        const purchaseEvents = await contract.queryFilter(contract.filters.NFTPurchased());
+        for (const ev of purchaseEvents) {
+          const args = (ev as ethers.EventLog).args as { tokenId?: bigint; price?: bigint; [k: number]: unknown };
+          const tokenIdRaw = args.tokenId ?? (args[0] as bigint | undefined);
+          const priceRaw = args.price ?? (args[2] as bigint | undefined);
+          if (typeof tokenIdRaw !== 'undefined' && typeof priceRaw !== 'undefined') {
+            soldPriceByTokenId.set(Number(tokenIdRaw), BigInt(priceRaw.toString()));
+          }
+        }
+      } catch (err) {
+        console.warn('Could not load NFTPurchased event history:', err);
+      }
 
       for (let i = 0; i < totalSupply; i++) {
         try {
@@ -292,7 +312,8 @@ export default function BankNFTManager({ contractAddress, contractABI }: BankNFT
           // Only include if it has a DID owner
           if (didOwner && didOwner !== '') {
             const tokenURI = await contract.tokenURI(i);
-            const price = await contract.getPrice(i);
+            const priceRaw = await contract.getPrice(i);
+            const price = priceRaw > 0n ? priceRaw : (soldPriceByTokenId.get(i) ?? 0n);
             
             let metadata;
             if (tokenURI.startsWith('data:application/json')) {

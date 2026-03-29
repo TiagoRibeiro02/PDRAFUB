@@ -59,9 +59,30 @@ export default function NFTGallery({ userDid, contractAddress, contractABI, onNF
       }
 
       const nftData: NFTData[] = [];
+      const soldPriceByTokenId = new Map<number, bigint>();
+
+      // In this contract getPrice(tokenId) becomes 0 after purchase.
+      // Recover historical paid price from NFTPurchased events.
+      try {
+        const purchaseEvents = await contract.queryFilter(contract.filters.NFTPurchased());
+        for (const ev of purchaseEvents) {
+          const args = (ev as ethers.EventLog).args as { tokenId?: bigint; price?: bigint; [k: number]: unknown };
+          const tokenIdRaw = args.tokenId ?? (args[0] as bigint | undefined);
+          const priceRaw = args.price ?? (args[2] as bigint | undefined);
+          if (typeof tokenIdRaw !== 'undefined' && typeof priceRaw !== 'undefined') {
+            soldPriceByTokenId.set(Number(tokenIdRaw), BigInt(priceRaw.toString()));
+          }
+        }
+      } catch (err) {
+        console.warn('Could not load NFTPurchased event history:', err);
+      }
+
       for (const tokenId of tokenIds) {
         try {
           const tokenURI     = await contract.tokenURI(tokenId);
+          const priceWeiRaw  = await contract.getPrice(tokenId);
+          const tokenIdNum   = Number(tokenId);
+          const priceWei     = priceWeiRaw > 0n ? priceWeiRaw : (soldPriceByTokenId.get(tokenIdNum) ?? 0n);
           const didOwner     = await contract.getDidOwner(tokenId);
           const ownerAddress = await contract.ownerOf(tokenId);
 
@@ -99,6 +120,7 @@ export default function NFTGallery({ userDid, contractAddress, contractABI, onNF
           nftData.push({
             id:             tokenId.toString(),
             tokenId:        Number(tokenId),
+            price:          ethers.formatEther(priceWei),
             did:            didOwner,
             owner:          ownerAddress,
             name:           metadata.name || `NFT #${tokenId}`,

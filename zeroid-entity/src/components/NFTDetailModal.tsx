@@ -87,6 +87,9 @@ export default function NFTDetailModal({ nft, ethEurRate, loading, onPurchase, o
               {nft.complianceTimestamp && nft.complianceTimestamp > 0 && (
                 <Field label="KYC Date" value={new Date(nft.complianceTimestamp * 1000).toLocaleString()} />
               )}
+              {nft.kycIssuer && (
+                <Field label="KYC Issuer" value={nft.kycIssuer} />
+              )}
             </>
           )}
         </div>

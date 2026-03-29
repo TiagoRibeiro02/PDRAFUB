@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NFTData } from './types';
 
 interface DetailPanelProps {
@@ -10,9 +10,35 @@ const DetailPanel: React.FC<DetailPanelProps> = ({ nft, onClose }) => {
   const imageUrl = nft.metadata?.image || '';
   const complianceTimestamp = nft.metadata?.complianceTimestamp as number | undefined;
   const kycExpiryTimestamp = nft.metadata?.kycExpiryTimestamp as number | undefined;
+  const kycIssuer = nft.metadata?.kycIssuer as string | undefined;
   const attributes = Array.isArray(nft.metadata?.attributes)
     ? (nft.metadata?.attributes as Array<{ trait_type?: string; value?: unknown }>)
     : [];
+  const [ethEurRate, setEthEurRate] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch('https://api.binance.com/api/v3/ticker/price?symbol=ETHEUR')
+      .then((r) => r.json())
+      .then((d) => {
+        const parsed = parseFloat(d?.price);
+        if (!cancelled && Number.isFinite(parsed) && parsed > 0) {
+          setEthEurRate(parsed);
+        }
+      })
+      .catch(() => {
+        // Keep EUR hidden if rate cannot be fetched.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const approxEur = ethEurRate !== null
+    ? (parseFloat(nft.price) * ethEurRate).toLocaleString('pt-PT', { maximumFractionDigits: 2 })
+    : null;
   
   return (
     <div className="detail-panel">
@@ -80,6 +106,10 @@ const DetailPanel: React.FC<DetailPanelProps> = ({ nft, onClose }) => {
           <div className="detail-value">{nft.tokenId}</div>
         </div>
         <div className="detail-field">
+          <div className="detail-label">Price</div>
+          <div className="detail-value">{nft.price} ETH{approxEur ? ` (≈ €${approxEur})` : ''}</div>
+        </div>
+        <div className="detail-field">
           <div className="detail-label">Owner Address</div>
           <div className="detail-value">{nft.owner}</div>
         </div>
@@ -103,6 +133,12 @@ const DetailPanel: React.FC<DetailPanelProps> = ({ nft, onClose }) => {
             <div className="detail-value">
               {new Date(kycExpiryTimestamp * 1000).toLocaleString()}
             </div>
+          </div>
+        )}
+        {kycIssuer && (
+          <div className="detail-field">
+            <div className="detail-label">KYC Issuer</div>
+            <div className="detail-value">{kycIssuer}</div>
           </div>
         )}
       </div>

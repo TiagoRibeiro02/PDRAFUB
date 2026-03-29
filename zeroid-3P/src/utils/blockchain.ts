@@ -22,6 +22,23 @@ export async function fetchAllNFTs(
     // Get total supply
     const totalSupply = await contract.totalSupply();
     const nfts: NFTData[] = [];
+    const soldPriceByTokenId = new Map<number, bigint>();
+
+    // In this contract getPrice(tokenId) becomes 0 after purchase.
+    // Recover historical paid price from NFTPurchased events.
+    try {
+      const purchaseEvents = await contract.queryFilter(contract.filters.NFTPurchased());
+      for (const ev of purchaseEvents) {
+        const args = (ev as ethers.EventLog).args as { tokenId?: bigint; price?: bigint; [k: number]: unknown };
+        const tokenIdRaw = args.tokenId ?? (args[0] as bigint | undefined);
+        const priceRaw = args.price ?? (args[2] as bigint | undefined);
+        if (typeof tokenIdRaw !== 'undefined' && typeof priceRaw !== 'undefined') {
+          soldPriceByTokenId.set(Number(tokenIdRaw), BigInt(priceRaw.toString()));
+        }
+      }
+    } catch (err) {
+      console.warn('Could not load NFTPurchased event history:', err);
+    }
 
     // Fetch all NFTs that have a DID owner
     for (let i = 0; i < totalSupply; i++) {
@@ -31,6 +48,8 @@ export async function fetchAllNFTs(
         // Only include NFTs that have been purchased (have a DID owner)
         if (didOwner && didOwner !== '') {
           const tokenURI = await contract.tokenURI(i);
+          const priceWeiRaw = await contract.getPrice(i);
+          const priceWei = priceWeiRaw > 0n ? priceWeiRaw : (soldPriceByTokenId.get(i) ?? 0n);
           const owner = await contract.ownerOf(i);
           
           // Parse metadata
@@ -54,11 +73,12 @@ export async function fetchAllNFTs(
           if (kycContractAddress && kycABI) {
             try {
               const kycContract = new ethers.Contract(kycContractAddress, kycABI, provider);
-              const [isComp, timestamp, expiryDate, commitment, kycIssuer] = await kycContract.checkCompliance(didOwner);
+              const [isComp, timestamp, expiryDate, commitment, issuerVal] = await kycContract.checkCompliance(didOwner);
               isCompliant = isComp;
               complianceTimestamp = Number(timestamp);
               kycExpiryTimestamp = Number(expiryDate);
               complianceCommitment = commitment;
+              kycIssuer = issuerVal || '';
             } catch (err) {
               console.warn(`Could not check KYC for DID ${didOwner}:`, err);
             }
@@ -74,6 +94,7 @@ export async function fetchAllNFTs(
           nfts.push({
             id: `${i}`,
             tokenId: i,
+            price: ethers.formatEther(priceWei),
             did: didOwner,
             owner: owner,
             name: metadata.name || `NFT #${i}`,

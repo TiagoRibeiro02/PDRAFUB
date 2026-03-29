@@ -1,6 +1,7 @@
 export interface NFTData {
   id: string;
   tokenId: number;
+  price: string;
   did: string;
   owner: string;
   name: string;

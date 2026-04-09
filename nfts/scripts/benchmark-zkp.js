@@ -5,6 +5,72 @@ const path = require("path");
 const { execFileSync } = require("child_process");
 const solc = require("solc");
 
+const DEPLOYMENTS_CACHE_VERSION = 1;
+
+function loadDeploymentsCache(cachePath) {
+  if (!fs.existsSync(cachePath)) {
+    return { version: DEPLOYMENTS_CACHE_VERSION, deployments: {} };
+  }
+
+  try {
+    const parsed = JSON.parse(fs.readFileSync(cachePath, "utf8"));
+    if (parsed && typeof parsed === "object" && parsed.deployments && typeof parsed.deployments === "object") {
+      return parsed;
+    }
+  } catch {
+    // Fall back to a clean cache if the file cannot be parsed.
+  }
+
+  return { version: DEPLOYMENTS_CACHE_VERSION, deployments: {} };
+}
+
+function saveDeploymentsCache(cachePath, cache) {
+  fs.mkdirSync(path.dirname(cachePath), { recursive: true });
+  fs.writeFileSync(cachePath, JSON.stringify(cache, null, 2));
+}
+
+function buildDeploymentKey(chainId, protocolName) {
+  return `${chainId}:${protocolName.toUpperCase()}`;
+}
+
+async function hasCode(address) {
+  const code = await ethers.provider.getCode(address);
+  return code && code !== "0x";
+}
+
+async function isReusableDeployment({
+  signer,
+  adapterAddress,
+  kycAddress,
+  kycArtifact,
+}) {
+  if (!ethers.isAddress(adapterAddress) || !ethers.isAddress(kycAddress)) {
+    return false;
+  }
+
+  if (!(await hasCode(adapterAddress)) || !(await hasCode(kycAddress))) {
+    return false;
+  }
+
+  const kyc = new ethers.Contract(kycAddress, kycArtifact.abi, signer);
+
+  try {
+    const linkedVerifier = await kyc.verifier();
+    if (linkedVerifier.toLowerCase() !== adapterAddress.toLowerCase()) {
+      return false;
+    }
+
+    const isAuthorized = await kyc.authorizedIssuers(signer.address);
+    if (!isAuthorized) {
+      return false;
+    }
+  } catch {
+    return false;
+  }
+
+  return true;
+}
+
 function compileFromSources(sources, contractFile, contractName) {
   const input = {
     language: "Solidity",
@@ -341,6 +407,57 @@ async function deployFromCompiled(artifact, signer, args = []) {
   return contract;
 }
 
+async function getOrDeployContracts({
+  signer,
+  protocolName,
+  adapterArtifact,
+  kycArtifact,
+  chainId,
+  networkName,
+  forceRedeploy,
+  cache,
+  cachePath,
+}) {
+  const deploymentKey = buildDeploymentKey(chainId, protocolName);
+  const cached = cache.deployments[deploymentKey];
+
+  if (!forceRedeploy && cached) {
+    const reusable = await isReusableDeployment({
+      signer,
+      adapterAddress: cached.adapter,
+      kycAddress: cached.kyc,
+      kycArtifact,
+    });
+
+    if (reusable) {
+      return {
+        adapter: new ethers.Contract(cached.adapter, adapterArtifact.abi, signer),
+        kyc: new ethers.Contract(cached.kyc, kycArtifact.abi, signer),
+        reused: true,
+      };
+    }
+  }
+
+  const adapter = await deployFromCompiled(adapterArtifact, signer);
+  const adapterAddress = await adapter.getAddress();
+
+  const kyc = await deployFromCompiled(kycArtifact, signer, [adapterAddress]);
+  const kycAddress = await kyc.getAddress();
+
+  cache.deployments[deploymentKey] = {
+    protocol: protocolName.toUpperCase(),
+    chainId,
+    network: networkName,
+    signer: signer.address,
+    adapter: adapterAddress,
+    kyc: kycAddress,
+    updatedAt: new Date().toISOString(),
+  };
+  saveDeploymentsCache(cachePath, cache);
+
+  return { adapter, kyc, reused: false };
+}
+
 async function benchmarkProtocol({
   signer,
   protocolName,
@@ -348,6 +465,11 @@ async function benchmarkProtocol({
   kycArtifact,
   proofHex,
   publicSignals,
+  chainId,
+  networkName,
+  forceRedeploy,
+  cache,
+  cachePath,
 }) {
   if (!Array.isArray(publicSignals) || publicSignals.length !== 3) {
     throw new Error(
@@ -355,10 +477,18 @@ async function benchmarkProtocol({
     );
   }
 
-  const adapter = await deployFromCompiled(adapterArtifact, signer);
+  const { adapter, kyc, reused } = await getOrDeployContracts({
+    signer,
+    protocolName,
+    adapterArtifact,
+    kycArtifact,
+    chainId,
+    networkName,
+    forceRedeploy,
+    cache,
+    cachePath,
+  });
   const adapterAddress = await adapter.getAddress();
-
-  const kyc = await deployFromCompiled(kycArtifact, signer, [adapterAddress]);
 
   const txVerify = await adapter.verifyProofTx(proofHex, publicSignals);
   const rcVerify = await txVerify.wait();
@@ -383,6 +513,7 @@ async function benchmarkProtocol({
     protocol: protocolName,
     adapter: adapterAddress,
     kyc: await kyc.getAddress(),
+    reusedDeployment: reused,
     verifyProofTxGas: rcVerify.gasUsed.toString(),
     submitComplianceProofGas: rcKyc.gasUsed.toString(),
   };
@@ -458,6 +589,12 @@ async function main() {
   const grothKycArtifact = compileFromSources(grothSources, "KYCCompliance.sol", "KYCCompliance");
 
   const [signer] = await ethers.getSigners();
+  const network = await ethers.provider.getNetwork();
+  const chainId = Number(network.chainId);
+  const networkName = network.name || "unknown";
+  const forceRedeploy = process.env.ZKP_BENCHMARK_FORCE_REDEPLOY === "1";
+  const cachePath = path.join(__dirname, "..", "artifacts", "zkp-deployments.json");
+  const cache = loadDeploymentsCache(cachePath);
 
   const plonkResult = await benchmarkProtocol({
     signer,
@@ -466,6 +603,11 @@ async function main() {
     kycArtifact: plonkKycArtifact,
     proofHex: plonkCalldata.proofHex,
     publicSignals: plonkCalldata.publicSignals,
+    chainId,
+    networkName,
+    forceRedeploy,
+    cache,
+    cachePath,
   });
 
   const fflonkResult = await benchmarkProtocol({
@@ -475,6 +617,11 @@ async function main() {
     kycArtifact: fflonkKycArtifact,
     proofHex: fflonkCalldata.proofHex,
     publicSignals: fflonkCalldata.publicSignals,
+    chainId,
+    networkName,
+    forceRedeploy,
+    cache,
+    cachePath,
   });
 
   const grothResult = await benchmarkProtocol({
@@ -484,6 +631,11 @@ async function main() {
     kycArtifact: grothKycArtifact,
     proofHex: grothCalldata.proofHex,
     publicSignals: grothCalldata.publicSignals,
+    chainId,
+    networkName,
+    forceRedeploy,
+    cache,
+    cachePath,
   });
 
   const output = {

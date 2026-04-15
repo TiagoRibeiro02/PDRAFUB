@@ -1,0 +1,14 @@
+/home/tiago/Documents/GitHub/PDRAFUB/performance-experiments/plonky3/target/release/deps/thiserror-dbf43a2d8c9d6407.d: /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/lib.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/aserror.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/display.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/var.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/private.rs /home/tiago/Documents/GitHub/PDRAFUB/performance-experiments/plonky3/target/release/build/thiserror-4dd88720fff3e600/out/private.rs
+
+/home/tiago/Documents/GitHub/PDRAFUB/performance-experiments/plonky3/target/release/deps/libthiserror-dbf43a2d8c9d6407.rlib: /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/lib.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/aserror.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/display.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/var.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/private.rs /home/tiago/Documents/GitHub/PDRAFUB/performance-experiments/plonky3/target/release/build/thiserror-4dd88720fff3e600/out/private.rs
+
+/home/tiago/Documents/GitHub/PDRAFUB/performance-experiments/plonky3/target/release/deps/libthiserror-dbf43a2d8c9d6407.rmeta: /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/lib.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/aserror.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/display.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/var.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/private.rs /home/tiago/Documents/GitHub/PDRAFUB/performance-experiments/plonky3/target/release/build/thiserror-4dd88720fff3e600/out/private.rs
+
+/home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/lib.rs:
+/home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/aserror.rs:
+/home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/display.rs:
+/home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/var.rs:
+/home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/private.rs:
+/home/tiago/Documents/GitHub/PDRAFUB/performance-experiments/plonky3/target/release/build/thiserror-4dd88720fff3e600/out/private.rs:
+
+# env-dep:OUT_DIR=/home/tiago/Documents/GitHub/PDRAFUB/performance-experiments/plonky3/target/release/build/thiserror-4dd88720fff3e600/out

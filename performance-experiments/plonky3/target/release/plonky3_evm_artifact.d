@@ -1,0 +1,1 @@
+/home/tiago/Documents/GitHub/PDRAFUB/performance-experiments/plonky3/target/release/plonky3_evm_artifact: /home/tiago/Documents/GitHub/PDRAFUB/performance-experiments/plonky3/src/bin/plonky3_evm_artifact.rs

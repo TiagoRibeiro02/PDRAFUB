@@ -1,6 +1,7 @@
 use p3_baby_bear::{BabyBear, default_babybear_poseidon2_16};
 use p3_field::PrimeCharacteristicRing;
 use p3_symmetric::Permutation;
+use std::time::Instant;
 
 #[derive(Clone, Copy, Debug)]
 struct PublicInputs {
@@ -46,6 +47,8 @@ fn verify_compliance(input: &ComplianceInput) -> bool {
 }
 
 fn main() {
+    let bench_json = std::env::args().any(|arg| arg == "--bench-json");
+
     let public_without_commitment = PublicInputs {
         did: BabyBear::from_u32(12_345),
         status: BabyBear::ONE,
@@ -58,14 +61,43 @@ fn main() {
 
     let input = ComplianceInput {
         public: PublicInputs {
-            commitment: compute_commitment(&public_without_commitment, &private),
+            commitment: {
+                let start = Instant::now();
+                let commitment = compute_commitment(&public_without_commitment, &private);
+                let proof_generation_ms = start.elapsed().as_secs_f64() * 1000.0;
+
+                let verify_start = Instant::now();
+                let verified = verify_compliance(&ComplianceInput {
+                    public: PublicInputs {
+                        commitment,
+                        ..public_without_commitment
+                    },
+                    private,
+                });
+                let verification_ms = verify_start.elapsed().as_secs_f64() * 1000.0;
+
+                assert!(verified);
+
+                if bench_json {
+                    println!(
+                        "BENCHMARK_TIMINGS_JSON={{\"protocol\":\"PLONKY3\",\"proofGenerationMs\":{:.4},\"verificationMs\":{:.4}}}",
+                        proof_generation_ms,
+                        verification_ms
+                    );
+                }
+
+                commitment
+            },
             ..public_without_commitment
         },
         private,
     };
 
     assert!(verify_compliance(&input));
-    println!("Compliance check verified successfully.");
+
+    if !bench_json {
+        println!("Compliance check verified successfully.");
+    }
 }
 
 #[cfg(test)]

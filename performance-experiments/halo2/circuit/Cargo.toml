@@ -6,3 +6,7 @@ edition = "2024"
 [dependencies]
 halo2_proofs = "0.3.0"
 halo2_gadgets = "0.3.1"
+halo2-base = "0.5.0"
+hex = "0.4"
+rand = "0.8"
+snark-verifier-sdk = { version = "0.2.3", features = ["revm", "display"] }

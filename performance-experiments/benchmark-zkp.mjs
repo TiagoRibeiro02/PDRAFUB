@@ -7,6 +7,8 @@ const perfRoot = resolve(process.cwd());
 const plonkDir = resolve(perfRoot, "plonk");
 const fflonkDir = resolve(perfRoot, "fflonk");
 const grothDir = resolve(perfRoot, "groth16");
+const plonky3Dir = resolve(perfRoot, "plonky3");
+const halo2Dir = resolve(perfRoot, "halo2", "circuit");
 const nftsDir = resolve(repoRoot, "nfts");
 
 function loadEnvFromNfts() {
@@ -79,10 +81,122 @@ function benchmarkProtocol({ name, cwd, proveArgs, verifyArgs, requiredFiles }) 
   return { proofGenerationMs: proofGenMs, verificationMs: verifyMs };
 }
 
-function runGasBenchmark() {
-  ensureTestnetEnv();
+function parseBenchTimingsFromOutput(output, protocolName) {
+  const marker = "BENCHMARK_TIMINGS_JSON=";
+  const line = output
+    .split("\n")
+    .map((l) => l.trim())
+    .find((l) => l.startsWith(marker));
 
-  const output = execFileSync("npm", ["run", "benchmark:zkp"], {
+  if (!line) {
+    throw new Error(`Missing timing marker from ${protocolName} benchmark output`);
+  }
+
+  return JSON.parse(line.slice(marker.length));
+}
+
+function benchmarkRustProtocol({ name, cwd, bin }) {
+  ensureFile(resolve(cwd, "Cargo.toml"), `${name} Cargo.toml`);
+  ensureFile(resolve(cwd, "src", "main.rs"), `${name} main.rs`);
+
+  const args = ["run", "--release"];
+  if (bin) {
+    args.push("--bin", bin);
+  }
+  args.push("--", "--bench-json");
+
+  const output = execFileSync("cargo", args, {
+    cwd,
+    encoding: "utf8",
+  });
+
+  process.stdout.write(output);
+
+  const parsed = parseBenchTimingsFromOutput(output, name);
+  return {
+    proofGenerationMs: Number(parsed.proofGenerationMs),
+    verificationMs: Number(parsed.verificationMs),
+  };
+}
+
+function appendUnsupportedGasEntries(gas) {
+  const existing = new Set((gas?.results || []).map((item) => item.protocol?.toUpperCase()));
+  const missingProtocols = ["PLONKY3", "HALO2"].filter((p) => !existing.has(p));
+
+  if (missingProtocols.length === 0) {
+    return gas;
+  }
+
+  const additions = missingProtocols.map((protocol) => ({
+    protocol,
+    supported: false,
+    reason:
+      "No Solidity verifier adapter is configured for this protocol in nfts/scripts/benchmark-zkp.js.",
+    verifyProofTxGas: null,
+    submitComplianceProofGas: null,
+  }));
+
+  return {
+    ...gas,
+    results: [...(gas?.results || []), ...additions],
+  };
+}
+
+function benchmarkHalo2Gas() {
+  const artifactOutput = execFileSync(
+    "cargo",
+    ["run", "--release", "--bin", "halo2_evm_gas", "--", "--bench-json"],
+    {
+      cwd: halo2Dir,
+      encoding: "utf8",
+    }
+  );
+
+  process.stdout.write(artifactOutput);
+
+  const artifactMarker = "BENCHMARK_HALO2_ARTIFACT_JSON=";
+  const artifactLine = artifactOutput
+    .split("\n")
+    .map((l) => l.trim())
+    .find((l) => l.startsWith(artifactMarker));
+
+  if (!artifactLine) {
+    throw new Error("Could not parse HALO2 artifact generation output");
+  }
+
+  const gasOutput = execFileSync("npm", ["run", "benchmark:halo2-gas:local"], {
+    cwd: nftsDir,
+    encoding: "utf8",
+  });
+
+  process.stdout.write(gasOutput);
+
+  const marker = "BENCHMARK_HALO2_GAS_JSON=";
+  const line = gasOutput
+    .split("\n")
+    .map((l) => l.trim())
+    .find((l) => l.startsWith(marker));
+
+  if (!line) {
+    throw new Error("Could not parse HALO2 gas benchmark output");
+  }
+
+  return JSON.parse(line.slice(marker.length));
+}
+
+function mergeHalo2Gas(gas, halo2Gas) {
+  const filtered = (gas?.results || []).filter(
+    (entry) => entry.protocol?.toUpperCase() !== "HALO2"
+  );
+
+  return {
+    ...gas,
+    results: [...filtered, halo2Gas],
+  };
+}
+
+function runGasBenchmark() {
+  const output = execFileSync("npm", ["run", "benchmark:zkp:local"], {
     cwd: nftsDir,
     encoding: "utf8",
   });
@@ -204,7 +318,20 @@ function main() {
     ],
   });
 
-  const gas = runGasBenchmark();
+  const plonky3 = benchmarkRustProtocol({
+    name: "PLONKY3",
+    cwd: plonky3Dir,
+  });
+
+  const halo2 = benchmarkRustProtocol({
+    name: "HALO2",
+    cwd: halo2Dir,
+    bin: "circuit",
+  });
+
+  const onchainGas = runGasBenchmark();
+  const halo2Gas = benchmarkHalo2Gas();
+  const gas = appendUnsupportedGasEntries(mergeHalo2Gas(onchainGas, halo2Gas));
 
   const currentRun = {
     generatedAt: new Date().toISOString(),
@@ -212,6 +339,8 @@ function main() {
       plonk,
       fflonk,
       groth16,
+      plonky3,
+      halo2,
     },
     gas,
   };

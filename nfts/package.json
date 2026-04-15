@@ -12,8 +12,10 @@
     "dev": "cd frontend && npm run dev",
     "benchmark:zkp": "hardhat run --no-compile --network sepolia scripts/benchmark-zkp.js",
     "benchmark:nft-gas": "hardhat run --no-compile --network sepolia scripts/benchmark-nft-gas.js",
-    "benchmark:zkp:local": "hardhat run --no-compile scripts/benchmark-zkp.js",
-    "benchmark:nft-gas:local": "hardhat run --no-compile scripts/benchmark-nft-gas.js"
+    "benchmark:halo2-gas": "hardhat run --no-compile --network sepolia scripts/benchmark-halo2-gas.js",
+    "benchmark:zkp:local": "hardhat run --no-compile --network localhost scripts/benchmark-zkp.js",
+    "benchmark:nft-gas:local": "hardhat run --no-compile --network localhost scripts/benchmark-nft-gas.js",
+    "benchmark:halo2-gas:local": "hardhat run --no-compile --network localhost scripts/benchmark-halo2-gas.js"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",

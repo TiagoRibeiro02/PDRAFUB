@@ -1,0 +1,1 @@
+/home/tiago/Documents/GitHub/PDRAFUB/performance-experiments/halo2/circuit/target/release/halo2_evm_gas: /home/tiago/Documents/GitHub/PDRAFUB/performance-experiments/halo2/circuit/src/bin/halo2_evm_gas.rs

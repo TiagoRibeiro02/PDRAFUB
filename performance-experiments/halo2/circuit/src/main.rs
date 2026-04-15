@@ -14,6 +14,7 @@ use halo2_proofs::{
     plonk::{Circuit, Column, ConstraintSystem, Error, Expression, Instance, Selector},
     poly::Rotation,
 };
+use std::time::Instant;
 
 const WIDTH: usize = 3;
 const RATE: usize = 2;
@@ -130,6 +131,8 @@ fn native_commitment(did: Fp, status: Fp, r: Fp) -> Fp {
 }
 
 fn main() {
+    let bench_json = std::env::args().any(|arg| arg == "--bench-json");
+
     let did = Fp::from(12_345);
     let status = Fp::from(1);
     let r = Fp::from(6_789);
@@ -143,8 +146,23 @@ fn main() {
     };
 
     let public_inputs = vec![vec![did, status, commitment]];
+    let prove_start = Instant::now();
     let prover = MockProver::run(9, &circuit, public_inputs).expect("mock prover should run");
-    assert_eq!(prover.verify(), Ok(()));
+    let proof_generation_ms = prove_start.elapsed().as_secs_f64() * 1000.0;
+
+    let verify_start = Instant::now();
+    let verify_result = prover.verify();
+    let verification_ms = verify_start.elapsed().as_secs_f64() * 1000.0;
+    assert_eq!(verify_result, Ok(()));
+
+    if bench_json {
+        println!(
+            "BENCHMARK_TIMINGS_JSON={{\"protocol\":\"HALO2\",\"proofGenerationMs\":{:.4},\"verificationMs\":{:.4}}}",
+            proof_generation_ms,
+            verification_ms
+        );
+        return;
+    }
 
     println!("Halo2 compliance circuit verified successfully.");
 }

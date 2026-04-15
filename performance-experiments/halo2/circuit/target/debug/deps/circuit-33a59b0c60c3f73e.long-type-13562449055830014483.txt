@@ -1,0 +1,1 @@
+AssignedCell<halo2_proofs::pasta_curves::Fp, halo2_proofs::pasta_curves::Fp>

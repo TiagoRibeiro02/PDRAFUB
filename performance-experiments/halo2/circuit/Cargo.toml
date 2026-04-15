@@ -4,4 +4,5 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-halo2 = { git = "https://github.com/zcash/halo2" }
+halo2_proofs = "0.3.0"
+halo2_gadgets = "0.3.1"

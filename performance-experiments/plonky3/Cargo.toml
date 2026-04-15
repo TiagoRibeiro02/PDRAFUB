@@ -1,0 +1,8 @@
+[package]
+name = "plonky3"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+plonky3 = "0.1.0"
+plonky3-evm = "0.1.0"

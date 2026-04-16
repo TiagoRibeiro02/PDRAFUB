@@ -7,7 +7,7 @@ const perfRoot = resolve(process.cwd());
 const plonkDir = resolve(perfRoot, "plonk");
 const fflonkDir = resolve(perfRoot, "fflonk");
 const grothDir = resolve(perfRoot, "groth16");
-const plonky3Dir = resolve(perfRoot, "plonky3");
+const noirDir = resolve(perfRoot, "noir");
 const halo2Dir = resolve(perfRoot, "halo2", "circuit");
 const nftsDir = resolve(repoRoot, "nfts");
 
@@ -119,9 +119,56 @@ function benchmarkRustProtocol({ name, cwd, bin }) {
   };
 }
 
+function benchmarkNoirProtocol() {
+  const proofOutputDir = resolve(noirDir, "target", "proof.bench");
+
+  ensureFile(resolve(noirDir, "target", "kyc_circuit.json"), "NOIR bytecode");
+  ensureFile(resolve(noirDir, "target", "witness.gz"), "NOIR witness");
+  ensureFile(resolve(noirDir, "target", "vk", "vk"), "NOIR verification key");
+
+  const proofGenerationMs = runWithTimer(
+    "bb",
+    [
+      "prove",
+      "-b",
+      "./target/kyc_circuit.json",
+      "-w",
+      "./target/witness.gz",
+      "-k",
+      "./target/vk/vk",
+      "-o",
+      "./target/proof.bench",
+      "-t",
+      "evm",
+    ],
+    noirDir
+  );
+
+  ensureFile(resolve(proofOutputDir, "proof"), "NOIR generated proof");
+  ensureFile(resolve(proofOutputDir, "public_inputs"), "NOIR generated public inputs");
+
+  const verificationMs = runWithTimer(
+    "bb",
+    [
+      "verify",
+      "-k",
+      "./target/vk/vk",
+      "-p",
+      "./target/proof.bench/proof",
+      "-i",
+      "./target/proof.bench/public_inputs",
+      "-t",
+      "evm",
+    ],
+    noirDir
+  );
+
+  return { proofGenerationMs, verificationMs };
+}
+
 function appendUnsupportedGasEntries(gas) {
   const existing = new Set((gas?.results || []).map((item) => item.protocol?.toUpperCase()));
-  const missingProtocols = ["PLONKY3", "HALO2"].filter((p) => !existing.has(p));
+  const missingProtocols = ["HALO2"].filter((p) => !existing.has(p));
 
   if (missingProtocols.length === 0) {
     return gas;
@@ -318,10 +365,7 @@ function main() {
     ],
   });
 
-  const plonky3 = benchmarkRustProtocol({
-    name: "PLONKY3",
-    cwd: plonky3Dir,
-  });
+  const noir = benchmarkNoirProtocol();
 
   const halo2 = benchmarkRustProtocol({
     name: "HALO2",
@@ -339,7 +383,7 @@ function main() {
       plonk,
       fflonk,
       groth16,
-      plonky3,
+      noir,
       halo2,
     },
     gas,

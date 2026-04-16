@@ -1,0 +1,11 @@
+/home/tiago/Documents/GitHub/PDRAFUB/performance-experiments/plonky3/target/debug/deps/p3_baby_bear-d0e4fdf281d932a5.d: /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/p3-baby-bear-0.5.2/src/lib.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/p3-baby-bear-0.5.2/src/baby_bear.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/p3-baby-bear-0.5.2/src/mds.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/p3-baby-bear-0.5.2/src/poseidon1.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/p3-baby-bear-0.5.2/src/poseidon2.rs
+
+/home/tiago/Documents/GitHub/PDRAFUB/performance-experiments/plonky3/target/debug/deps/libp3_baby_bear-d0e4fdf281d932a5.rlib: /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/p3-baby-bear-0.5.2/src/lib.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/p3-baby-bear-0.5.2/src/baby_bear.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/p3-baby-bear-0.5.2/src/mds.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/p3-baby-bear-0.5.2/src/poseidon1.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/p3-baby-bear-0.5.2/src/poseidon2.rs
+
+/home/tiago/Documents/GitHub/PDRAFUB/performance-experiments/plonky3/target/debug/deps/libp3_baby_bear-d0e4fdf281d932a5.rmeta: /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/p3-baby-bear-0.5.2/src/lib.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/p3-baby-bear-0.5.2/src/baby_bear.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/p3-baby-bear-0.5.2/src/mds.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/p3-baby-bear-0.5.2/src/poseidon1.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/p3-baby-bear-0.5.2/src/poseidon2.rs
+
+/home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/p3-baby-bear-0.5.2/src/lib.rs:
+/home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/p3-baby-bear-0.5.2/src/baby_bear.rs:
+/home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/p3-baby-bear-0.5.2/src/mds.rs:
+/home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/p3-baby-bear-0.5.2/src/poseidon1.rs:
+/home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/p3-baby-bear-0.5.2/src/poseidon2.rs:

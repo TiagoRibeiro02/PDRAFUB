@@ -81,7 +81,7 @@ function compileFromSources(sources, contractFile, contractName) {
       optimizer: { enabled: true, runs: 200 },
       outputSelection: {
         "*": {
-          "*": ["abi", "evm.bytecode.object"],
+          "*": ["abi", "evm.bytecode.object", "evm.bytecode.linkReferences"],
         },
       },
     },
@@ -104,7 +104,88 @@ function compileFromSources(sources, contractFile, contractName) {
   return {
     abi: artifact.abi,
     bytecode: `0x${artifact.evm.bytecode.object}`,
+    linkReferences: artifact.evm.bytecode.linkReferences || {},
+    allContracts: output.contracts || {},
   };
+}
+
+function hasLinkReferences(linkReferences) {
+  return Object.values(linkReferences || {}).some((libs) =>
+    Object.values(libs || {}).some((refs) => Array.isArray(refs) && refs.length > 0)
+  );
+}
+
+function applyLinkReferences(bytecode, linkReferences, deployedLibraries) {
+  let linked = bytecode.startsWith("0x") ? bytecode.slice(2) : bytecode;
+
+  for (const [fileName, libraries] of Object.entries(linkReferences || {})) {
+    for (const [libraryName, refs] of Object.entries(libraries || {})) {
+      const libraryKey = `${fileName}:${libraryName}`;
+      const address = deployedLibraries[libraryKey];
+      if (!address) {
+        throw new Error(`Missing deployed address for library ${libraryKey}`);
+      }
+
+      const normalizedAddress = address.toLowerCase().replace(/^0x/, "");
+
+      for (const ref of refs) {
+        const start = ref.start * 2;
+        const length = ref.length * 2;
+        const paddedAddress = normalizedAddress.padStart(length, "0");
+        linked = `${linked.slice(0, start)}${paddedAddress}${linked.slice(start + length)}`;
+      }
+    }
+  }
+
+  return `0x${linked}`;
+}
+
+async function deployLibrariesForArtifact(artifact, signer) {
+  const deployed = {};
+  const deployedCache = new Map();
+
+  async function deployLibrary(fileName, libraryName) {
+    const key = `${fileName}:${libraryName}`;
+    if (deployedCache.has(key)) {
+      return deployedCache.get(key);
+    }
+
+    const libArtifact = artifact.allContracts?.[fileName]?.[libraryName];
+    if (!libArtifact?.evm?.bytecode?.object) {
+      throw new Error(`Library artifact not found for ${key}`);
+    }
+
+    const libLinkReferences = libArtifact.evm.bytecode.linkReferences || {};
+    let libBytecode = `0x${libArtifact.evm.bytecode.object}`;
+
+    if (hasLinkReferences(libLinkReferences)) {
+      for (const [depFile, depLibraries] of Object.entries(libLinkReferences)) {
+        for (const depLibrary of Object.keys(depLibraries || {})) {
+          const depAddress = await deployLibrary(depFile, depLibrary);
+          deployed[`${depFile}:${depLibrary}`] = depAddress;
+        }
+      }
+
+      libBytecode = applyLinkReferences(libBytecode, libLinkReferences, deployed);
+    }
+
+    const libFactory = new ethers.ContractFactory(libArtifact.abi || [], libBytecode, signer);
+    const libContract = await libFactory.deploy();
+    await libContract.waitForDeployment();
+    const libAddress = await libContract.getAddress();
+
+    deployedCache.set(key, libAddress);
+    deployed[key] = libAddress;
+    return libAddress;
+  }
+
+  for (const [fileName, libraries] of Object.entries(artifact.linkReferences || {})) {
+    for (const libraryName of Object.keys(libraries || {})) {
+      await deployLibrary(fileName, libraryName);
+    }
+  }
+
+  return deployed;
 }
 
 function parseCalldata(raw) {
@@ -401,7 +482,22 @@ function readGrothProofAndSignals(protocolDir, publicFile, proofFile) {
 }
 
 async function deployFromCompiled(artifact, signer, args = []) {
-  const factory = new ethers.ContractFactory(artifact.abi, artifact.bytecode, signer);
+  let deployBytecode = artifact.bytecode;
+
+  if (hasLinkReferences(artifact.linkReferences)) {
+    const deployedLibraries = await deployLibrariesForArtifact(artifact, signer);
+    deployBytecode = applyLinkReferences(
+      deployBytecode,
+      artifact.linkReferences,
+      deployedLibraries
+    );
+  }
+
+  if (/__\$[0-9a-fA-F]{34}\$__/.test(deployBytecode)) {
+    throw new Error("Unresolved Solidity library placeholders remain in deploy bytecode");
+  }
+
+  const factory = new ethers.ContractFactory(artifact.abi, deployBytecode, signer);
   const contract = await factory.deploy(...args);
   await contract.waitForDeployment();
   return contract;
@@ -411,6 +507,7 @@ async function getOrDeployContracts({
   signer,
   protocolName,
   adapterArtifact,
+  adapterDeployArgs = [],
   kycArtifact,
   chainId,
   networkName,
@@ -438,7 +535,7 @@ async function getOrDeployContracts({
     }
   }
 
-  const adapter = await deployFromCompiled(adapterArtifact, signer);
+  const adapter = await deployFromCompiled(adapterArtifact, signer, adapterDeployArgs);
   const adapterAddress = await adapter.getAddress();
 
   const kyc = await deployFromCompiled(kycArtifact, signer, [adapterAddress]);
@@ -462,6 +559,7 @@ async function benchmarkProtocol({
   signer,
   protocolName,
   adapterArtifact,
+  adapterDeployArgs = [],
   kycArtifact,
   proofHex,
   publicSignals,
@@ -481,6 +579,7 @@ async function benchmarkProtocol({
     signer,
     protocolName,
     adapterArtifact,
+    adapterDeployArgs,
     kycArtifact,
     chainId,
     networkName,
@@ -519,12 +618,34 @@ async function benchmarkProtocol({
   };
 }
 
+function readNoirProofAndPublicInputs(noirDir) {
+  // Use bb prove outputs so proof and public inputs are guaranteed to be paired.
+  const proofBinary = fs.readFileSync(path.join(noirDir, "target", "proof.bench", "proof"));
+  const proofHex = "0x" + proofBinary.toString("hex");
+
+  const publicInputsBinary = fs.readFileSync(
+    path.join(noirDir, "target", "proof.bench", "public_inputs")
+  );
+
+  // bb writes field elements as 32-byte big-endian values.
+  const publicSignals = [];
+  for (let i = 0; i < 3; i++) {
+    const fieldBytes = publicInputsBinary.slice(i * 32, (i + 1) * 32);
+    const fieldHex = fieldBytes.toString("hex") || "0";
+    const fieldValue = BigInt(`0x${fieldHex}`);
+    publicSignals.push(fieldValue.toString());
+  }
+
+  return { proofHex, publicSignals };
+}
+
 async function main() {
   const root = path.resolve(__dirname, "../../");
   const perfRoot = path.join(root, "performance-experiments");
   const plonkDir = path.join(perfRoot, "plonk");
   const fflonkDir = path.join(perfRoot, "fflonk");
   const grothDir = path.join(perfRoot, "groth16");
+  const noirDir = path.join(perfRoot, "noir");
 
   const chooseExisting = (dir, preferred, fallback) => {
     const preferredPath = path.join(dir, preferred);
@@ -538,7 +659,6 @@ async function main() {
   const fflonkPublicFile = chooseExisting(fflonkDir, "public.bench.json", "public.json");
   const grothProofFile = chooseExisting(grothDir, "proof.bench.json", "proof.json");
   const grothPublicFile = chooseExisting(grothDir, "public.bench.json", "public.json");
-
   const plonkCalldata = exportSolidityCalldata(plonkDir, plonkPublicFile, plonkProofFile);
   const fflonkCalldata = exportSolidityCalldata(fflonkDir, fflonkPublicFile, fflonkProofFile);
   const grothCalldata = readGrothProofAndSignals(grothDir, grothPublicFile, grothProofFile);
@@ -567,6 +687,13 @@ async function main() {
     "KYCCompliance.sol": fs.readFileSync(path.join(grothDir, "KYCCompliance.sol"), "utf8"),
   };
 
+  const noirSources = {
+    "Verifier.sol": fs.readFileSync(path.join(noirDir, "target", "Verifier.sol"), "utf8"),
+    "NoirVerifierAdapter.sol": fs
+      .readFileSync(path.join(noirDir, "target", "NoirVerifierAdapter.sol"), "utf8"),
+    "KYCCompliance.sol": fs.readFileSync(path.join(noirDir, "target", "KYCCompliance.sol"), "utf8"),
+  };
+
   const plonkAdapterArtifact = compileFromSources(
     plonkSources,
     "PlonkVerifierAdapter.sol",
@@ -588,6 +715,14 @@ async function main() {
   );
   const grothKycArtifact = compileFromSources(grothSources, "KYCCompliance.sol", "KYCCompliance");
 
+  const noirAdapterArtifact = compileFromSources(
+    noirSources,
+    "NoirVerifierAdapter.sol",
+    "NoirVerifierAdapter"
+  );
+  const noirVerifierArtifact = compileFromSources(noirSources, "Verifier.sol", "HonkVerifier");
+  const noirKycArtifact = compileFromSources(noirSources, "KYCCompliance.sol", "KYCCompliance");
+
   const [signer] = await ethers.getSigners();
   const network = await ethers.provider.getNetwork();
   const chainId = Number(network.chainId);
@@ -595,6 +730,9 @@ async function main() {
   const forceRedeploy = process.env.ZKP_BENCHMARK_FORCE_REDEPLOY === "1";
   const cachePath = path.join(__dirname, "..", "artifacts", "zkp-deployments.json");
   const cache = loadDeploymentsCache(cachePath);
+
+  const noirVerifier = await deployFromCompiled(noirVerifierArtifact, signer);
+  const noirVerifierAddress = await noirVerifier.getAddress();
 
   const plonkResult = await benchmarkProtocol({
     signer,
@@ -638,9 +776,25 @@ async function main() {
     cachePath,
   });
 
+  const noirProofAndSignals = readNoirProofAndPublicInputs(noirDir);
+  const noirResult = await benchmarkProtocol({
+    signer,
+    protocolName: "NOIR",
+    adapterArtifact: noirAdapterArtifact,
+    adapterDeployArgs: [noirVerifierAddress],
+    kycArtifact: noirKycArtifact,
+    proofHex: noirProofAndSignals.proofHex,
+    publicSignals: noirProofAndSignals.publicSignals,
+    chainId,
+    networkName,
+    forceRedeploy,
+    cache,
+    cachePath,
+  });
+
   const output = {
     generatedAt: new Date().toISOString(),
-    results: [plonkResult, fflonkResult, grothResult],
+    results: [plonkResult, fflonkResult, grothResult, noirResult],
   };
 
   console.log("=== ON-CHAIN GAS BENCHMARK ===");

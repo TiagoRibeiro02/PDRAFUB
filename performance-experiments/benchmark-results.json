@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-04-15T20:49:14.709Z",
-  "totalRuns": 6,
+  "updatedAt": "2026-04-16T13:43:19.424Z",
+  "totalRuns": 11,
   "runs": [
     {
       "generatedAt": "2026-03-25T19:44:38.536Z",
@@ -312,6 +312,371 @@
             "reason": "No Solidity verifier adapter is configured for this protocol in nfts/scripts/benchmark-zkp.js.",
             "verifyProofTxGas": null,
             "submitComplianceProofGas": null
+          }
+        ]
+      }
+    },
+    {
+      "generatedAt": "2026-04-15T21:47:09.760Z",
+      "timings": {
+        "plonk": {
+          "proofGenerationMs": 1317.51,
+          "verificationMs": 509.07
+        },
+        "fflonk": {
+          "proofGenerationMs": 1458.7,
+          "verificationMs": 495.05
+        },
+        "groth16": {
+          "proofGenerationMs": 566.7,
+          "verificationMs": 465.12
+        },
+        "plonky3": {
+          "proofGenerationMs": 0.0047,
+          "verificationMs": 0.0012
+        },
+        "halo2": {
+          "proofGenerationMs": 3.4567,
+          "verificationMs": 3.1191
+        }
+      },
+      "gas": {
+        "generatedAt": "2026-04-15T21:47:03.655Z",
+        "results": [
+          {
+            "protocol": "PLONK",
+            "adapter": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+            "kyc": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+            "reusedDeployment": false,
+            "verifyProofTxGas": "311078",
+            "submitComplianceProofGas": "510003"
+          },
+          {
+            "protocol": "FFLONK",
+            "adapter": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+            "kyc": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+            "reusedDeployment": false,
+            "verifyProofTxGas": "231414",
+            "submitComplianceProofGas": "430329"
+          },
+          {
+            "protocol": "GROTH16",
+            "adapter": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
+            "kyc": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+            "reusedDeployment": false,
+            "verifyProofTxGas": "240219",
+            "submitComplianceProofGas": "438969"
+          },
+          {
+            "protocol": "PLONKY3",
+            "adapter": "0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0",
+            "kyc": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
+            "reusedDeployment": false,
+            "verifyProofTxGas": "25748",
+            "submitComplianceProofGas": "156309"
+          },
+          {
+            "protocol": "HALO2",
+            "adapter": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+            "verifier": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+            "kyc": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+            "payloadFormat": "calldataHex",
+            "verifyProofTxGas": "331237",
+            "submitComplianceProofGas": "434766",
+            "verifierSource": "/home/tiago/Documents/GitHub/PDRAFUB/performance-experiments/halo2/artifacts/Halo2ComplianceVerifier.sol"
+          }
+        ]
+      }
+    },
+    {
+      "generatedAt": "2026-04-15T21:51:49.429Z",
+      "timings": {
+        "plonk": {
+          "proofGenerationMs": 1184.1,
+          "verificationMs": 452.19
+        },
+        "fflonk": {
+          "proofGenerationMs": 1410.07,
+          "verificationMs": 444.69
+        },
+        "groth16": {
+          "proofGenerationMs": 542.02,
+          "verificationMs": 434.51
+        },
+        "plonky3": {
+          "proofGenerationMs": 0.0021,
+          "verificationMs": 0.0012
+        },
+        "halo2": {
+          "proofGenerationMs": 2.7207,
+          "verificationMs": 2.9342
+        }
+      },
+      "gas": {
+        "generatedAt": "2026-04-15T21:51:44.105Z",
+        "results": [
+          {
+            "protocol": "PLONK",
+            "adapter": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+            "kyc": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+            "reusedDeployment": false,
+            "verifyProofTxGas": "309194",
+            "submitComplianceProofGas": "508119"
+          },
+          {
+            "protocol": "FFLONK",
+            "adapter": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+            "kyc": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+            "reusedDeployment": false,
+            "verifyProofTxGas": "231426",
+            "submitComplianceProofGas": "430341"
+          },
+          {
+            "protocol": "GROTH16",
+            "adapter": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
+            "kyc": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+            "reusedDeployment": false,
+            "verifyProofTxGas": "240243",
+            "submitComplianceProofGas": "438993"
+          },
+          {
+            "protocol": "PLONKY3",
+            "adapter": "0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0",
+            "kyc": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
+            "reusedDeployment": false,
+            "verifyProofTxGas": "56439",
+            "submitComplianceProofGas": "187211"
+          },
+          {
+            "protocol": "HALO2",
+            "adapter": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+            "verifier": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+            "kyc": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+            "payloadFormat": "calldataHex",
+            "verifyProofTxGas": "331261",
+            "submitComplianceProofGas": "434790",
+            "verifierSource": "/home/tiago/Documents/GitHub/PDRAFUB/performance-experiments/halo2/artifacts/Halo2ComplianceVerifier.sol"
+          }
+        ]
+      }
+    },
+    {
+      "generatedAt": "2026-04-15T21:53:51.202Z",
+      "timings": {
+        "plonk": {
+          "proofGenerationMs": 1145.31,
+          "verificationMs": 464
+        },
+        "fflonk": {
+          "proofGenerationMs": 1381.16,
+          "verificationMs": 449.51
+        },
+        "groth16": {
+          "proofGenerationMs": 535.86,
+          "verificationMs": 451.31
+        },
+        "plonky3": {
+          "proofGenerationMs": 0.0019,
+          "verificationMs": 0.0012
+        },
+        "halo2": {
+          "proofGenerationMs": 2.8227,
+          "verificationMs": 2.9686
+        }
+      },
+      "gas": {
+        "generatedAt": "2026-04-15T21:53:45.517Z",
+        "results": [
+          {
+            "protocol": "PLONK",
+            "adapter": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+            "kyc": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+            "reusedDeployment": false,
+            "verifyProofTxGas": "309782",
+            "submitComplianceProofGas": "508707"
+          },
+          {
+            "protocol": "FFLONK",
+            "adapter": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+            "kyc": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+            "reusedDeployment": false,
+            "verifyProofTxGas": "231402",
+            "submitComplianceProofGas": "430317"
+          },
+          {
+            "protocol": "GROTH16",
+            "adapter": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
+            "kyc": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+            "reusedDeployment": false,
+            "verifyProofTxGas": "240231",
+            "submitComplianceProofGas": "438981"
+          },
+          {
+            "protocol": "PLONKY3",
+            "adapter": "0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0",
+            "kyc": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
+            "reusedDeployment": false,
+            "verifyProofTxGas": "185788",
+            "submitComplianceProofGas": "316560"
+          },
+          {
+            "protocol": "HALO2",
+            "adapter": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+            "verifier": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+            "kyc": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+            "payloadFormat": "calldataHex",
+            "verifyProofTxGas": "331153",
+            "submitComplianceProofGas": "434682",
+            "verifierSource": "/home/tiago/Documents/GitHub/PDRAFUB/performance-experiments/halo2/artifacts/Halo2ComplianceVerifier.sol"
+          }
+        ]
+      }
+    },
+    {
+      "generatedAt": "2026-04-15T22:01:51.707Z",
+      "timings": {
+        "plonk": {
+          "proofGenerationMs": 1122.18,
+          "verificationMs": 437.46
+        },
+        "fflonk": {
+          "proofGenerationMs": 1395.93,
+          "verificationMs": 447.17
+        },
+        "groth16": {
+          "proofGenerationMs": 564.13,
+          "verificationMs": 465.69
+        },
+        "plonky3": {
+          "proofGenerationMs": 0.0022,
+          "verificationMs": 0.0012
+        },
+        "halo2": {
+          "proofGenerationMs": 2.877,
+          "verificationMs": 3.0513
+        }
+      },
+      "gas": {
+        "generatedAt": "2026-04-15T22:01:45.608Z",
+        "results": [
+          {
+            "protocol": "PLONK",
+            "adapter": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+            "kyc": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+            "reusedDeployment": false,
+            "verifyProofTxGas": "309464",
+            "submitComplianceProofGas": "508389"
+          },
+          {
+            "protocol": "FFLONK",
+            "adapter": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+            "kyc": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+            "reusedDeployment": false,
+            "verifyProofTxGas": "231426",
+            "submitComplianceProofGas": "430341"
+          },
+          {
+            "protocol": "GROTH16",
+            "adapter": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
+            "kyc": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+            "reusedDeployment": false,
+            "verifyProofTxGas": "240231",
+            "submitComplianceProofGas": "438981"
+          },
+          {
+            "protocol": "HALO2",
+            "adapter": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+            "verifier": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+            "kyc": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+            "payloadFormat": "calldataHex",
+            "verifyProofTxGas": "331285",
+            "submitComplianceProofGas": "434814",
+            "verifierSource": "/home/tiago/Documents/GitHub/PDRAFUB/performance-experiments/halo2/artifacts/Halo2ComplianceVerifier.sol"
+          },
+          {
+            "protocol": "PLONKY3_WRAPPED_HALO2",
+            "adapter": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+            "verifier": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+            "kyc": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+            "payloadFormat": "calldataHex",
+            "verifyProofTxGas": "331285",
+            "submitComplianceProofGas": "434814",
+            "verifierSource": "/home/tiago/Documents/GitHub/PDRAFUB/performance-experiments/halo2/artifacts/Halo2ComplianceVerifier.sol",
+            "wrappedProtocol": "PLONKY3",
+            "wrapperProtocol": "HALO2",
+            "note": "EVM-verifiable wrapper benchmark: the on-chain verifier is HALO2 and represents the wrapper verification cost for PLONKY3 workflow."
+          }
+        ]
+      }
+    },
+    {
+      "generatedAt": "2026-04-16T13:43:19.423Z",
+      "timings": {
+        "plonk": {
+          "proofGenerationMs": 1059.61,
+          "verificationMs": 431.83
+        },
+        "fflonk": {
+          "proofGenerationMs": 1345.66,
+          "verificationMs": 427.74
+        },
+        "groth16": {
+          "proofGenerationMs": 487.19,
+          "verificationMs": 410.93
+        },
+        "noir": {
+          "proofGenerationMs": 116.31,
+          "verificationMs": 8.13
+        },
+        "halo2": {
+          "proofGenerationMs": 2.7078,
+          "verificationMs": 2.9977
+        }
+      },
+      "gas": {
+        "generatedAt": "2026-04-16T13:43:13.605Z",
+        "results": [
+          {
+            "protocol": "PLONK",
+            "adapter": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+            "kyc": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "reusedDeployment": false,
+            "verifyProofTxGas": "310846",
+            "submitComplianceProofGas": "509771"
+          },
+          {
+            "protocol": "FFLONK",
+            "adapter": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+            "kyc": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
+            "reusedDeployment": false,
+            "verifyProofTxGas": "231402",
+            "submitComplianceProofGas": "430317"
+          },
+          {
+            "protocol": "GROTH16",
+            "adapter": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
+            "kyc": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+            "reusedDeployment": false,
+            "verifyProofTxGas": "240231",
+            "submitComplianceProofGas": "438981"
+          },
+          {
+            "protocol": "NOIR",
+            "adapter": "0x9A676e781A523b5d0C0e43731313A708CB607508",
+            "kyc": "0x0B306BF915C4d645ff596e518fAf3F9669b97016",
+            "reusedDeployment": false,
+            "verifyProofTxGas": "3333223",
+            "submitComplianceProofGas": "3534784"
+          },
+          {
+            "protocol": "HALO2",
+            "adapter": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+            "verifier": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+            "kyc": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+            "payloadFormat": "calldataHex",
+            "verifyProofTxGas": "331201",
+            "submitComplianceProofGas": "434730",
+            "verifierSource": "/home/tiago/Documents/GitHub/PDRAFUB/performance-experiments/halo2/artifacts/Halo2ComplianceVerifier.sol"
           }
         ]
       }

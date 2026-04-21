@@ -3,9 +3,10 @@ const { ethers } = hre;
 const fs = require("fs");
 const path = require("path");
 const { execFileSync } = require("child_process");
+const crypto = require("crypto");
 const solc = require("solc");
 
-const DEPLOYMENTS_CACHE_VERSION = 1;
+const DEPLOYMENTS_CACHE_VERSION = 2;
 
 function loadDeploymentsCache(cachePath) {
   if (!fs.existsSync(cachePath)) {
@@ -14,7 +15,13 @@ function loadDeploymentsCache(cachePath) {
 
   try {
     const parsed = JSON.parse(fs.readFileSync(cachePath, "utf8"));
-    if (parsed && typeof parsed === "object" && parsed.deployments && typeof parsed.deployments === "object") {
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      parsed.version === DEPLOYMENTS_CACHE_VERSION &&
+      parsed.deployments &&
+      typeof parsed.deployments === "object"
+    ) {
       return parsed;
     }
   } catch {
@@ -29,8 +36,40 @@ function saveDeploymentsCache(cachePath, cache) {
   fs.writeFileSync(cachePath, JSON.stringify(cache, null, 2));
 }
 
+function resolveRisc0VerifierAddress() {
+  const fromEnv = process.env.RISC0_VERIFIER_ADDRESS;
+  if (fromEnv && ethers.isAddress(fromEnv)) {
+    return fromEnv;
+  }
+
+  const deploymentPath = path.join(__dirname, "..", "artifacts", "risc0-verifier-deployment.json");
+  if (!fs.existsSync(deploymentPath)) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(fs.readFileSync(deploymentPath, "utf8"));
+    const fromDeployment = parsed?.verifier;
+    if (typeof fromDeployment === "string" && ethers.isAddress(fromDeployment)) {
+      return fromDeployment;
+    }
+  } catch {
+    // Ignore malformed deployment file and surface a unified error to caller.
+  }
+
+  return null;
+}
+
 function buildDeploymentKey(chainId, protocolName) {
   return `${chainId}:${protocolName.toUpperCase()}`;
+}
+
+function buildDeployArgsHash(args = []) {
+  try {
+    return JSON.stringify(args);
+  } catch {
+    return "[]";
+  }
 }
 
 async function hasCode(address) {
@@ -515,23 +554,26 @@ async function getOrDeployContracts({
   cache,
   cachePath,
 }) {
+  const deployArgsHash = buildDeployArgsHash(adapterDeployArgs);
   const deploymentKey = buildDeploymentKey(chainId, protocolName);
   const cached = cache.deployments[deploymentKey];
 
   if (!forceRedeploy && cached) {
-    const reusable = await isReusableDeployment({
-      signer,
-      adapterAddress: cached.adapter,
-      kycAddress: cached.kyc,
-      kycArtifact,
-    });
+    if (cached.adapterDeployArgsHash === deployArgsHash) {
+      const reusable = await isReusableDeployment({
+        signer,
+        adapterAddress: cached.adapter,
+        kycAddress: cached.kyc,
+        kycArtifact,
+      });
 
-    if (reusable) {
-      return {
-        adapter: new ethers.Contract(cached.adapter, adapterArtifact.abi, signer),
-        kyc: new ethers.Contract(cached.kyc, kycArtifact.abi, signer),
-        reused: true,
-      };
+      if (reusable) {
+        return {
+          adapter: new ethers.Contract(cached.adapter, adapterArtifact.abi, signer),
+          kyc: new ethers.Contract(cached.kyc, kycArtifact.abi, signer),
+          reused: true,
+        };
+      }
     }
   }
 
@@ -546,6 +588,7 @@ async function getOrDeployContracts({
     chainId,
     network: networkName,
     signer: signer.address,
+    adapterDeployArgsHash: deployArgsHash,
     adapter: adapterAddress,
     kyc: kycAddress,
     updatedAt: new Date().toISOString(),
@@ -639,6 +682,155 @@ function readNoirProofAndPublicInputs(noirDir) {
   return { proofHex, publicSignals };
 }
 
+function toBytes32FromWordsLE(words) {
+  if (!Array.isArray(words) || words.length !== 8) {
+    throw new Error(`RISC0: imageId must contain exactly 8 words, got ${JSON.stringify(words)}`);
+  }
+
+  const bytes = Buffer.alloc(32);
+  for (let i = 0; i < 8; i++) {
+    const v = Number(words[i]);
+    if (!Number.isInteger(v) || v < 0 || v > 0xffffffff) {
+      throw new Error(`RISC0: invalid imageId word at index ${i}: ${words[i]}`);
+    }
+    bytes.writeUInt32LE(v, i * 4);
+  }
+  return `0x${bytes.toString("hex")}`;
+}
+
+function toBytes32FromWordsBE(words) {
+  if (!Array.isArray(words) || words.length !== 8) {
+    throw new Error(`RISC0: imageId must contain exactly 8 words, got ${JSON.stringify(words)}`);
+  }
+
+  const bytes = Buffer.alloc(32);
+  for (let i = 0; i < 8; i++) {
+    const v = Number(words[i]);
+    if (!Number.isInteger(v) || v < 0 || v > 0xffffffff) {
+      throw new Error(`RISC0: invalid imageId word at index ${i}: ${words[i]}`);
+    }
+    bytes.writeUInt32BE(v, i * 4);
+  }
+  return `0x${bytes.toString("hex")}`;
+}
+
+function sealWordsToBytesHex(words) {
+  if (!Array.isArray(words) || words.length === 0) {
+    throw new Error("RISC0: missing seal words array");
+  }
+
+  const bytes = Buffer.alloc(words.length * 4);
+  for (let i = 0; i < words.length; i++) {
+    const v = Number(words[i]);
+    if (!Number.isInteger(v) || v < 0 || v > 0xffffffff) {
+      throw new Error(`RISC0: invalid seal word at index ${i}: ${words[i]}`);
+    }
+    bytes.writeUInt32LE(v, i * 4);
+  }
+  return `0x${bytes.toString("hex")}`;
+}
+
+function parseImageIdWords(imageIdValue) {
+  if (Array.isArray(imageIdValue)) {
+    return imageIdValue;
+  }
+
+  if (typeof imageIdValue === "string") {
+    return JSON.parse(imageIdValue);
+  }
+
+  throw new Error(`RISC0: unsupported imageId format: ${JSON.stringify(imageIdValue)}`);
+}
+
+function readRisc0ProofAndSignals(risc0Dir) {
+  const proofPath = path.join(risc0Dir, "proofs", "proof.bench.json");
+  const publicPath = path.join(risc0Dir, "proofs", "public.bench.json");
+
+  if (!fs.existsSync(proofPath) || !fs.existsSync(publicPath)) {
+    throw new Error(
+      `RISC0: missing proof artifacts. Expected ${proofPath} and ${publicPath}. Run RiskZero host benchmark first.`
+    );
+  }
+
+  const proofJson = JSON.parse(fs.readFileSync(proofPath, "utf8"));
+  const publicJson = JSON.parse(fs.readFileSync(publicPath, "utf8"));
+
+  let sealHex = proofJson?.sealHex;
+  if (typeof sealHex !== "string" || !sealHex.startsWith("0x")) {
+    const sealWords = proofJson?.inner?.Composite?.segments?.[0]?.seal;
+    sealHex = sealWordsToBytesHex(sealWords);
+  }
+
+  const imageIdWords = parseImageIdWords(publicJson.imageIdWords ?? publicJson.imageId);
+
+  const journalHex = publicJson.journalBytesHex;
+  if (typeof journalHex !== "string" || !journalHex.startsWith("0x")) {
+    throw new Error(`RISC0: invalid journalBytesHex in ${publicPath}`);
+  }
+
+  const journalDigestHex = `0x${crypto
+    .createHash("sha256")
+    .update(Buffer.from(journalHex.slice(2), "hex"))
+    .digest("hex")}`;
+
+  const outputSignal = BigInt(publicJson.output ?? 0).toString();
+  const okSignal = "1";
+  const commitmentSignal = BigInt(publicJson.sealSize ?? 0).toString();
+  const publicSignals = [outputSignal, okSignal, commitmentSignal];
+
+  return { sealHex, imageIdWords, journalDigestHex, publicSignals };
+}
+
+async function resolveRisc0ProofHex(verifierAddress, proofData) {
+  const verifier = new ethers.Contract(
+    verifierAddress,
+    [
+      "function verify(bytes calldata seal, bytes32 imageId, bytes32 journalDigest) external view",
+      "function SELECTOR() external view returns (bytes4)",
+    ],
+    ethers.provider
+  );
+
+  const imageIdLE = toBytes32FromWordsLE(proofData.imageIdWords);
+  const imageIdBE = toBytes32FromWordsBE(proofData.imageIdWords);
+  const coder = ethers.AbiCoder.defaultAbiCoder();
+
+  const candidates = [
+    { endian: "LE", imageId: imageIdLE, seal: proofData.sealHex, sealForm: "raw" },
+    { endian: "BE", imageId: imageIdBE, seal: proofData.sealHex, sealForm: "raw" },
+  ];
+
+  try {
+    const selector = await verifier.SELECTOR();
+    const selectorHex = selector.toLowerCase().replace(/^0x/, "");
+    const rawHex = proofData.sealHex.toLowerCase().replace(/^0x/, "");
+    if (rawHex.length === 512) {
+      const prefixedSeal = `0x${selectorHex}${rawHex}`;
+      candidates.push({ endian: "LE", imageId: imageIdLE, seal: prefixedSeal, sealForm: "selector+raw" });
+      candidates.push({ endian: "BE", imageId: imageIdBE, seal: prefixedSeal, sealForm: "selector+raw" });
+    }
+  } catch {
+    // Not all verifier contracts expose SELECTOR(); keep raw candidates only.
+  }
+
+  for (const candidate of candidates) {
+    try {
+      await verifier.verify(candidate.seal, candidate.imageId, proofData.journalDigestHex);
+      console.log(
+        `RISC0: verifier accepted imageId encoding ${candidate.endian} with ${candidate.sealForm} seal.`
+      );
+      return coder.encode(
+        ["bytes", "bytes32", "bytes32"],
+        [candidate.seal, candidate.imageId, proofData.journalDigestHex]
+      );
+    } catch {
+      // Try next candidate.
+    }
+  }
+
+  throw new Error("RISC0: verifier rejected all candidate encodings (LE/BE, raw/prefixed seal).");
+}
+
 async function main() {
   const root = path.resolve(__dirname, "../../");
   const perfRoot = path.join(root, "performance-experiments");
@@ -646,6 +838,8 @@ async function main() {
   const fflonkDir = path.join(perfRoot, "fflonk");
   const grothDir = path.join(perfRoot, "groth16");
   const noirDir = path.join(perfRoot, "noir");
+  const risc0Dir = path.join(perfRoot, "RiskZero");
+  const skipRisc0 = process.env.ZKP_SKIP_RISC0 === "1";
 
   const chooseExisting = (dir, preferred, fallback) => {
     const preferredPath = path.join(dir, preferred);
@@ -694,6 +888,20 @@ async function main() {
     "KYCCompliance.sol": fs.readFileSync(path.join(noirDir, "target", "KYCCompliance.sol"), "utf8"),
   };
 
+  const risc0Sources = skipRisc0
+    ? null
+    : {
+        "Risc0VerifierAdapter.sol": fs.readFileSync(
+          path.join(root, "nfts", "contracts", "Risc0VerifierAdapter.sol"),
+          "utf8"
+        ),
+        "KYCCompliance.sol": fs.readFileSync(
+          path.join(root, "nfts", "contracts", "KYCCompliance.sol"),
+          "utf8"
+        ),
+      };
+
+
   const plonkAdapterArtifact = compileFromSources(
     plonkSources,
     "PlonkVerifierAdapter.sol",
@@ -723,6 +931,13 @@ async function main() {
   const noirVerifierArtifact = compileFromSources(noirSources, "Verifier.sol", "HonkVerifier");
   const noirKycArtifact = compileFromSources(noirSources, "KYCCompliance.sol", "KYCCompliance");
 
+  const risc0AdapterArtifact = skipRisc0
+    ? null
+    : compileFromSources(risc0Sources, "Risc0VerifierAdapter.sol", "Risc0VerifierAdapter");
+  const risc0KycArtifact = skipRisc0
+    ? null
+    : compileFromSources(risc0Sources, "KYCCompliance.sol", "KYCCompliance");
+
   const [signer] = await ethers.getSigners();
   const network = await ethers.provider.getNetwork();
   const chainId = Number(network.chainId);
@@ -733,6 +948,13 @@ async function main() {
 
   const noirVerifier = await deployFromCompiled(noirVerifierArtifact, signer);
   const noirVerifierAddress = await noirVerifier.getAddress();
+
+  const risc0VerifierAddress = skipRisc0 ? null : resolveRisc0VerifierAddress();
+  if (!skipRisc0 && !risc0VerifierAddress) {
+    throw new Error(
+      "Missing RISC0 verifier address. Set RISC0_VERIFIER_ADDRESS or run deploy:risc0-verifier to generate artifacts/risc0-verifier-deployment.json."
+    );
+  }
 
   const plonkResult = await benchmarkProtocol({
     signer,
@@ -792,9 +1014,32 @@ async function main() {
     cachePath,
   });
 
+  const results = [plonkResult, fflonkResult, grothResult, noirResult];
+
+  if (!skipRisc0) {
+    const risc0ProofData = readRisc0ProofAndSignals(risc0Dir);
+    const risc0ProofHex = await resolveRisc0ProofHex(risc0VerifierAddress, risc0ProofData);
+    const risc0Result = await benchmarkProtocol({
+      signer,
+      protocolName: "RISC0",
+      adapterArtifact: risc0AdapterArtifact,
+      adapterDeployArgs: [risc0VerifierAddress],
+      kycArtifact: risc0KycArtifact,
+      proofHex: risc0ProofHex,
+      publicSignals: risc0ProofData.publicSignals,
+      chainId,
+      networkName,
+      forceRedeploy,
+      cache,
+      cachePath,
+    });
+
+    results.push(risc0Result);
+  }
+
   const output = {
     generatedAt: new Date().toISOString(),
-    results: [plonkResult, fflonkResult, grothResult, noirResult],
+    results,
   };
 
   console.log("=== ON-CHAIN GAS BENCHMARK ===");

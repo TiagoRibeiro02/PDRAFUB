@@ -1,0 +1,15 @@
+cargo:rerun-if-env-changed=RISC0_BUILD_DEBUG
+Building guest package: methods.method
+cargo:rerun-if-env-changed=RISC0_SKIP_BUILD
+Using Rust toolchain version 1.94.1
+Using rustc: /home/tiago/.risc0/toolchains/v1.94.1-rust-x86_64-unknown-linux-gnu/bin/rustc
+cargo:rerun-if-env-changed=RISC0_BUILD_LOCKED
+cargo:rerun-if-env-changed=RISC0_RUST_SRC
+cargo:rerun-if-env-changed=CC_riscv32im_risc0_zkvm_elf
+cargo:rerun-if-env-changed=CFLAGS_riscv32im_risc0_zkvm_elf
+Using C++ toolchain version 2024.1.5
+cargo:rerun-if-env-changed=RISC0_BUILD_DEBUG
+cargo:rerun-if-env-changed=RISC0_SKIP_BUILD
+cargo:rerun-if-env-changed=RISC0_SKIP_BUILD
+cargo:rerun-if-changed=/home/tiago/Documents/GitHub/PDRAFUB/.cargo-target-risc0/release/build/methods-b74af39d46253306/out/methods.rs
+cargo:rerun-if-env-changed=RISC0_GUEST_LOGFILE

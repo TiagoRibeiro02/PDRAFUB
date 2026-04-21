@@ -1,0 +1,11 @@
+/home/tiago/Documents/GitHub/PDRAFUB/.cargo-target-risc0/release/deps/ark_serialize-7c702cf03620c20e.d: /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/lib.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/error.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/flags.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/impls.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/../README.md
+
+/home/tiago/Documents/GitHub/PDRAFUB/.cargo-target-risc0/release/deps/libark_serialize-7c702cf03620c20e.rlib: /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/lib.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/error.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/flags.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/impls.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/../README.md
+
+/home/tiago/Documents/GitHub/PDRAFUB/.cargo-target-risc0/release/deps/libark_serialize-7c702cf03620c20e.rmeta: /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/lib.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/error.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/flags.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/impls.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/../README.md
+
+/home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/lib.rs:
+/home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/error.rs:
+/home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/flags.rs:
+/home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/impls.rs:
+/home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/../README.md:

@@ -6,6 +6,8 @@
     "compile": "hardhat compile",
     "deploy": "hardhat run scripts/deploy.ts --network localhost",
     "deploy:kyc": "hardhat run scripts/deploy-kyc.ts --network localhost",
+    "deploy:risc0-verifier": "hardhat run scripts/deploy-risc0-verifier.ts --network localhost",
+    "deploy:risc0-verifier:sepolia": "hardhat run scripts/deploy-risc0-verifier.ts --network sepolia",
     "mint": "hardhat run scripts/mint.ts --network localhost",
     "node": "hardhat node",
     "test": "hardhat test",

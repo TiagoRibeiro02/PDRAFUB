@@ -1,5 +1,5 @@
 import { execFileSync } from "child_process";
-import { existsSync, readFileSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { resolve } from "path";
 
 const repoRoot = resolve(process.cwd(), "..");
@@ -9,7 +9,10 @@ const fflonkDir = resolve(perfRoot, "fflonk");
 const grothDir = resolve(perfRoot, "groth16");
 const noirDir = resolve(perfRoot, "noir");
 const halo2Dir = resolve(perfRoot, "halo2", "circuit");
+const risc0Dir = resolve(perfRoot, "RiskZero");
 const nftsDir = resolve(repoRoot, "nfts");
+const localTmpDir = resolve(perfRoot, ".tmp");
+const RUN_COUNT = 1000;
 
 function loadEnvFromNfts() {
   const envPath = resolve(nftsDir, ".env");
@@ -59,7 +62,7 @@ function ensureTestnetEnv() {
 
 function runWithTimer(command, args, cwd) {
   const start = process.hrtime.bigint();
-  execFileSync(command, args, { cwd, stdio: "inherit" });
+  execFileSync(command, args, { cwd, stdio: "pipe" });
   const end = process.hrtime.bigint();
   const ms = Number(end - start) / 1_000_000;
   return Number(ms.toFixed(2));
@@ -95,9 +98,9 @@ function parseBenchTimingsFromOutput(output, protocolName) {
   return JSON.parse(line.slice(marker.length));
 }
 
-function benchmarkRustProtocol({ name, cwd, bin }) {
+function benchmarkRustProtocol({ name, cwd, bin, mainFile = "src/main.rs" }) {
   ensureFile(resolve(cwd, "Cargo.toml"), `${name} Cargo.toml`);
-  ensureFile(resolve(cwd, "src", "main.rs"), `${name} main.rs`);
+  ensureFile(resolve(cwd, mainFile), `${name} main.rs`);
 
   const args = ["run", "--release"];
   if (bin) {
@@ -105,12 +108,13 @@ function benchmarkRustProtocol({ name, cwd, bin }) {
   }
   args.push("--", "--bench-json");
 
+  mkdirSync(localTmpDir, { recursive: true });
+
   const output = execFileSync("cargo", args, {
     cwd,
     encoding: "utf8",
+    env: { ...process.env, TMPDIR: process.env.TMPDIR || localTmpDir },
   });
-
-  process.stdout.write(output);
 
   const parsed = parseBenchTimingsFromOutput(output, name);
   return {
@@ -166,9 +170,29 @@ function benchmarkNoirProtocol() {
   return { proofGenerationMs, verificationMs };
 }
 
+function benchmarkRiscZeroProtocol() {
+  const proofDir = resolve(risc0Dir, "proofs");
+
+  const timings = benchmarkRustProtocol({
+    name: "RISC0",
+    cwd: risc0Dir,
+    bin: "host",
+    mainFile: "host/src/main.rs",
+  });
+
+  ensureFile(resolve(proofDir, "proof.bench.json"), "RISC0 generated proof");
+  ensureFile(resolve(proofDir, "public.bench.json"), "RISC0 generated public inputs");
+
+  return timings;
+}
+
 function appendUnsupportedGasEntries(gas) {
   const existing = new Set((gas?.results || []).map((item) => item.protocol?.toUpperCase()));
-  const missingProtocols = ["HALO2"].filter((p) => !existing.has(p));
+  const unsupportedReasons = {
+    HALO2: "No Solidity verifier adapter is configured for this protocol in nfts/scripts/benchmark-zkp.js.",
+  };
+
+  const missingProtocols = Object.keys(unsupportedReasons).filter((p) => !existing.has(p));
 
   if (missingProtocols.length === 0) {
     return gas;
@@ -177,8 +201,7 @@ function appendUnsupportedGasEntries(gas) {
   const additions = missingProtocols.map((protocol) => ({
     protocol,
     supported: false,
-    reason:
-      "No Solidity verifier adapter is configured for this protocol in nfts/scripts/benchmark-zkp.js.",
+    reason: unsupportedReasons[protocol],
     verifyProofTxGas: null,
     submitComplianceProofGas: null,
   }));
@@ -199,8 +222,6 @@ function benchmarkHalo2Gas() {
     }
   );
 
-  process.stdout.write(artifactOutput);
-
   const artifactMarker = "BENCHMARK_HALO2_ARTIFACT_JSON=";
   const artifactLine = artifactOutput
     .split("\n")
@@ -215,8 +236,6 @@ function benchmarkHalo2Gas() {
     cwd: nftsDir,
     encoding: "utf8",
   });
-
-  process.stdout.write(gasOutput);
 
   const marker = "BENCHMARK_HALO2_GAS_JSON=";
   const line = gasOutput
@@ -246,9 +265,11 @@ function runGasBenchmark() {
   const output = execFileSync("npm", ["run", "benchmark:zkp:local"], {
     cwd: nftsDir,
     encoding: "utf8",
+    env: {
+      ...process.env,
+      ZKP_SKIP_RISC0: "1",
+    },
   });
-
-  process.stdout.write(output);
 
   const marker = "BENCHMARK_GAS_JSON=";
   const line = output
@@ -261,6 +282,188 @@ function runGasBenchmark() {
   }
 
   return JSON.parse(line.slice(marker.length));
+}
+
+function getErrorMessage(error) {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return String(error);
+}
+
+function runWithModelError(modelName, fn) {
+  try {
+    return fn();
+  } catch (error) {
+    return {
+      error: true,
+      model: modelName,
+      message: getErrorMessage(error),
+    };
+  }
+}
+
+function makeGasErrorResult(protocol, message) {
+  return {
+    protocol,
+    supported: false,
+    reason: message,
+    verifyProofTxGas: null,
+    submitComplianceProofGas: null,
+  };
+}
+
+function isModelError(value) {
+  return Boolean(value && typeof value === "object" && value.error === true);
+}
+
+function buildGasResult(onchainGasResult, halo2GasResult) {
+  const protocols = ["PLONK", "FFLONK", "GROTH16", "NOIR"];
+
+  if (isModelError(onchainGasResult) && isModelError(halo2GasResult)) {
+    return {
+      generatedAt: new Date().toISOString(),
+      results: [
+        ...protocols.map((p) => makeGasErrorResult(p, `Error on ${onchainGasResult.model}: ${onchainGasResult.message}`)),
+        makeGasErrorResult("HALO2", `Error on ${halo2GasResult.model}: ${halo2GasResult.message}`),
+      ],
+    };
+  }
+
+  if (isModelError(onchainGasResult)) {
+    return {
+      generatedAt: new Date().toISOString(),
+      results: [
+        ...protocols.map((p) => makeGasErrorResult(p, `Error on ${onchainGasResult.model}: ${onchainGasResult.message}`)),
+        halo2GasResult,
+      ],
+    };
+  }
+
+  if (isModelError(halo2GasResult)) {
+    const filtered = (onchainGasResult?.results || []).filter(
+      (entry) => entry.protocol?.toUpperCase() !== "HALO2"
+    );
+    return {
+      ...onchainGasResult,
+      results: [
+        ...filtered,
+        makeGasErrorResult("HALO2", `Error on ${halo2GasResult.model}: ${halo2GasResult.message}`),
+      ],
+    };
+  }
+
+  return appendUnsupportedGasEntries(mergeHalo2Gas(onchainGasResult, halo2GasResult));
+}
+
+function benchmarkOneRun() {
+  const plonk = runWithModelError("PLONK", () =>
+    benchmarkProtocol({
+      name: "PLONK",
+      cwd: plonkDir,
+      requiredFiles: [
+        { path: "circuit_final.zkey", label: "zkey" },
+        { path: "witness.test.wtns", label: "witness" },
+        { path: "verification_key.json", label: "verification key" },
+      ],
+      proveArgs: [
+        "plonk",
+        "prove",
+        "circuit_final.zkey",
+        "witness.test.wtns",
+        "proof.bench.json",
+        "public.bench.json",
+      ],
+      verifyArgs: [
+        "plonk",
+        "verify",
+        "verification_key.json",
+        "public.bench.json",
+        "proof.bench.json",
+      ],
+    })
+  );
+
+  const fflonk = runWithModelError("FFLONK", () =>
+    benchmarkProtocol({
+      name: "FFLONK",
+      cwd: fflonkDir,
+      requiredFiles: [
+        { path: "circuit_final.zkey", label: "zkey" },
+        { path: "witness.test.wtns", label: "witness" },
+        { path: "verification_key.json", label: "verification key" },
+      ],
+      proveArgs: [
+        "fflonk",
+        "prove",
+        "circuit_final.zkey",
+        "witness.test.wtns",
+        "proof.bench.json",
+        "public.bench.json",
+      ],
+      verifyArgs: [
+        "fflonk",
+        "verify",
+        "verification_key.json",
+        "public.bench.json",
+        "proof.bench.json",
+      ],
+    })
+  );
+
+  const groth16 = runWithModelError("GROTH16", () =>
+    benchmarkProtocol({
+      name: "GROTH16",
+      cwd: grothDir,
+      requiredFiles: [
+        { path: "circuit_final.zkey", label: "zkey" },
+        { path: "witness.test.wtns", label: "witness" },
+        { path: "verification_key.json", label: "verification key" },
+      ],
+      proveArgs: [
+        "groth16",
+        "prove",
+        "circuit_final.zkey",
+        "witness.test.wtns",
+        "proof.bench.json",
+        "public.bench.json",
+      ],
+      verifyArgs: [
+        "groth16",
+        "verify",
+        "verification_key.json",
+        "public.bench.json",
+        "proof.bench.json",
+      ],
+    })
+  );
+
+  const noir = runWithModelError("NOIR", () => benchmarkNoirProtocol());
+
+  const halo2 = runWithModelError("HALO2", () =>
+    benchmarkRustProtocol({
+      name: "HALO2",
+      cwd: halo2Dir,
+      bin: "circuit",
+    })
+  );
+
+  const onchainGas = runWithModelError("ONCHAIN_GAS", () => runGasBenchmark());
+  const halo2Gas = runWithModelError("HALO2_GAS", () => benchmarkHalo2Gas());
+  const gas = buildGasResult(onchainGas, halo2Gas);
+
+  return {
+    generatedAt: new Date().toISOString(),
+    timings: {
+      plonk,
+      fflonk,
+      groth16,
+      noir,
+      halo2,
+    },
+    gas,
+  };
 }
 
 function loadExistingRuns(outPath) {
@@ -290,119 +493,21 @@ function loadExistingRuns(outPath) {
 }
 
 function main() {
-  const plonk = benchmarkProtocol({
-    name: "PLONK",
-    cwd: plonkDir,
-    requiredFiles: [
-      { path: "circuit_final.zkey", label: "zkey" },
-      { path: "witness.test.wtns", label: "witness" },
-      { path: "verification_key.json", label: "verification key" },
-    ],
-    proveArgs: [
-      "plonk",
-      "prove",
-      "circuit_final.zkey",
-      "witness.test.wtns",
-      "proof.bench.json",
-      "public.bench.json",
-    ],
-    verifyArgs: [
-      "plonk",
-      "verify",
-      "verification_key.json",
-      "public.bench.json",
-      "proof.bench.json",
-    ],
-  });
-
-  const fflonk = benchmarkProtocol({
-    name: "FFLONK",
-    cwd: fflonkDir,
-    requiredFiles: [
-      { path: "circuit_final.zkey", label: "zkey" },
-      { path: "witness.test.wtns", label: "witness" },
-      { path: "verification_key.json", label: "verification key" },
-    ],
-    proveArgs: [
-      "fflonk",
-      "prove",
-      "circuit_final.zkey",
-      "witness.test.wtns",
-      "proof.bench.json",
-      "public.bench.json",
-    ],
-    verifyArgs: [
-      "fflonk",
-      "verify",
-      "verification_key.json",
-      "public.bench.json",
-      "proof.bench.json",
-    ],
-  });
-
-  const groth16 = benchmarkProtocol({
-    name: "GROTH16",
-    cwd: grothDir,
-    requiredFiles: [
-      { path: "circuit_final.zkey", label: "zkey" },
-      { path: "witness.test.wtns", label: "witness" },
-      { path: "verification_key.json", label: "verification key" },
-    ],
-    proveArgs: [
-      "groth16",
-      "prove",
-      "circuit_final.zkey",
-      "witness.test.wtns",
-      "proof.bench.json",
-      "public.bench.json",
-    ],
-    verifyArgs: [
-      "groth16",
-      "verify",
-      "verification_key.json",
-      "public.bench.json",
-      "proof.bench.json",
-    ],
-  });
-
-  const noir = benchmarkNoirProtocol();
-
-  const halo2 = benchmarkRustProtocol({
-    name: "HALO2",
-    cwd: halo2Dir,
-    bin: "circuit",
-  });
-
-  const onchainGas = runGasBenchmark();
-  const halo2Gas = benchmarkHalo2Gas();
-  const gas = appendUnsupportedGasEntries(mergeHalo2Gas(onchainGas, halo2Gas));
-
-  const currentRun = {
-    generatedAt: new Date().toISOString(),
-    timings: {
-      plonk,
-      fflonk,
-      groth16,
-      noir,
-      halo2,
-    },
-    gas,
-  };
+  const runResults = [];
+  for (let i = 1; i <= RUN_COUNT; i += 1) {
+    console.log(i);
+    runResults.push(benchmarkOneRun());
+  }
 
   const outPath = resolve(perfRoot, "benchmark-results.json");
   const previousRuns = loadExistingRuns(outPath);
   const report = {
     updatedAt: new Date().toISOString(),
-    totalRuns: previousRuns.length + 1,
-    runs: [...previousRuns, currentRun],
+    totalRuns: previousRuns.length + runResults.length,
+    runs: [...previousRuns, ...runResults],
   };
 
   writeFileSync(outPath, JSON.stringify(report, null, 2));
-
-  console.log("\n=== ZKP BENCHMARK SUMMARY ===");
-  console.log(JSON.stringify(currentRun, null, 2));
-  console.log(`\nTotal stored runs: ${report.totalRuns}`);
-  console.log(`\nSaved report to: ${outPath}`);
 }
 
 main();

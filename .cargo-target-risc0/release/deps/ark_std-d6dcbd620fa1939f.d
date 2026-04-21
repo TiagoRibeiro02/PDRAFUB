@@ -1,0 +1,11 @@
+/home/tiago/Documents/GitHub/PDRAFUB/.cargo-target-risc0/release/deps/ark_std-d6dcbd620fa1939f.d: /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-std-0.5.0/src/lib.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-std-0.5.0/src/rand_helper.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-std-0.5.0/src/perf_trace.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-std-0.5.0/src/iterable/mod.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-std-0.5.0/src/iterable/rev.rs
+
+/home/tiago/Documents/GitHub/PDRAFUB/.cargo-target-risc0/release/deps/libark_std-d6dcbd620fa1939f.rlib: /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-std-0.5.0/src/lib.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-std-0.5.0/src/rand_helper.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-std-0.5.0/src/perf_trace.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-std-0.5.0/src/iterable/mod.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-std-0.5.0/src/iterable/rev.rs
+
+/home/tiago/Documents/GitHub/PDRAFUB/.cargo-target-risc0/release/deps/libark_std-d6dcbd620fa1939f.rmeta: /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-std-0.5.0/src/lib.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-std-0.5.0/src/rand_helper.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-std-0.5.0/src/perf_trace.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-std-0.5.0/src/iterable/mod.rs /home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-std-0.5.0/src/iterable/rev.rs
+
+/home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-std-0.5.0/src/lib.rs:
+/home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-std-0.5.0/src/rand_helper.rs:
+/home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-std-0.5.0/src/perf_trace.rs:
+/home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-std-0.5.0/src/iterable/mod.rs:
+/home/tiago/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-std-0.5.0/src/iterable/rev.rs:

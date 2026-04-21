@@ -1,0 +1,1 @@
+/home/tiago/Documents/GitHub/PDRAFUB/.cargo-target-risc0/riscv-guest/methods/method/riscv32im-risc0-zkvm-elf/release/method: /home/tiago/Documents/GitHub/PDRAFUB/performance-experiments/RiskZero/methods/guest/src/main.rs

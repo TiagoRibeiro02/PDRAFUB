@@ -17,11 +17,21 @@ from statistics import mean, pstdev
 
 import matplotlib.pyplot as plt
 
-PROTOCOLS = ["plonk", "fflonk", "groth16"]
+#PROTOCOLS = ["plonk", "fflonk", "groth16", "halo2"]
+#PROTOCOL_LABELS = {
+    #"plonk": "PLONK",
+    #"fflonk": "FFLONK",
+    #"groth16": "GROTH16",
+    #"halo2": "HALO2",
+#}
+
+PROTOCOLS = ["plonk", "fflonk", "groth16", "noir", "halo2"]
 PROTOCOL_LABELS = {
     "plonk": "PLONK",
     "fflonk": "FFLONK",
     "groth16": "GROTH16",
+    "noir": "NOIR",
+    "halo2": "HALO2",
 }
 
 
@@ -49,6 +59,14 @@ def safe_int(value: object, default: int = 0) -> int:
         return default
 
 
+def safe_mean(values: list[float | int]) -> float:
+    return mean(values) if values else 0.0
+
+
+def safe_pstdev(values: list[float | int]) -> float:
+    return pstdev(values) if values else 0.0
+
+
 def save_fig(out_dir: Path, filename: str) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     plt.tight_layout()
@@ -66,29 +84,102 @@ def extract_time_series(zkp_runs: list[dict], metric_key: str) -> dict[str, list
     return series
 
 
+def extract_protocol_run_gas_sums(zkp_runs: list[dict]) -> dict[str, list[int]]:
+    sums: dict[str, list[int]] = {p: [] for p in PROTOCOLS}
+    for run in zkp_runs:
+        run_totals: dict[str, int] = {p: 0 for p in PROTOCOLS}
+        gas_results = run.get("gas", {}).get("results", [])
+        for row in gas_results:
+            protocol = str(row.get("protocol", "")).strip().lower()
+            if protocol not in run_totals:
+                continue
+            run_totals[protocol] += safe_int(row.get("verifyProofTxGas"), 0)
+            run_totals[protocol] += safe_int(row.get("submitComplianceProofGas"), 0)
+
+        for protocol in PROTOCOLS:
+            sums[protocol].append(run_totals[protocol])
+
+    return sums
+
+
+def cumulative(values: list[int]) -> list[int]:
+    total = 0
+    out: list[int] = []
+    for value in values:
+        total += value
+        out.append(total)
+    return out
+
+
+def spaced_run_ticks(run_count: int, step: int = 50) -> list[int]:
+    if run_count <= 0:
+        return []
+    ticks = [1]
+    ticks.extend(list(range(step, run_count + 1, step)))
+    if ticks[-1] != run_count:
+        ticks.append(run_count)
+    return ticks
+
+
 def plot_time_series(zkp_runs: list[dict], out_dir: Path) -> None:
     run_ids = list(range(1, len(zkp_runs) + 1))
+    protocol_run_gas_sums = extract_protocol_run_gas_sums(zkp_runs)
+    cumulative_protocol_gas_sums = {
+        protocol: cumulative(protocol_run_gas_sums[protocol]) for protocol in PROTOCOLS
+    }
+    scale = 1_000_000
+    cumulative_protocol_gas_sums_scaled = {
+        protocol: [value / scale for value in values]
+        for protocol, values in cumulative_protocol_gas_sums.items()
+    }
+    run_ticks = spaced_run_ticks(len(zkp_runs), step=50)
+    marker_step = max(1, len(zkp_runs) // 20)
 
     for metric_key, title, y_label, filename in [
         ("proofGenerationMs", "Proof Generation Over Time", "Milliseconds", "01-time-series-proof.png"),
         ("verificationMs", "Verification Over Time", "Milliseconds", "02-time-series-verification.png"),
     ]:
-        series = extract_time_series(zkp_runs, metric_key)
-        plt.figure(figsize=(10, 5))
-        for protocol in PROTOCOLS:
-            plt.plot(
-                run_ids,
-                series[protocol],
-                marker="o",
-                linewidth=2,
-                label=PROTOCOL_LABELS[protocol],
-            )
-        plt.title(title)
-        plt.xlabel("Run #")
-        plt.ylabel(y_label)
-        plt.xticks(run_ids)
-        plt.grid(True, linestyle="--", linewidth=0.5, alpha=0.6)
-        plt.legend()
+        fig, ax = plt.subplots(figsize=(10, 5))
+        if metric_key == "proofGenerationMs":
+            for protocol in PROTOCOLS:
+                ax.plot(
+                    run_ids,
+                    cumulative_protocol_gas_sums_scaled[protocol],
+                    marker="o",
+                    markersize=2.5,
+                    markevery=marker_step,
+                    linewidth=1.1,
+                    alpha=0.95,
+                    label=PROTOCOL_LABELS[protocol],
+                )
+            ax.set_title("Cumulative Gas Sum Over Runs by Protocol")
+            ax.set_xlabel("Run / User #")
+            ax.set_ylabel("Cumulative Gas x10⁶")
+            ax.set_xticks(run_ticks)
+            ax.grid(axis="y", linestyle="--", linewidth=0.45, alpha=0.55)
+            ax.grid(axis="x", linestyle=":", linewidth=0.35, alpha=0.35)
+            ax.legend(loc="upper left", ncol=3, frameon=False)
+        else:
+            series = extract_time_series(zkp_runs, metric_key)
+            for protocol in PROTOCOLS:
+                ax.plot(
+                    run_ids,
+                    series[protocol],
+                    marker="o",
+                    markersize=2.5,
+                    markevery=marker_step,
+                    linewidth=1.1,
+                    alpha=0.95,
+                    label=PROTOCOL_LABELS[protocol],
+                )
+            ax.set_title(title)
+            ax.set_xlabel("Run / User #")
+            ax.set_ylabel(y_label)
+            ax.set_xticks(run_ticks)
+            ax.grid(axis="y", linestyle="--", linewidth=0.45, alpha=0.55)
+            ax.grid(axis="x", linestyle=":", linewidth=0.35, alpha=0.35)
+            ax.legend(loc="upper left", ncol=3, frameon=False)
+
         save_fig(out_dir, filename)
 
 
@@ -106,10 +197,10 @@ def plot_grouped_means_with_error(zkp_runs: list[dict], out_dir: Path) -> None:
     verify_vals = protocol_metric_values(zkp_runs, "verificationMs")
 
     labels = [PROTOCOL_LABELS[p] for p in PROTOCOLS]
-    proof_means = [mean(proof_vals[p]) for p in PROTOCOLS]
-    verify_means = [mean(verify_vals[p]) for p in PROTOCOLS]
-    proof_err = [pstdev(proof_vals[p]) for p in PROTOCOLS]
-    verify_err = [pstdev(verify_vals[p]) for p in PROTOCOLS]
+    proof_means = [safe_mean(proof_vals[p]) for p in PROTOCOLS]
+    verify_means = [safe_mean(verify_vals[p]) for p in PROTOCOLS]
+    proof_err = [safe_pstdev(proof_vals[p]) for p in PROTOCOLS]
+    verify_err = [safe_pstdev(verify_vals[p]) for p in PROTOCOLS]
 
     x = list(range(len(PROTOCOLS)))
     width = 0.36
@@ -125,42 +216,15 @@ def plot_grouped_means_with_error(zkp_runs: list[dict], out_dir: Path) -> None:
     save_fig(out_dir, "03-grouped-means-errorbars.png")
 
 
-def plot_timing_boxplots(zkp_runs: list[dict], out_dir: Path) -> None:
-    proof_vals = protocol_metric_values(zkp_runs, "proofGenerationMs")
-    verify_vals = protocol_metric_values(zkp_runs, "verificationMs")
-
-    labels = [PROTOCOL_LABELS[p] for p in PROTOCOLS]
-
-    plt.figure(figsize=(10, 5))
-    plt.boxplot([proof_vals[p] for p in PROTOCOLS], tick_labels=labels, showmeans=True)
-    plt.title("Proof Generation Distribution")
-    plt.ylabel("Milliseconds")
-    plt.grid(axis="y", linestyle="--", linewidth=0.5, alpha=0.6)
-    save_fig(out_dir, "04-boxplot-proof.png")
-
-    plt.figure(figsize=(10, 5))
-    plt.boxplot([verify_vals[p] for p in PROTOCOLS], tick_labels=labels, showmeans=True)
-    plt.title("Verification Distribution")
-    plt.ylabel("Milliseconds")
-    plt.grid(axis="y", linestyle="--", linewidth=0.5, alpha=0.6)
-    save_fig(out_dir, "05-boxplot-verification.png")
-
-
 def get_gas_values(zkp_runs: list[dict], field: str) -> dict[str, list[int]]:
     values = {p: [] for p in PROTOCOLS}
     for run in zkp_runs:
         gas_results = run.get("gas", {}).get("results", [])
         for row in gas_results:
             protocol_label = str(row.get("protocol", "")).strip().lower()
-            if protocol_label == "plonk":
-                protocol = "plonk"
-            elif protocol_label == "fflonk":
-                protocol = "fflonk"
-            elif protocol_label == "groth16":
-                protocol = "groth16"
-            else:
+            if protocol_label not in values:
                 continue
-            values[protocol].append(safe_int(row.get(field), 0))
+            values[protocol_label].append(safe_int(row.get(field), 0))
     return values
 
 
@@ -169,57 +233,38 @@ def plot_gas_grouped(zkp_runs: list[dict], out_dir: Path) -> None:
     submit_vals = get_gas_values(zkp_runs, "submitComplianceProofGas")
 
     labels = [PROTOCOL_LABELS[p] for p in PROTOCOLS]
-    verify_means = [mean(verify_vals[p]) for p in PROTOCOLS]
-    submit_means = [mean(submit_vals[p]) for p in PROTOCOLS]
+    verify_means = [safe_mean(verify_vals[p]) for p in PROTOCOLS]
+    submit_means = [safe_mean(submit_vals[p]) for p in PROTOCOLS]
+    scale = 1_000_000
+    verify_scaled = [value / scale for value in verify_means]
+    submit_scaled = [value / scale for value in submit_means]
 
     x = list(range(len(PROTOCOLS)))
     width = 0.36
 
     plt.figure(figsize=(10, 5))
-    plt.bar([i - width / 2 for i in x], verify_means, width, label="verifyProofTxGas")
-    plt.bar([i + width / 2 for i in x], submit_means, width, label="submitComplianceProofGas")
+    verify_bars = plt.bar([i - width / 2 for i in x], verify_scaled, width, label="verifyProofTxGas")
+    submit_bars = plt.bar([i + width / 2 for i in x], submit_scaled, width, label="submitComplianceProofGas")
     plt.xticks(x, labels)
-    plt.ylabel("Gas")
+    plt.ylabel("Gas x10⁶")
     plt.title("Average Gas by Protocol")
     plt.grid(axis="y", linestyle="--", linewidth=0.5, alpha=0.6)
     plt.legend()
+
+    label_offset = max(verify_scaled + submit_scaled) * 0.015 if (verify_scaled or submit_scaled) else 0.0
+    for bars, scaled_values in [(verify_bars, verify_scaled), (submit_bars, submit_scaled)]:
+        for bar, scaled_value in zip(bars, scaled_values):
+            height = bar.get_height()
+            plt.text(
+                bar.get_x() + bar.get_width() / 2,
+                height + label_offset,
+                f"{scaled_value:.2f}",
+                ha="center",
+                va="bottom",
+                fontsize=8,
+            )
+
     save_fig(out_dir, "06-gas-grouped.png")
-
-
-def plot_relative_improvement(zkp_runs: list[dict], out_dir: Path) -> None:
-    proof_vals = protocol_metric_values(zkp_runs, "proofGenerationMs")
-    verify_vals = protocol_metric_values(zkp_runs, "verificationMs")
-    gas_verify_vals = get_gas_values(zkp_runs, "verifyProofTxGas")
-    gas_submit_vals = get_gas_values(zkp_runs, "submitComplianceProofGas")
-
-    baseline = "plonk"
-    metrics = [
-        ("Proof Gen", proof_vals),
-        ("Verification", verify_vals),
-        ("verifyProofTxGas", gas_verify_vals),
-        ("submitComplianceProofGas", gas_submit_vals),
-    ]
-
-    labels = []
-    deltas = []
-    for protocol in ["fflonk", "groth16"]:
-        for metric_name, metric_map in metrics:
-            base = mean(metric_map[baseline])
-            target = mean(metric_map[protocol])
-            pct = ((target - base) / base) * 100 if base else 0.0
-            labels.append(f"{PROTOCOL_LABELS[protocol]}\n{metric_name}")
-            deltas.append(pct)
-
-    colors = ["#2E8B57" if d < 0 else "#B22222" for d in deltas]
-
-    plt.figure(figsize=(12, 5))
-    plt.bar(range(len(labels)), deltas, color=colors)
-    plt.axhline(0, color="black", linewidth=1)
-    plt.xticks(range(len(labels)), labels, rotation=20, ha="right")
-    plt.ylabel("% vs PLONK (negative is better)")
-    plt.title("Relative Improvement Compared to PLONK")
-    plt.grid(axis="y", linestyle="--", linewidth=0.5, alpha=0.6)
-    save_fig(out_dir, "07-relative-improvement-vs-plonk.png")
 
 
 def plot_speed_vs_gas(zkp_runs: list[dict], out_dir: Path) -> None:
@@ -228,8 +273,8 @@ def plot_speed_vs_gas(zkp_runs: list[dict], out_dir: Path) -> None:
 
     plt.figure(figsize=(8, 6))
     for protocol in PROTOCOLS:
-        x = mean(proof_vals[protocol])
-        y = mean(submit_vals[protocol])
+        x = safe_mean(proof_vals[protocol])
+        y = safe_mean(submit_vals[protocol])
         plt.scatter([x], [y], s=130, label=PROTOCOL_LABELS[protocol])
         plt.text(x + 10, y + 60, PROTOCOL_LABELS[protocol], fontsize=9)
 
@@ -257,37 +302,6 @@ def nft_function_means(nft_runs: list[dict]) -> dict[str, float]:
     return means
 
 
-def plot_nft_gas_rank(nft_runs: list[dict], out_dir: Path) -> None:
-    means = nft_function_means(nft_runs)
-
-    label_map = {
-        "deploy": "deployContract",
-        "setEntityAuthorization": "setEntityAuthorization",
-        "mintNFT": "mintNFT",
-        "purchaseNFT": "purchaseNFT",
-        "linkDIDToAddress": "linkDIDToAddress",
-        "transferToDID": "transferToDID",
-        "purchaseAndTransferNFT": "purchaseAndTransferNFT",
-    }
-
-    ordered_items = sorted(
-        ((label_map.get(k, k), v) for k, v in means.items()),
-        key=lambda t: t[1],
-        reverse=True,
-    )
-
-    labels = [k for k, _ in ordered_items]
-    values = [v for _, v in ordered_items]
-
-    plt.figure(figsize=(10, 6))
-    plt.barh(labels, values)
-    plt.gca().invert_yaxis()
-    plt.xlabel("Gas")
-    plt.title("NFT Operations Gas Ranking")
-    plt.grid(axis="x", linestyle="--", linewidth=0.5, alpha=0.6)
-    save_fig(out_dir, "09-nft-gas-ranking.png")
-
-
 def plot_nft_purchase_composition(nft_runs: list[dict], out_dir: Path) -> None:
     means = nft_function_means(nft_runs)
     purchase = means.get("purchaseNFT", 0.0)
@@ -297,15 +311,22 @@ def plot_nft_purchase_composition(nft_runs: list[dict], out_dir: Path) -> None:
     separate_total = purchase + transfer + link_did
     delta = separate_total - combined
 
-    labels = ["purchaseNFT", "transferToDID", "linkDIDToAddress", "separate total", "purchaseAndTransferNFT"]
+    labels = [
+        "NFT\nPurchase",
+        "Transfer\nto DID",
+        "DID\nLinking",
+        "Sequential\nExecution\nTotal",
+        "Integrated Purchase, \nTransfer and Linking",
+    ]
     values = [purchase, transfer, link_did, separate_total, combined]
     colors = ["#6B8E23", "#4682B4", "#DAA520", "#CD853F", "#8B4513"]
 
-    plt.figure(figsize=(9, 5))
+    plt.figure(figsize=(10, 6))
     bars = plt.bar(labels, values, color=colors)
     plt.ylabel("Gas")
     plt.title(f"NFT Purchase Flow Gas Composition (saved: {int(delta)} gas)")
     plt.grid(axis="y", linestyle="--", linewidth=0.5, alpha=0.6)
+    plt.xticks(rotation=0, ha="center")
 
     for bar in bars:
         h = bar.get_height()
@@ -315,7 +336,7 @@ def plot_nft_purchase_composition(nft_runs: list[dict], out_dir: Path) -> None:
 
 
 def write_index(out_dir: Path) -> None:
-    content = """# Benchmark Charts\n\nGenerated files:\n\n1. 01-time-series-proof.png\n2. 02-time-series-verification.png\n3. 03-grouped-means-errorbars.png\n4. 04-boxplot-proof.png\n5. 05-boxplot-verification.png\n6. 06-gas-grouped.png\n7. 07-relative-improvement-vs-plonk.png\n8. 08-speed-vs-gas-scatter.png\n9. 09-nft-gas-ranking.png\n10. 10-nft-purchase-composition.png\n"""
+    content = """# Benchmark Charts\n\nGenerated files:\n\n1. 01-time-series-proof.png\n2. 02-time-series-verification.png\n3. 03-grouped-means-errorbars.png\n4. 06-gas-grouped.png\n5. 08-speed-vs-gas-scatter.png\n6. 10-nft-purchase-composition.png\n"""
     (out_dir / "README.md").write_text(content, encoding="utf-8")
 
 
@@ -352,11 +373,8 @@ def main() -> None:
 
     plot_time_series(zkp_runs, out_dir)
     plot_grouped_means_with_error(zkp_runs, out_dir)
-    plot_timing_boxplots(zkp_runs, out_dir)
     plot_gas_grouped(zkp_runs, out_dir)
-    plot_relative_improvement(zkp_runs, out_dir)
     plot_speed_vs_gas(zkp_runs, out_dir)
-    plot_nft_gas_rank(nft_runs, out_dir)
     plot_nft_purchase_composition(nft_runs, out_dir)
     write_index(out_dir)
 

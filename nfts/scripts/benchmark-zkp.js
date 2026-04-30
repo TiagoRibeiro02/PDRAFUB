@@ -632,8 +632,11 @@ async function benchmarkProtocol({
   });
   const adapterAddress = await adapter.getAddress();
 
+  const verifyStart = process.hrtime.bigint();
   const txVerify = await adapter.verifyProofTx(proofHex, publicSignals);
   const rcVerify = await txVerify.wait();
+  const verifyEnd = process.hrtime.bigint();
+  const verificationMs = Number((Number(verifyEnd - verifyStart) / 1_000_000).toFixed(2));
 
   const did = `did:zeroid:${protocolName.toLowerCase()}-bench`;
   const commitment = publicSignals[2].toString();
@@ -651,7 +654,7 @@ async function benchmarkProtocol({
   );
   const rcKyc = await txKyc.wait();
 
-  return {
+  const gasResult = {
     protocol: protocolName,
     adapter: adapterAddress,
     kyc: await kyc.getAddress(),
@@ -659,6 +662,8 @@ async function benchmarkProtocol({
     verifyProofTxGas: rcVerify.gasUsed.toString(),
     submitComplianceProofGas: rcKyc.gasUsed.toString(),
   };
+
+  return { gasResult, verificationMs };
 }
 
 function readNoirProofAndPublicInputs(noirDir) {
@@ -1014,7 +1019,22 @@ async function main() {
     cachePath,
   });
 
-  const results = [plonkResult, fflonkResult, grothResult, noirResult];
+  const results = [
+    plonkResult.gasResult,
+    fflonkResult.gasResult,
+    grothResult.gasResult,
+    noirResult.gasResult,
+  ];
+
+  const timings = {
+    generatedAt: new Date().toISOString(),
+    results: [
+      { protocol: "PLONK", verificationMs: plonkResult.verificationMs },
+      { protocol: "FFLONK", verificationMs: fflonkResult.verificationMs },
+      { protocol: "GROTH16", verificationMs: grothResult.verificationMs },
+      { protocol: "NOIR", verificationMs: noirResult.verificationMs },
+    ],
+  };
 
   if (!skipRisc0) {
     const risc0ProofData = readRisc0ProofAndSignals(risc0Dir);
@@ -1034,7 +1054,8 @@ async function main() {
       cachePath,
     });
 
-    results.push(risc0Result);
+    results.push(risc0Result.gasResult);
+    timings.results.push({ protocol: "RISC0", verificationMs: risc0Result.verificationMs });
   }
 
   const output = {
@@ -1045,6 +1066,7 @@ async function main() {
   console.log("=== ON-CHAIN GAS BENCHMARK ===");
   console.log(JSON.stringify(output, null, 2));
   console.log(`BENCHMARK_GAS_JSON=${JSON.stringify(output)}`);
+  console.log(`BENCHMARK_ONCHAIN_VERIFICATION_TIME_JSON=${JSON.stringify(timings)}`);
 }
 
 main().catch((error) => {

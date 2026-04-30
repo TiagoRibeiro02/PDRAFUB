@@ -238,16 +238,31 @@ function benchmarkHalo2Gas() {
   });
 
   const marker = "BENCHMARK_HALO2_GAS_JSON=";
+  const timingMarker = "BENCHMARK_HALO2_VERIFICATION_TIME_JSON=";
   const line = gasOutput
     .split("\n")
     .map((l) => l.trim())
     .find((l) => l.startsWith(marker));
+  const timingLine = gasOutput
+    .split("\n")
+    .map((l) => l.trim())
+    .find((l) => l.startsWith(timingMarker));
 
   if (!line) {
     throw new Error("Could not parse HALO2 gas benchmark output");
   }
 
-  return JSON.parse(line.slice(marker.length));
+  if (!timingLine) {
+    throw new Error("Could not parse HALO2 verification-time benchmark output");
+  }
+
+  const gas = JSON.parse(line.slice(marker.length));
+  const timing = JSON.parse(timingLine.slice(timingMarker.length));
+
+  return {
+    gas,
+    verificationMs: Number(timing.verificationMs),
+  };
 }
 
 function mergeHalo2Gas(gas, halo2Gas) {
@@ -272,16 +287,52 @@ function runGasBenchmark() {
   });
 
   const marker = "BENCHMARK_GAS_JSON=";
+  const timingMarker = "BENCHMARK_ONCHAIN_VERIFICATION_TIME_JSON=";
   const line = output
     .split("\n")
     .map((l) => l.trim())
     .find((l) => l.startsWith(marker));
+  const timingLine = output
+    .split("\n")
+    .map((l) => l.trim())
+    .find((l) => l.startsWith(timingMarker));
 
   if (!line) {
     throw new Error("Could not parse gas benchmark output");
   }
 
-  return JSON.parse(line.slice(marker.length));
+  if (!timingLine) {
+    throw new Error("Could not parse on-chain verification-time benchmark output");
+  }
+
+  const timingJson = JSON.parse(timingLine.slice(timingMarker.length));
+  const verificationMsByProtocol = Object.fromEntries(
+    (timingJson?.results || []).map((item) => [
+      String(item.protocol || "").toUpperCase(),
+      Number(item.verificationMs),
+    ])
+  );
+
+  return {
+    gas: JSON.parse(line.slice(marker.length)),
+    verificationMsByProtocol,
+  };
+}
+
+function applyOnchainVerificationTiming(timing, protocolName, onchainGasResult) {
+  if (isModelError(timing) || isModelError(onchainGasResult)) {
+    return timing;
+  }
+
+  const onchainValue = onchainGasResult?.verificationMsByProtocol?.[protocolName];
+  if (!Number.isFinite(onchainValue)) {
+    return timing;
+  }
+
+  return {
+    ...timing,
+    verificationMs: onchainValue,
+  };
 }
 
 function getErrorMessage(error) {
@@ -450,17 +501,27 @@ function benchmarkOneRun() {
   );
 
   const onchainGas = runWithModelError("ONCHAIN_GAS", () => runGasBenchmark());
-  const halo2Gas = runWithModelError("HALO2_GAS", () => benchmarkHalo2Gas());
-  const gas = buildGasResult(onchainGas, halo2Gas);
+  const halo2GasAndTiming = runWithModelError("HALO2_GAS", () => benchmarkHalo2Gas());
+  const plonkWithOnchainVerification = applyOnchainVerificationTiming(plonk, "PLONK", onchainGas);
+  const fflonkWithOnchainVerification = applyOnchainVerificationTiming(fflonk, "FFLONK", onchainGas);
+  const groth16WithOnchainVerification = applyOnchainVerificationTiming(groth16, "GROTH16", onchainGas);
+  const halo2WithOnchainVerification =
+    !isModelError(halo2) && !isModelError(halo2GasAndTiming)
+      ? { ...halo2, verificationMs: halo2GasAndTiming.verificationMs }
+      : halo2;
+  const gas = buildGasResult(
+    isModelError(onchainGas) ? onchainGas : onchainGas.gas,
+    isModelError(halo2GasAndTiming) ? halo2GasAndTiming : halo2GasAndTiming.gas
+  );
 
   return {
     generatedAt: new Date().toISOString(),
     timings: {
-      plonk,
-      fflonk,
-      groth16,
+      plonk: plonkWithOnchainVerification,
+      fflonk: fflonkWithOnchainVerification,
+      groth16: groth16WithOnchainVerification,
       noir,
-      halo2,
+      halo2: halo2WithOnchainVerification,
     },
     gas,
   };

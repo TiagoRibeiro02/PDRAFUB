@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-27T17:32:37.883Z",
+  "updatedAt": "2026-04-27T15:31:20.805Z",
   "totalRuns": 1002,
   "runs": [
     {
@@ -72069,78 +72069,6 @@
             "payloadFormat": "calldataHex",
             "verifyProofTxGas": "331237",
             "submitComplianceProofGas": "434766",
-            "verifierSource": "/home/tiago/Documents/GitHub/PDRAFUB/performance-experiments/halo2/artifacts/Halo2ComplianceVerifier.sol"
-          }
-        ]
-      }
-    },
-    {
-      "generatedAt": "2026-04-27T17:32:37.839Z",
-      "timings": {
-        "plonk": {
-          "proofGenerationMs": 1186.01,
-          "verificationMs": 24.2
-        },
-        "fflonk": {
-          "proofGenerationMs": 1319.58,
-          "verificationMs": 10.91
-        },
-        "groth16": {
-          "proofGenerationMs": 528.73,
-          "verificationMs": 11
-        },
-        "noir": {
-          "proofGenerationMs": 223.05,
-          "verificationMs": 11.75
-        },
-        "halo2": {
-          "proofGenerationMs": 3.7954,
-          "verificationMs": 9.59
-        }
-      },
-      "gas": {
-        "generatedAt": "2026-04-27T17:32:32.307Z",
-        "results": [
-          {
-            "protocol": "PLONK",
-            "adapter": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-            "kyc": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
-            "reusedDeployment": false,
-            "verifyProofTxGas": "308534",
-            "submitComplianceProofGas": "507459"
-          },
-          {
-            "protocol": "FFLONK",
-            "adapter": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
-            "kyc": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
-            "reusedDeployment": false,
-            "verifyProofTxGas": "231414",
-            "submitComplianceProofGas": "430329"
-          },
-          {
-            "protocol": "GROTH16",
-            "adapter": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
-            "kyc": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
-            "reusedDeployment": false,
-            "verifyProofTxGas": "240171",
-            "submitComplianceProofGas": "438921"
-          },
-          {
-            "protocol": "NOIR",
-            "adapter": "0x9A676e781A523b5d0C0e43731313A708CB607508",
-            "kyc": "0x0B306BF915C4d645ff596e518fAf3F9669b97016",
-            "reusedDeployment": false,
-            "verifyProofTxGas": "3333295",
-            "submitComplianceProofGas": "3534856"
-          },
-          {
-            "protocol": "HALO2",
-            "adapter": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-            "verifier": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-            "kyc": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-            "payloadFormat": "calldataHex",
-            "verifyProofTxGas": "331225",
-            "submitComplianceProofGas": "434754",
             "verifierSource": "/home/tiago/Documents/GitHub/PDRAFUB/performance-experiments/halo2/artifacts/Halo2ComplianceVerifier.sol"
           }
         ]

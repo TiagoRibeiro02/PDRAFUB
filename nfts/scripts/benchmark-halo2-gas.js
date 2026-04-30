@@ -272,14 +272,18 @@ async function main() {
 
   let selectedProofHex = null;
   let rcVerify = null;
+  let verifyProofTxMs = null;
   let lastVerifyError = null;
 
   for (const candidate of proofCandidates) {
     try {
+      const verifyStart = process.hrtime.bigint();
       const txVerify = await adapter.verifyProofTx(candidate, publicSignals, {
         gasLimit: verifyGasLimit,
       });
       rcVerify = await txVerify.wait();
+      const verifyEnd = process.hrtime.bigint();
+      verifyProofTxMs = Number(((Number(verifyEnd - verifyStart) / 1_000_000)).toFixed(2));
       selectedProofHex = candidate;
       break;
     } catch (error) {
@@ -324,9 +328,15 @@ async function main() {
     verifierSource: verifierSolPath,
   };
 
+  const timingOutput = {
+    protocol: "HALO2",
+    verificationMs: verifyProofTxMs,
+  };
+
   console.log("=== HALO2 ON-CHAIN GAS BENCHMARK ===");
   console.log(JSON.stringify(output, null, 2));
   console.log(`BENCHMARK_HALO2_GAS_JSON=${JSON.stringify(output)}`);
+  console.log(`BENCHMARK_HALO2_VERIFICATION_TIME_JSON=${JSON.stringify(timingOutput)}`);
 }
 
 main().catch((error) => {

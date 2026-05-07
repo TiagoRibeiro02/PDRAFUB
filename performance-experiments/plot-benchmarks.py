@@ -67,6 +67,39 @@ def safe_pstdev(values: list[float | int]) -> float:
     return pstdev(values) if values else 0.0
 
 
+def moving_average(values: list[float], window: int) -> list[float]:
+    if window <= 1 or len(values) <= 1:
+        return values[:]
+
+    averages: list[float] = []
+    running_total = 0.0
+    for index, value in enumerate(values):
+        running_total += value
+        if index >= window:
+            running_total -= values[index - window]
+        divisor = min(index + 1, window)
+        averages.append(running_total / divisor)
+    return averages
+
+
+def add_bar_labels(ax: plt.Axes, bars: list[plt.Axes], fmt: str = "{:.2f}", offset_ratio: float = 0.01) -> None:
+    heights = [bar.get_height() for bar in bars]
+    if not heights:
+        return
+
+    offset = max(heights) * offset_ratio if max(heights) else offset_ratio
+    for bar in bars:
+        height = bar.get_height()
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            height + offset,
+            fmt.format(height),
+            ha="center",
+            va="bottom",
+            fontsize=8,
+        )
+
+
 def save_fig(out_dir: Path, filename: str) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     plt.tight_layout()
@@ -161,23 +194,24 @@ def plot_time_series(zkp_runs: list[dict], out_dir: Path) -> None:
             ax.legend(loc="upper left", ncol=3, frameon=False)
         else:
             series = extract_time_series(zkp_runs, metric_key)
-            for protocol in PROTOCOLS:
+            colors = ["#4682B4","#DAA520","#6B8E23", "#CD853F", "#8B4513"]
+            window = max(10, len(run_ids) // 40)
+            for protocol, color in zip(PROTOCOLS, colors):
+                values = series[protocol]
+                ax.plot(run_ids, values, color=color, alpha=0.04, linewidth=0.8)
                 ax.plot(
                     run_ids,
-                    series[protocol],
-                    marker="o",
-                    markersize=2.5,
-                    markevery=marker_step,
-                    linewidth=1.1,
-                    alpha=0.95,
+                    moving_average(values, window),
+                    color=color,
+                    linewidth=1.8,
                     label=PROTOCOL_LABELS[protocol],
                 )
-            ax.set_title(title)
+            ax.set_title(f"Verification Time Over Runs ({window}-Run Moving Average)")
             ax.set_xlabel("Run / User #")
             ax.set_ylabel(y_label)
             ax.set_xticks(run_ticks)
             ax.grid(axis="y", linestyle="--", linewidth=0.45, alpha=0.55)
-            ax.grid(axis="x", linestyle=":", linewidth=0.35, alpha=0.35)
+            ax.grid(axis="x", linestyle=":", linewidth=0.35, alpha=0.2)
             ax.legend(loc="upper left", ncol=3, frameon=False)
 
         save_fig(out_dir, filename)
@@ -193,26 +227,22 @@ def protocol_metric_values(zkp_runs: list[dict], metric_key: str) -> dict[str, l
 
 
 def plot_grouped_means_with_error(zkp_runs: list[dict], out_dir: Path) -> None:
-    proof_vals = protocol_metric_values(zkp_runs, "proofGenerationMs")
     verify_vals = protocol_metric_values(zkp_runs, "verificationMs")
 
     labels = [PROTOCOL_LABELS[p] for p in PROTOCOLS]
-    proof_means = [safe_mean(proof_vals[p]) for p in PROTOCOLS]
     verify_means = [safe_mean(verify_vals[p]) for p in PROTOCOLS]
-    proof_err = [safe_pstdev(proof_vals[p]) for p in PROTOCOLS]
     verify_err = [safe_pstdev(verify_vals[p]) for p in PROTOCOLS]
+    colors = ["#6B8E23", "#4682B4", "#DAA520", "#CD853F", "#8B4513"]
 
     x = list(range(len(PROTOCOLS)))
-    width = 0.36
-
-    plt.figure(figsize=(10, 5))
-    plt.bar([i - width / 2 for i in x], proof_means, width, yerr=proof_err, capsize=5, label="Proof Gen")
-    plt.bar([i + width / 2 for i in x], verify_means, width, yerr=verify_err, capsize=5, label="Verification")
-    plt.xticks(x, labels)
-    plt.ylabel("Milliseconds")
-    plt.title("Average Timing by Protocol (with Std Dev)")
+    fig, ax = plt.subplots(figsize=(10, 5))
+    bars = ax.bar(x, verify_means, color=colors, alpha=0.85, edgecolor="none", linewidth=0)
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.set_ylabel("Milliseconds")
+    ax.set_title("Average Verification Time by Protocol")
+    add_bar_labels(ax, bars, fmt="{:.2f}")
     plt.grid(axis="y", linestyle="--", linewidth=0.5, alpha=0.6)
-    plt.legend()
     save_fig(out_dir, "03-grouped-means-errorbars.png")
 
 
@@ -228,41 +258,40 @@ def get_gas_values(zkp_runs: list[dict], field: str) -> dict[str, list[int]]:
     return values
 
 
+def get_total_gas_values(zkp_runs: list[dict]) -> dict[str, list[int]]:
+    values = {p: [] for p in PROTOCOLS}
+    for run in zkp_runs:
+        run_totals: dict[str, int] = {p: 0 for p in PROTOCOLS}
+        gas_results = run.get("gas", {}).get("results", [])
+        for row in gas_results:
+            protocol = str(row.get("protocol", "")).strip().lower()
+            if protocol not in run_totals:
+                continue
+            run_totals[protocol] += safe_int(row.get("verifyProofTxGas"), 0)
+            run_totals[protocol] += safe_int(row.get("submitComplianceProofGas"), 0)
+
+        for protocol in PROTOCOLS:
+            values[protocol].append(run_totals[protocol])
+
+    return values
+
+
 def plot_gas_grouped(zkp_runs: list[dict], out_dir: Path) -> None:
-    verify_vals = get_gas_values(zkp_runs, "verifyProofTxGas")
-    submit_vals = get_gas_values(zkp_runs, "submitComplianceProofGas")
+    gas_vals = get_total_gas_values(zkp_runs)
 
     labels = [PROTOCOL_LABELS[p] for p in PROTOCOLS]
-    verify_means = [safe_mean(verify_vals[p]) for p in PROTOCOLS]
-    submit_means = [safe_mean(submit_vals[p]) for p in PROTOCOLS]
-    scale = 1_000_000
-    verify_scaled = [value / scale for value in verify_means]
-    submit_scaled = [value / scale for value in submit_means]
+    gas_means = [safe_mean(gas_vals[p]) for p in PROTOCOLS]
+    colors = ["#6B8E23", "#4682B4", "#DAA520", "#CD853F", "#8B4513"]
 
     x = list(range(len(PROTOCOLS)))
-    width = 0.36
-
-    plt.figure(figsize=(10, 5))
-    verify_bars = plt.bar([i - width / 2 for i in x], verify_scaled, width, label="verifyProofTxGas")
-    submit_bars = plt.bar([i + width / 2 for i in x], submit_scaled, width, label="submitComplianceProofGas")
-    plt.xticks(x, labels)
-    plt.ylabel("Gas x10⁶")
-    plt.title("Average Gas by Protocol")
-    plt.grid(axis="y", linestyle="--", linewidth=0.5, alpha=0.6)
-    plt.legend()
-
-    label_offset = max(verify_scaled + submit_scaled) * 0.015 if (verify_scaled or submit_scaled) else 0.0
-    for bars, scaled_values in [(verify_bars, verify_scaled), (submit_bars, submit_scaled)]:
-        for bar, scaled_value in zip(bars, scaled_values):
-            height = bar.get_height()
-            plt.text(
-                bar.get_x() + bar.get_width() / 2,
-                height + label_offset,
-                f"{scaled_value:.2f}",
-                ha="center",
-                va="bottom",
-                fontsize=8,
-            )
+    fig, ax = plt.subplots(figsize=(10, 5))
+    bars = ax.bar(x, gas_means, color=colors, alpha=0.85)
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.set_ylabel("Gas")
+    ax.set_title("Average Gas by Protocol")
+    ax.grid(axis="y", linestyle="--", linewidth=0.5, alpha=0.6)
+    add_bar_labels(ax, bars, fmt="{:.0f}")
 
     save_fig(out_dir, "06-gas-grouped.png")
 

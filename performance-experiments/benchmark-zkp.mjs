@@ -12,7 +12,7 @@ const halo2Dir = resolve(perfRoot, "halo2", "circuit");
 const risc0Dir = resolve(perfRoot, "RiskZero");
 const nftsDir = resolve(repoRoot, "nfts");
 const localTmpDir = resolve(perfRoot, ".tmp");
-const RUN_COUNT = 1000;
+const RUN_COUNT = 1;
 
 function loadEnvFromNfts() {
   const envPath = resolve(nftsDir, ".env");

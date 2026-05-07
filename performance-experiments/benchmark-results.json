@@ -1,7 +1,151 @@
 {
-  "updatedAt": "2026-05-03T22:48:00.603936Z",
-  "totalRuns": 1000,
+  "updatedAt": "2026-05-06T16:58:40.498971Z",
+  "totalRuns": 1002,
   "runs": [
+    {
+      "generatedAt": "2026-04-27T15:31:20.765Z",
+      "timings": {
+        "plonk": {
+          "proofGenerationMs": 1174.39,
+          "verificationMs": 17.12
+        },
+        "fflonk": {
+          "proofGenerationMs": 1372.02,
+          "verificationMs": 7.91
+        },
+        "groth16": {
+          "proofGenerationMs": 533.7,
+          "verificationMs": 9.95
+        },
+        "noir": {
+          "proofGenerationMs": 134.5,
+          "verificationMs": 10.24
+        },
+        "halo2": {
+          "proofGenerationMs": 2.2493,
+          "verificationMs": 17.26
+        }
+      },
+      "gas": {
+        "generatedAt": "2026-04-27T15:31:15.493Z",
+        "results": [
+          {
+            "protocol": "PLONK",
+            "adapter": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+            "kyc": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "reusedDeployment": false,
+            "verifyProofTxGas": "310320",
+            "submitComplianceProofGas": "509245"
+          },
+          {
+            "protocol": "FFLONK",
+            "adapter": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+            "kyc": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
+            "reusedDeployment": false,
+            "verifyProofTxGas": "231414",
+            "submitComplianceProofGas": "430329"
+          },
+          {
+            "protocol": "GROTH16",
+            "adapter": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
+            "kyc": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+            "reusedDeployment": false,
+            "verifyProofTxGas": "240243",
+            "submitComplianceProofGas": "438993"
+          },
+          {
+            "protocol": "NOIR",
+            "adapter": "0x9A676e781A523b5d0C0e43731313A708CB607508",
+            "kyc": "0x0B306BF915C4d645ff596e518fAf3F9669b97016",
+            "reusedDeployment": false,
+            "verifyProofTxGas": "3333127",
+            "submitComplianceProofGas": "3534688"
+          },
+          {
+            "protocol": "HALO2",
+            "adapter": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+            "verifier": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+            "kyc": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+            "payloadFormat": "calldataHex",
+            "verifyProofTxGas": "331237",
+            "submitComplianceProofGas": "434766",
+            "verifierSource": "/home/tiago/Documents/GitHub/PDRAFUB/performance-experiments/halo2/artifacts/Halo2ComplianceVerifier.sol"
+          }
+        ]
+      }
+    },
+    {
+      "generatedAt": "2026-04-27T17:32:37.839Z",
+      "timings": {
+        "plonk": {
+          "proofGenerationMs": 1186.01,
+          "verificationMs": 14.2
+        },
+        "fflonk": {
+          "proofGenerationMs": 1319.58,
+          "verificationMs": 8.79
+        },
+        "groth16": {
+          "proofGenerationMs": 528.73,
+          "verificationMs": 11
+        },
+        "noir": {
+          "proofGenerationMs": 223.05,
+          "verificationMs": 11.75
+        },
+        "halo2": {
+          "proofGenerationMs": 3.7954,
+          "verificationMs": 13.59
+        }
+      },
+      "gas": {
+        "generatedAt": "2026-04-27T17:32:32.307Z",
+        "results": [
+          {
+            "protocol": "PLONK",
+            "adapter": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+            "kyc": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "reusedDeployment": false,
+            "verifyProofTxGas": "308534",
+            "submitComplianceProofGas": "507459"
+          },
+          {
+            "protocol": "FFLONK",
+            "adapter": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+            "kyc": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
+            "reusedDeployment": false,
+            "verifyProofTxGas": "231414",
+            "submitComplianceProofGas": "430329"
+          },
+          {
+            "protocol": "GROTH16",
+            "adapter": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
+            "kyc": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+            "reusedDeployment": false,
+            "verifyProofTxGas": "240171",
+            "submitComplianceProofGas": "438921"
+          },
+          {
+            "protocol": "NOIR",
+            "adapter": "0x9A676e781A523b5d0C0e43731313A708CB607508",
+            "kyc": "0x0B306BF915C4d645ff596e518fAf3F9669b97016",
+            "reusedDeployment": false,
+            "verifyProofTxGas": "3333295",
+            "submitComplianceProofGas": "3534856"
+          },
+          {
+            "protocol": "HALO2",
+            "adapter": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+            "verifier": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+            "kyc": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+            "payloadFormat": "calldataHex",
+            "verifyProofTxGas": "331225",
+            "submitComplianceProofGas": "434754",
+            "verifierSource": "/home/tiago/Documents/GitHub/PDRAFUB/performance-experiments/halo2/artifacts/Halo2ComplianceVerifier.sol"
+          }
+        ]
+      }
+    },
     {
       "generatedAt": "2026-05-02T11:29:48.770Z",
       "timings": {
@@ -11,7 +155,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1287.5,
-          "verificationMs": 8.43
+          "verificationMs": 10.05
         },
         "groth16": {
           "proofGenerationMs": 495.96,
@@ -155,7 +299,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1341.34,
-          "verificationMs": 8.44
+          "verificationMs": 10.72
         },
         "groth16": {
           "proofGenerationMs": 479.52,
@@ -371,7 +515,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1275.01,
-          "verificationMs": 4.24
+          "verificationMs": 10.41
         },
         "groth16": {
           "proofGenerationMs": 481.67,
@@ -515,7 +659,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1270.18,
-          "verificationMs": 9.5
+          "verificationMs": 11.39
         },
         "groth16": {
           "proofGenerationMs": 475.97,
@@ -587,7 +731,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1278.56,
-          "verificationMs": 8.7
+          "verificationMs": 10.1
         },
         "groth16": {
           "proofGenerationMs": 480.1,
@@ -659,7 +803,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1274.52,
-          "verificationMs": 8.87
+          "verificationMs": 11.39
         },
         "groth16": {
           "proofGenerationMs": 477.49,
@@ -875,7 +1019,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1277.29,
-          "verificationMs": 9.28
+          "verificationMs": 10.8
         },
         "groth16": {
           "proofGenerationMs": 483.49,
@@ -947,7 +1091,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1290.51,
-          "verificationMs": 7.92
+          "verificationMs": 10.64
         },
         "groth16": {
           "proofGenerationMs": 487.86,
@@ -1307,7 +1451,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1298.83,
-          "verificationMs": 8.37
+          "verificationMs": 11.39
         },
         "groth16": {
           "proofGenerationMs": 478.44,
@@ -1451,7 +1595,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1304.93,
-          "verificationMs": 4.11
+          "verificationMs": 10.54
         },
         "groth16": {
           "proofGenerationMs": 486.07,
@@ -1523,7 +1667,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1255.32,
-          "verificationMs": 4.11
+          "verificationMs": 6.18
         },
         "groth16": {
           "proofGenerationMs": 481.82,
@@ -1595,7 +1739,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1302.22,
-          "verificationMs": 8.96
+          "verificationMs": 10.76
         },
         "groth16": {
           "proofGenerationMs": 502.62,
@@ -1667,7 +1811,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1289.88,
-          "verificationMs": 8.4
+          "verificationMs": 10.94
         },
         "groth16": {
           "proofGenerationMs": 484.78,
@@ -1739,7 +1883,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1258.76,
-          "verificationMs": 6.2
+          "verificationMs": 7.4
         },
         "groth16": {
           "proofGenerationMs": 501.72,
@@ -1811,7 +1955,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1301.22,
-          "verificationMs": 9.51
+          "verificationMs": 11.29
         },
         "groth16": {
           "proofGenerationMs": 481.25,
@@ -1955,7 +2099,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1282.45,
-          "verificationMs": 5.07
+          "verificationMs": 10.68
         },
         "groth16": {
           "proofGenerationMs": 488.29,
@@ -2027,7 +2171,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1277.77,
-          "verificationMs": 7.79
+          "verificationMs": 10.62
         },
         "groth16": {
           "proofGenerationMs": 487.55,
@@ -2315,7 +2459,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1288.19,
-          "verificationMs": 3.51
+          "verificationMs": 7.33
         },
         "groth16": {
           "proofGenerationMs": 483.96,
@@ -2387,7 +2531,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1296.58,
-          "verificationMs": 9.22
+          "verificationMs": 11.11
         },
         "groth16": {
           "proofGenerationMs": 477.92,
@@ -2459,7 +2603,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1291.3,
-          "verificationMs": 7.92
+          "verificationMs": 11.69
         },
         "groth16": {
           "proofGenerationMs": 485.89,
@@ -2603,7 +2747,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1287.08,
-          "verificationMs": 9.32
+          "verificationMs": 11.68
         },
         "groth16": {
           "proofGenerationMs": 474.99,
@@ -2675,7 +2819,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1267.35,
-          "verificationMs": 3.24
+          "verificationMs": 10.6
         },
         "groth16": {
           "proofGenerationMs": 495.04,
@@ -2747,7 +2891,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1277.28,
-          "verificationMs": 3.39
+          "verificationMs": 9.95
         },
         "groth16": {
           "proofGenerationMs": 479.65,
@@ -2891,7 +3035,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1276.24,
-          "verificationMs": 4.3
+          "verificationMs": 10.92
         },
         "groth16": {
           "proofGenerationMs": 483.22,
@@ -2963,7 +3107,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1272.04,
-          "verificationMs": 3.63
+          "verificationMs": 5.5
         },
         "groth16": {
           "proofGenerationMs": 474.44,
@@ -3107,7 +3251,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1273.65,
-          "verificationMs": 8.27
+          "verificationMs": 10.25
         },
         "groth16": {
           "proofGenerationMs": 479.32,
@@ -3251,7 +3395,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1287.73,
-          "verificationMs": 8.32
+          "verificationMs": 10.61
         },
         "groth16": {
           "proofGenerationMs": 488.6,
@@ -3395,7 +3539,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1291,
-          "verificationMs": 8.25
+          "verificationMs": 11.78
         },
         "groth16": {
           "proofGenerationMs": 480.42,
@@ -3467,7 +3611,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1302.56,
-          "verificationMs": 7.59
+          "verificationMs": 11.04
         },
         "groth16": {
           "proofGenerationMs": 477.19,
@@ -3611,7 +3755,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1275.25,
-          "verificationMs": 3.37
+          "verificationMs": 5.4
         },
         "groth16": {
           "proofGenerationMs": 479.93,
@@ -3755,7 +3899,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1266.52,
-          "verificationMs": 7.72
+          "verificationMs": 11.89
         },
         "groth16": {
           "proofGenerationMs": 487.17,
@@ -3899,7 +4043,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1287.91,
-          "verificationMs": 8.87
+          "verificationMs": 10.84
         },
         "groth16": {
           "proofGenerationMs": 484.56,
@@ -4043,7 +4187,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1274.4,
-          "verificationMs": 5.25
+          "verificationMs": 7.12
         },
         "groth16": {
           "proofGenerationMs": 489.3,
@@ -4115,7 +4259,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1288.5,
-          "verificationMs": 9.92
+          "verificationMs": 11.75
         },
         "groth16": {
           "proofGenerationMs": 480.75,
@@ -4331,7 +4475,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1259.2,
-          "verificationMs": 8.33
+          "verificationMs": 10.08
         },
         "groth16": {
           "proofGenerationMs": 482.61,
@@ -4619,7 +4763,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1266.74,
-          "verificationMs": 8.19
+          "verificationMs": 11.06
         },
         "groth16": {
           "proofGenerationMs": 487.7,
@@ -4691,7 +4835,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1278.86,
-          "verificationMs": 8.53
+          "verificationMs": 10.23
         },
         "groth16": {
           "proofGenerationMs": 476.48,
@@ -4907,7 +5051,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1268.11,
-          "verificationMs": 3.3
+          "verificationMs": 11.33
         },
         "groth16": {
           "proofGenerationMs": 479.24,
@@ -4979,7 +5123,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1290.56,
-          "verificationMs": 7.11
+          "verificationMs": 11.2
         },
         "groth16": {
           "proofGenerationMs": 481.81,
@@ -5123,7 +5267,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1269.94,
-          "verificationMs": 8.46
+          "verificationMs": 9.88
         },
         "groth16": {
           "proofGenerationMs": 485.44,
@@ -5195,7 +5339,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1282.37,
-          "verificationMs": 7.98
+          "verificationMs": 10.66
         },
         "groth16": {
           "proofGenerationMs": 483.77,
@@ -5267,7 +5411,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1273.31,
-          "verificationMs": 4.98
+          "verificationMs": 7.22
         },
         "groth16": {
           "proofGenerationMs": 480.56,
@@ -5483,7 +5627,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1275.35,
-          "verificationMs": 7.67
+          "verificationMs": 10.13
         },
         "groth16": {
           "proofGenerationMs": 480.23,
@@ -5555,7 +5699,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1251.39,
-          "verificationMs": 8.77
+          "verificationMs": 11.19
         },
         "groth16": {
           "proofGenerationMs": 483.06,
@@ -5699,7 +5843,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1293.74,
-          "verificationMs": 8.27
+          "verificationMs": 11.94
         },
         "groth16": {
           "proofGenerationMs": 485.43,
@@ -5987,7 +6131,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1286.23,
-          "verificationMs": 8.96
+          "verificationMs": 10.53
         },
         "groth16": {
           "proofGenerationMs": 482.31,
@@ -6059,7 +6203,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1277.27,
-          "verificationMs": 7.39
+          "verificationMs": 11.71
         },
         "groth16": {
           "proofGenerationMs": 483.74,
@@ -6203,7 +6347,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1320.42,
-          "verificationMs": 8.87
+          "verificationMs": 10.58
         },
         "groth16": {
           "proofGenerationMs": 491.33,
@@ -6419,7 +6563,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1300.95,
-          "verificationMs": 9.0
+          "verificationMs": 11.01
         },
         "groth16": {
           "proofGenerationMs": 488.23,
@@ -6491,7 +6635,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1292.06,
-          "verificationMs": 7.71
+          "verificationMs": 11.59
         },
         "groth16": {
           "proofGenerationMs": 473.81,
@@ -6563,7 +6707,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1329.26,
-          "verificationMs": 8.56
+          "verificationMs": 10.66
         },
         "groth16": {
           "proofGenerationMs": 478.97,
@@ -6707,7 +6851,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1266.37,
-          "verificationMs": 9.0
+          "verificationMs": 10.29
         },
         "groth16": {
           "proofGenerationMs": 473.59,
@@ -6779,7 +6923,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1283.92,
-          "verificationMs": 9.41
+          "verificationMs": 10.78
         },
         "groth16": {
           "proofGenerationMs": 481.05,
@@ -6851,7 +6995,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1298.97,
-          "verificationMs": 8.31
+          "verificationMs": 11.49
         },
         "groth16": {
           "proofGenerationMs": 476.71,
@@ -6995,7 +7139,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1288.58,
-          "verificationMs": 7.73
+          "verificationMs": 10.34
         },
         "groth16": {
           "proofGenerationMs": 481.72,
@@ -7067,7 +7211,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1271.84,
-          "verificationMs": 9.41
+          "verificationMs": 12.09
         },
         "groth16": {
           "proofGenerationMs": 485.33,
@@ -7139,7 +7283,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1312.35,
-          "verificationMs": 4.93
+          "verificationMs": 5.98
         },
         "groth16": {
           "proofGenerationMs": 501.1,
@@ -7211,7 +7355,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1300.92,
-          "verificationMs": 8.97
+          "verificationMs": 10.52
         },
         "groth16": {
           "proofGenerationMs": 484.42,
@@ -7283,7 +7427,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1268.25,
-          "verificationMs": 7.59
+          "verificationMs": 11.05
         },
         "groth16": {
           "proofGenerationMs": 480.04,
@@ -7571,7 +7715,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1268.31,
-          "verificationMs": 8.16
+          "verificationMs": 11.47
         },
         "groth16": {
           "proofGenerationMs": 488.64,
@@ -7787,7 +7931,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1257.01,
-          "verificationMs": 4.19
+          "verificationMs": 5.94
         },
         "groth16": {
           "proofGenerationMs": 475.58,
@@ -7931,7 +8075,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1303.03,
-          "verificationMs": 8.49
+          "verificationMs": 9.33
         },
         "groth16": {
           "proofGenerationMs": 486.54,
@@ -8219,7 +8363,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1286.01,
-          "verificationMs": 8.77
+          "verificationMs": 11.46
         },
         "groth16": {
           "proofGenerationMs": 488.68,
@@ -8579,7 +8723,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1303.79,
-          "verificationMs": 7.29
+          "verificationMs": 11.67
         },
         "groth16": {
           "proofGenerationMs": 499.86,
@@ -8867,7 +9011,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1266.45,
-          "verificationMs": 8.34
+          "verificationMs": 11.73
         },
         "groth16": {
           "proofGenerationMs": 481.98,
@@ -9011,7 +9155,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1289.8,
-          "verificationMs": 7.49
+          "verificationMs": 11
         },
         "groth16": {
           "proofGenerationMs": 480.48,
@@ -9083,7 +9227,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1274.09,
-          "verificationMs": 8.31
+          "verificationMs": 10.3
         },
         "groth16": {
           "proofGenerationMs": 484.24,
@@ -9155,7 +9299,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1296.08,
-          "verificationMs": 8.49
+          "verificationMs": 11.45
         },
         "groth16": {
           "proofGenerationMs": 482.88,
@@ -9299,7 +9443,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1286.21,
-          "verificationMs": 8.81
+          "verificationMs": 10.24
         },
         "groth16": {
           "proofGenerationMs": 485.33,
@@ -9371,7 +9515,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1269.64,
-          "verificationMs": 7.84
+          "verificationMs": 12.43
         },
         "groth16": {
           "proofGenerationMs": 474.88,
@@ -9443,7 +9587,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1274.7,
-          "verificationMs": 7.62
+          "verificationMs": 11.37
         },
         "groth16": {
           "proofGenerationMs": 479.65,
@@ -9659,7 +9803,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1284.66,
-          "verificationMs": 9.05
+          "verificationMs": 11.34
         },
         "groth16": {
           "proofGenerationMs": 485.97,
@@ -9803,7 +9947,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1270.45,
-          "verificationMs": 8.68
+          "verificationMs": 11.05
         },
         "groth16": {
           "proofGenerationMs": 487.84,
@@ -9875,7 +10019,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1280.07,
-          "verificationMs": 8.35
+          "verificationMs": 10.19
         },
         "groth16": {
           "proofGenerationMs": 489.55,
@@ -10235,7 +10379,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1275.55,
-          "verificationMs": 4.24
+          "verificationMs": 6.04
         },
         "groth16": {
           "proofGenerationMs": 482.16,
@@ -10379,7 +10523,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1272.34,
-          "verificationMs": 8.75
+          "verificationMs": 11.57
         },
         "groth16": {
           "proofGenerationMs": 480.15,
@@ -10451,7 +10595,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1278.97,
-          "verificationMs": 8.57
+          "verificationMs": 11.91
         },
         "groth16": {
           "proofGenerationMs": 500.17,
@@ -10667,7 +10811,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1276.59,
-          "verificationMs": 8.27
+          "verificationMs": 10.56
         },
         "groth16": {
           "proofGenerationMs": 488.66,
@@ -10811,7 +10955,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1320.73,
-          "verificationMs": 8.74
+          "verificationMs": 10.71
         },
         "groth16": {
           "proofGenerationMs": 479.13,
@@ -10955,7 +11099,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1262.38,
-          "verificationMs": 8.28
+          "verificationMs": 11.35
         },
         "groth16": {
           "proofGenerationMs": 495.56,
@@ -11171,7 +11315,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1305.93,
-          "verificationMs": 8.73
+          "verificationMs": 10.66
         },
         "groth16": {
           "proofGenerationMs": 477.93,
@@ -11243,7 +11387,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1276.06,
-          "verificationMs": 3.71
+          "verificationMs": 6.3
         },
         "groth16": {
           "proofGenerationMs": 479.78,
@@ -11675,7 +11819,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1297.73,
-          "verificationMs": 9.13
+          "verificationMs": 10.98
         },
         "groth16": {
           "proofGenerationMs": 486.21,
@@ -11963,7 +12107,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1304,
-          "verificationMs": 9.38
+          "verificationMs": 11.56
         },
         "groth16": {
           "proofGenerationMs": 478.27,
@@ -12035,7 +12179,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1303.1,
-          "verificationMs": 3.23
+          "verificationMs": 10.54
         },
         "groth16": {
           "proofGenerationMs": 478.53,
@@ -12179,7 +12323,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1257.67,
-          "verificationMs": 9.6
+          "verificationMs": 11.86
         },
         "groth16": {
           "proofGenerationMs": 488.22,
@@ -12251,7 +12395,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1296.52,
-          "verificationMs": 8.31
+          "verificationMs": 11.49
         },
         "groth16": {
           "proofGenerationMs": 479.09,
@@ -12395,7 +12539,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1276.88,
-          "verificationMs": 8.26
+          "verificationMs": 11.74
         },
         "groth16": {
           "proofGenerationMs": 481.08,
@@ -12467,7 +12611,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1263.1,
-          "verificationMs": 9.02
+          "verificationMs": 10.12
         },
         "groth16": {
           "proofGenerationMs": 481.66,
@@ -12611,7 +12755,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1291.1,
-          "verificationMs": 7.33
+          "verificationMs": 11.28
         },
         "groth16": {
           "proofGenerationMs": 493.37,
@@ -12827,7 +12971,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1270.69,
-          "verificationMs": 8.91
+          "verificationMs": 10.98
         },
         "groth16": {
           "proofGenerationMs": 487.24,
@@ -12899,7 +13043,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1293.73,
-          "verificationMs": 7.79
+          "verificationMs": 12.11
         },
         "groth16": {
           "proofGenerationMs": 489.75,
@@ -12971,7 +13115,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1292.53,
-          "verificationMs": 9.5
+          "verificationMs": 11.08
         },
         "groth16": {
           "proofGenerationMs": 481.24,
@@ -13043,7 +13187,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1266.01,
-          "verificationMs": 7.92
+          "verificationMs": 11.04
         },
         "groth16": {
           "proofGenerationMs": 482.84,
@@ -13259,7 +13403,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1306.49,
-          "verificationMs": 8.4
+          "verificationMs": 10.99
         },
         "groth16": {
           "proofGenerationMs": 483.96,
@@ -13403,7 +13547,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1290.2,
-          "verificationMs": 8.38
+          "verificationMs": 10.55
         },
         "groth16": {
           "proofGenerationMs": 481.43,
@@ -13475,7 +13619,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1297.28,
-          "verificationMs": 8.82
+          "verificationMs": 11.73
         },
         "groth16": {
           "proofGenerationMs": 507.86,
@@ -13691,7 +13835,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1309.75,
-          "verificationMs": 7.71
+          "verificationMs": 11.26
         },
         "groth16": {
           "proofGenerationMs": 477.88,
@@ -13835,7 +13979,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1289.53,
-          "verificationMs": 7.9
+          "verificationMs": 11.32
         },
         "groth16": {
           "proofGenerationMs": 485.47,
@@ -14051,7 +14195,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1263.5,
-          "verificationMs": 9.29
+          "verificationMs": 10.53
         },
         "groth16": {
           "proofGenerationMs": 478.31,
@@ -14123,7 +14267,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1296.74,
-          "verificationMs": 7.85
+          "verificationMs": 11.25
         },
         "groth16": {
           "proofGenerationMs": 482.84,
@@ -14339,7 +14483,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1295.75,
-          "verificationMs": 8.68
+          "verificationMs": 11.66
         },
         "groth16": {
           "proofGenerationMs": 477.36,
@@ -14411,7 +14555,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1284.9,
-          "verificationMs": 9.27
+          "verificationMs": 11.53
         },
         "groth16": {
           "proofGenerationMs": 478.61,
@@ -14483,7 +14627,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1283.53,
-          "verificationMs": 9.03
+          "verificationMs": 11.6
         },
         "groth16": {
           "proofGenerationMs": 476.46,
@@ -14843,7 +14987,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1305.24,
-          "verificationMs": 8.61
+          "verificationMs": 10.86
         },
         "groth16": {
           "proofGenerationMs": 483.02,
@@ -14915,7 +15059,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1298.48,
-          "verificationMs": 8.74
+          "verificationMs": 10.61
         },
         "groth16": {
           "proofGenerationMs": 517.95,
@@ -14987,7 +15131,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1266.51,
-          "verificationMs": 9.16
+          "verificationMs": 10.29
         },
         "groth16": {
           "proofGenerationMs": 480.94,
@@ -15347,7 +15491,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1291.3,
-          "verificationMs": 8.94
+          "verificationMs": 12
         },
         "groth16": {
           "proofGenerationMs": 473.96,
@@ -15563,7 +15707,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1283.53,
-          "verificationMs": 8.35
+          "verificationMs": 11.41
         },
         "groth16": {
           "proofGenerationMs": 490.09,
@@ -15851,7 +15995,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1286.99,
-          "verificationMs": 8.49
+          "verificationMs": 11.45
         },
         "groth16": {
           "proofGenerationMs": 478.74,
@@ -16067,7 +16211,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1272.73,
-          "verificationMs": 7.74
+          "verificationMs": 12.1
         },
         "groth16": {
           "proofGenerationMs": 486.19,
@@ -16427,7 +16571,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1274.93,
-          "verificationMs": 9.23
+          "verificationMs": 12.02
         },
         "groth16": {
           "proofGenerationMs": 514.7,
@@ -16643,7 +16787,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1272.9,
-          "verificationMs": 8.5
+          "verificationMs": 10.16
         },
         "groth16": {
           "proofGenerationMs": 490.42,
@@ -16715,7 +16859,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1299.05,
-          "verificationMs": 8.36
+          "verificationMs": 10.84
         },
         "groth16": {
           "proofGenerationMs": 512.8,
@@ -17003,7 +17147,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1270.44,
-          "verificationMs": 8.93
+          "verificationMs": 11.02
         },
         "groth16": {
           "proofGenerationMs": 485.29,
@@ -17075,7 +17219,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1295.53,
-          "verificationMs": 8.98
+          "verificationMs": 10.53
         },
         "groth16": {
           "proofGenerationMs": 486.94,
@@ -17363,7 +17507,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1289.7,
-          "verificationMs": 7.25
+          "verificationMs": 10.13
         },
         "groth16": {
           "proofGenerationMs": 481.22,
@@ -17507,7 +17651,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1274.23,
-          "verificationMs": 3.23
+          "verificationMs": 6.45
         },
         "groth16": {
           "proofGenerationMs": 486.58,
@@ -17579,7 +17723,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1260.52,
-          "verificationMs": 7.97
+          "verificationMs": 11.48
         },
         "groth16": {
           "proofGenerationMs": 502.28,
@@ -17651,7 +17795,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1257.46,
-          "verificationMs": 7.6
+          "verificationMs": 11.46
         },
         "groth16": {
           "proofGenerationMs": 508.4,
@@ -17723,7 +17867,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1259.57,
-          "verificationMs": 7.43
+          "verificationMs": 10.59
         },
         "groth16": {
           "proofGenerationMs": 475.19,
@@ -17939,7 +18083,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1267.82,
-          "verificationMs": 8.11
+          "verificationMs": 10.71
         },
         "groth16": {
           "proofGenerationMs": 477.25,
@@ -18083,7 +18227,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1288.9,
-          "verificationMs": 5.11
+          "verificationMs": 6.08
         },
         "groth16": {
           "proofGenerationMs": 473.68,
@@ -18155,7 +18299,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1297.46,
-          "verificationMs": 8.89
+          "verificationMs": 11.72
         },
         "groth16": {
           "proofGenerationMs": 480.29,
@@ -18299,7 +18443,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1348.89,
-          "verificationMs": 7.82
+          "verificationMs": 9.35
         },
         "groth16": {
           "proofGenerationMs": 486.85,
@@ -18371,7 +18515,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1282.88,
-          "verificationMs": 8.16
+          "verificationMs": 10.01
         },
         "groth16": {
           "proofGenerationMs": 509.87,
@@ -18515,7 +18659,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1263.27,
-          "verificationMs": 7.9
+          "verificationMs": 11.01
         },
         "groth16": {
           "proofGenerationMs": 502.78,
@@ -18587,7 +18731,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1289.11,
-          "verificationMs": 3.18
+          "verificationMs": 6.66
         },
         "groth16": {
           "proofGenerationMs": 481.98,
@@ -18731,7 +18875,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1285.61,
-          "verificationMs": 8.48
+          "verificationMs": 10.71
         },
         "groth16": {
           "proofGenerationMs": 478.89,
@@ -18803,7 +18947,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1273.96,
-          "verificationMs": 9.56
+          "verificationMs": 11.95
         },
         "groth16": {
           "proofGenerationMs": 483.38,
@@ -18875,7 +19019,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1299.53,
-          "verificationMs": 9.21
+          "verificationMs": 10.92
         },
         "groth16": {
           "proofGenerationMs": 474.93,
@@ -19019,7 +19163,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1280.56,
-          "verificationMs": 8.63
+          "verificationMs": 10.48
         },
         "groth16": {
           "proofGenerationMs": 489.6,
@@ -19307,7 +19451,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1293.76,
-          "verificationMs": 3.44
+          "verificationMs": 9.24
         },
         "groth16": {
           "proofGenerationMs": 487.11,
@@ -19595,7 +19739,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1302.35,
-          "verificationMs": 7.91
+          "verificationMs": 11.64
         },
         "groth16": {
           "proofGenerationMs": 477.78,
@@ -19667,7 +19811,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1294.37,
-          "verificationMs": 7.21
+          "verificationMs": 11.52
         },
         "groth16": {
           "proofGenerationMs": 490.23,
@@ -19811,7 +19955,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1287.85,
-          "verificationMs": 8.66
+          "verificationMs": 10.72
         },
         "groth16": {
           "proofGenerationMs": 485.2,
@@ -19883,7 +20027,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1290.08,
-          "verificationMs": 8.16
+          "verificationMs": 12
         },
         "groth16": {
           "proofGenerationMs": 479.43,
@@ -19955,7 +20099,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1261.86,
-          "verificationMs": 4.73
+          "verificationMs": 6.52
         },
         "groth16": {
           "proofGenerationMs": 488.98,
@@ -20099,7 +20243,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1298.29,
-          "verificationMs": 8.89
+          "verificationMs": 10.31
         },
         "groth16": {
           "proofGenerationMs": 502.46,
@@ -20171,7 +20315,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1275.51,
-          "verificationMs": 7.86
+          "verificationMs": 10.8
         },
         "groth16": {
           "proofGenerationMs": 485.96,
@@ -20243,7 +20387,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1284.34,
-          "verificationMs": 3.39
+          "verificationMs": 11.34
         },
         "groth16": {
           "proofGenerationMs": 478.98,
@@ -20315,7 +20459,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1303.11,
-          "verificationMs": 8.4
+          "verificationMs": 10.85
         },
         "groth16": {
           "proofGenerationMs": 482.4,
@@ -20531,7 +20675,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1275.98,
-          "verificationMs": 4.05
+          "verificationMs": 11.06
         },
         "groth16": {
           "proofGenerationMs": 480.57,
@@ -20603,7 +20747,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1279.29,
-          "verificationMs": 8.39
+          "verificationMs": 11.38
         },
         "groth16": {
           "proofGenerationMs": 477.98,
@@ -20891,7 +21035,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1299.56,
-          "verificationMs": 7.93
+          "verificationMs": 11.75
         },
         "groth16": {
           "proofGenerationMs": 503.72,
@@ -20963,7 +21107,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1291.49,
-          "verificationMs": 7.67
+          "verificationMs": 10.59
         },
         "groth16": {
           "proofGenerationMs": 504.72,
@@ -21035,7 +21179,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1285.75,
-          "verificationMs": 4.84
+          "verificationMs": 10.32
         },
         "groth16": {
           "proofGenerationMs": 493.91,
@@ -21107,7 +21251,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1295.88,
-          "verificationMs": 8.82
+          "verificationMs": 11.47
         },
         "groth16": {
           "proofGenerationMs": 485.29,
@@ -21179,7 +21323,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1287.55,
-          "verificationMs": 8.66
+          "verificationMs": 11.64
         },
         "groth16": {
           "proofGenerationMs": 474.54,
@@ -21323,7 +21467,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1278.9,
-          "verificationMs": 9.08
+          "verificationMs": 10.79
         },
         "groth16": {
           "proofGenerationMs": 490.89,
@@ -21539,7 +21683,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1278.47,
-          "verificationMs": 8.98
+          "verificationMs": 11.99
         },
         "groth16": {
           "proofGenerationMs": 478.7,
@@ -21611,7 +21755,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1272.7,
-          "verificationMs": 3.43
+          "verificationMs": 11.8
         },
         "groth16": {
           "proofGenerationMs": 483.39,
@@ -21755,7 +21899,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1275.15,
-          "verificationMs": 3.22
+          "verificationMs": 5.57
         },
         "groth16": {
           "proofGenerationMs": 485.28,
@@ -21971,7 +22115,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1273.28,
-          "verificationMs": 7.74
+          "verificationMs": 12.03
         },
         "groth16": {
           "proofGenerationMs": 483.84,
@@ -22403,7 +22547,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1271.23,
-          "verificationMs": 7.75
+          "verificationMs": 10.63
         },
         "groth16": {
           "proofGenerationMs": 480.29,
@@ -22475,7 +22619,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1290.98,
-          "verificationMs": 9.19
+          "verificationMs": 12.08
         },
         "groth16": {
           "proofGenerationMs": 498.64,
@@ -22763,7 +22907,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1282.27,
-          "verificationMs": 3.39
+          "verificationMs": 5.9
         },
         "groth16": {
           "proofGenerationMs": 493.54,
@@ -22835,7 +22979,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1273.95,
-          "verificationMs": 8.9
+          "verificationMs": 11.25
         },
         "groth16": {
           "proofGenerationMs": 487.85,
@@ -22907,7 +23051,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1343.27,
-          "verificationMs": 8.68
+          "verificationMs": 10.26
         },
         "groth16": {
           "proofGenerationMs": 477.1,
@@ -22979,7 +23123,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1298.12,
-          "verificationMs": 9.68
+          "verificationMs": 10.7
         },
         "groth16": {
           "proofGenerationMs": 483.59,
@@ -23123,7 +23267,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1291.27,
-          "verificationMs": 8.48
+          "verificationMs": 11
         },
         "groth16": {
           "proofGenerationMs": 488.9,
@@ -23195,7 +23339,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1267.15,
-          "verificationMs": 3.35
+          "verificationMs": 10.37
         },
         "groth16": {
           "proofGenerationMs": 477.52,
@@ -23339,7 +23483,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1314.1,
-          "verificationMs": 9.48
+          "verificationMs": 11.34
         },
         "groth16": {
           "proofGenerationMs": 512,
@@ -23411,7 +23555,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1301.31,
-          "verificationMs": 9.47
+          "verificationMs": 11.01
         },
         "groth16": {
           "proofGenerationMs": 477.96,
@@ -23627,7 +23771,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1258.01,
-          "verificationMs": 8.9
+          "verificationMs": 10.24
         },
         "groth16": {
           "proofGenerationMs": 485.05,
@@ -23915,7 +24059,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1306.6,
-          "verificationMs": 9.26
+          "verificationMs": 10.53
         },
         "groth16": {
           "proofGenerationMs": 498.34,
@@ -24275,7 +24419,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1285.26,
-          "verificationMs": 4.43
+          "verificationMs": 6.53
         },
         "groth16": {
           "proofGenerationMs": 480.19,
@@ -24347,7 +24491,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1328.15,
-          "verificationMs": 7.64
+          "verificationMs": 9.91
         },
         "groth16": {
           "proofGenerationMs": 480,
@@ -24635,7 +24779,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1299.28,
-          "verificationMs": 4.28
+          "verificationMs": 10.86
         },
         "groth16": {
           "proofGenerationMs": 479.12,
@@ -24707,7 +24851,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1263.35,
-          "verificationMs": 7.47
+          "verificationMs": 11.81
         },
         "groth16": {
           "proofGenerationMs": 476.32,
@@ -24779,7 +24923,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1271.84,
-          "verificationMs": 9.0
+          "verificationMs": 11.46
         },
         "groth16": {
           "proofGenerationMs": 480.78,
@@ -24923,7 +25067,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1281.48,
-          "verificationMs": 6.03
+          "verificationMs": 11.09
         },
         "groth16": {
           "proofGenerationMs": 484.21,
@@ -24995,7 +25139,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1285.18,
-          "verificationMs": 4.7
+          "verificationMs": 10.98
         },
         "groth16": {
           "proofGenerationMs": 476.74,
@@ -25067,7 +25211,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1264.82,
-          "verificationMs": 8.39
+          "verificationMs": 11.58
         },
         "groth16": {
           "proofGenerationMs": 480.63,
@@ -25139,7 +25283,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1282.42,
-          "verificationMs": 4.26
+          "verificationMs": 6.41
         },
         "groth16": {
           "proofGenerationMs": 476.19,
@@ -25859,7 +26003,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1262.2,
-          "verificationMs": 8.61
+          "verificationMs": 10.46
         },
         "groth16": {
           "proofGenerationMs": 477.99,
@@ -25931,7 +26075,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1256.73,
-          "verificationMs": 9.08
+          "verificationMs": 10.51
         },
         "groth16": {
           "proofGenerationMs": 486.91,
@@ -26003,7 +26147,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1283.48,
-          "verificationMs": 8.74
+          "verificationMs": 10.69
         },
         "groth16": {
           "proofGenerationMs": 482.15,
@@ -26219,7 +26363,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1271.3,
-          "verificationMs": 8.38
+          "verificationMs": 11.45
         },
         "groth16": {
           "proofGenerationMs": 473.75,
@@ -26363,7 +26507,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1304.15,
-          "verificationMs": 4.55
+          "verificationMs": 6.53
         },
         "groth16": {
           "proofGenerationMs": 482.63,
@@ -26435,7 +26579,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1288.58,
-          "verificationMs": 3.67
+          "verificationMs": 10.48
         },
         "groth16": {
           "proofGenerationMs": 480.19,
@@ -26507,7 +26651,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1298.79,
-          "verificationMs": 8.17
+          "verificationMs": 10.33
         },
         "groth16": {
           "proofGenerationMs": 480.43,
@@ -26579,7 +26723,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1282.57,
-          "verificationMs": 4.32
+          "verificationMs": 10.69
         },
         "groth16": {
           "proofGenerationMs": 482.11,
@@ -26651,7 +26795,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1292.5,
-          "verificationMs": 8.79
+          "verificationMs": 10.73
         },
         "groth16": {
           "proofGenerationMs": 477.8,
@@ -26867,7 +27011,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1270.62,
-          "verificationMs": 9.42
+          "verificationMs": 11.14
         },
         "groth16": {
           "proofGenerationMs": 486.9,
@@ -27155,7 +27299,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1271.49,
-          "verificationMs": 8.76
+          "verificationMs": 10.52
         },
         "groth16": {
           "proofGenerationMs": 478.88,
@@ -27659,7 +27803,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1301.9,
-          "verificationMs": 8.72
+          "verificationMs": 11.39
         },
         "groth16": {
           "proofGenerationMs": 482.06,
@@ -27731,7 +27875,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1286.02,
-          "verificationMs": 7.98
+          "verificationMs": 10.61
         },
         "groth16": {
           "proofGenerationMs": 480.13,
@@ -28019,7 +28163,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1286.83,
-          "verificationMs": 5.35
+          "verificationMs": 10.76
         },
         "groth16": {
           "proofGenerationMs": 492.08,
@@ -28235,7 +28379,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1296.42,
-          "verificationMs": 7.67
+          "verificationMs": 11.67
         },
         "groth16": {
           "proofGenerationMs": 487.88,
@@ -28667,7 +28811,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1293.05,
-          "verificationMs": 9.27
+          "verificationMs": 11.06
         },
         "groth16": {
           "proofGenerationMs": 485.01,
@@ -28811,7 +28955,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1292.26,
-          "verificationMs": 8.42
+          "verificationMs": 11.19
         },
         "groth16": {
           "proofGenerationMs": 484.98,
@@ -29171,7 +29315,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1319.41,
-          "verificationMs": 8.1
+          "verificationMs": 11.07
         },
         "groth16": {
           "proofGenerationMs": 481.91,
@@ -29531,7 +29675,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1268.75,
-          "verificationMs": 9.08
+          "verificationMs": 10.43
         },
         "groth16": {
           "proofGenerationMs": 482.31,
@@ -29747,7 +29891,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1260.19,
-          "verificationMs": 8.11
+          "verificationMs": 10.25
         },
         "groth16": {
           "proofGenerationMs": 486.37,
@@ -30035,7 +30179,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1286.67,
-          "verificationMs": 7.69
+          "verificationMs": 10.51
         },
         "groth16": {
           "proofGenerationMs": 479.68,
@@ -30467,7 +30611,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1275.74,
-          "verificationMs": 8.46
+          "verificationMs": 11.94
         },
         "groth16": {
           "proofGenerationMs": 478.63,
@@ -30539,7 +30683,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1322.7,
-          "verificationMs": 9.51
+          "verificationMs": 10.34
         },
         "groth16": {
           "proofGenerationMs": 482.19,
@@ -30683,7 +30827,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1278.33,
-          "verificationMs": 8.94
+          "verificationMs": 11.03
         },
         "groth16": {
           "proofGenerationMs": 486.59,
@@ -30827,7 +30971,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1281.38,
-          "verificationMs": 7.97
+          "verificationMs": 11.32
         },
         "groth16": {
           "proofGenerationMs": 484.72,
@@ -30899,7 +31043,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1262.69,
-          "verificationMs": 8.34
+          "verificationMs": 10.95
         },
         "groth16": {
           "proofGenerationMs": 489.58,
@@ -31043,7 +31187,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1281.12,
-          "verificationMs": 8.77
+          "verificationMs": 10.88
         },
         "groth16": {
           "proofGenerationMs": 475.53,
@@ -31331,7 +31475,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1286.65,
-          "verificationMs": 7.89
+          "verificationMs": 10.25
         },
         "groth16": {
           "proofGenerationMs": 481.75,
@@ -31547,7 +31691,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1286.38,
-          "verificationMs": 7.99
+          "verificationMs": 11.58
         },
         "groth16": {
           "proofGenerationMs": 479.44,
@@ -31763,7 +31907,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1279.6,
-          "verificationMs": 3.98
+          "verificationMs": 5.68
         },
         "groth16": {
           "proofGenerationMs": 490.52,
@@ -31835,7 +31979,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1292.13,
-          "verificationMs": 7.75
+          "verificationMs": 12.06
         },
         "groth16": {
           "proofGenerationMs": 479.81,
@@ -32051,7 +32195,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1273.69,
-          "verificationMs": 7.95
+          "verificationMs": 10.54
         },
         "groth16": {
           "proofGenerationMs": 479,
@@ -32627,7 +32771,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1278.96,
-          "verificationMs": 4.32
+          "verificationMs": 5.54
         },
         "groth16": {
           "proofGenerationMs": 484.25,
@@ -32843,7 +32987,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1260.73,
-          "verificationMs": 7.28
+          "verificationMs": 11.5
         },
         "groth16": {
           "proofGenerationMs": 485.8,
@@ -32987,7 +33131,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1293.77,
-          "verificationMs": 7.85
+          "verificationMs": 10.76
         },
         "groth16": {
           "proofGenerationMs": 479.45,
@@ -33059,7 +33203,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1286.53,
-          "verificationMs": 7.78
+          "verificationMs": 10.45
         },
         "groth16": {
           "proofGenerationMs": 483.03,
@@ -33203,7 +33347,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1268.34,
-          "verificationMs": 8.97
+          "verificationMs": 10.83
         },
         "groth16": {
           "proofGenerationMs": 479.94,
@@ -33275,7 +33419,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1286.71,
-          "verificationMs": 4.28
+          "verificationMs": 5.7
         },
         "groth16": {
           "proofGenerationMs": 507.12,
@@ -33995,7 +34139,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1297.4,
-          "verificationMs": 8.72
+          "verificationMs": 9.69
         },
         "groth16": {
           "proofGenerationMs": 495.62,
@@ -34211,7 +34355,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1309.65,
-          "verificationMs": 3.54
+          "verificationMs": 6.86
         },
         "groth16": {
           "proofGenerationMs": 475.64,
@@ -34355,7 +34499,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1293.42,
-          "verificationMs": 9.81
+          "verificationMs": 11.03
         },
         "groth16": {
           "proofGenerationMs": 504.01,
@@ -34499,7 +34643,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1288.77,
-          "verificationMs": 9.65
+          "verificationMs": 11.04
         },
         "groth16": {
           "proofGenerationMs": 504.95,
@@ -34571,7 +34715,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1282.55,
-          "verificationMs": 8.19
+          "verificationMs": 11.18
         },
         "groth16": {
           "proofGenerationMs": 497.49,
@@ -34787,7 +34931,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1299.15,
-          "verificationMs": 8.51
+          "verificationMs": 11.38
         },
         "groth16": {
           "proofGenerationMs": 500.01,
@@ -34931,7 +35075,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1313.11,
-          "verificationMs": 4.61
+          "verificationMs": 5.94
         },
         "groth16": {
           "proofGenerationMs": 485.18,
@@ -35147,7 +35291,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1301.35,
-          "verificationMs": 7.95
+          "verificationMs": 11.36
         },
         "groth16": {
           "proofGenerationMs": 483.61,
@@ -35291,7 +35435,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1305.68,
-          "verificationMs": 8.45
+          "verificationMs": 10.3
         },
         "groth16": {
           "proofGenerationMs": 474.83,
@@ -35435,7 +35579,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1339.62,
-          "verificationMs": 7.61
+          "verificationMs": 10.37
         },
         "groth16": {
           "proofGenerationMs": 492.42,
@@ -35579,7 +35723,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1287.57,
-          "verificationMs": 8.21
+          "verificationMs": 11.26
         },
         "groth16": {
           "proofGenerationMs": 480.43,
@@ -35651,7 +35795,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1279.04,
-          "verificationMs": 8.98
+          "verificationMs": 10.55
         },
         "groth16": {
           "proofGenerationMs": 486.33,
@@ -36011,7 +36155,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1279.58,
-          "verificationMs": 3.64
+          "verificationMs": 6.75
         },
         "groth16": {
           "proofGenerationMs": 486.22,
@@ -36083,7 +36227,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1307.52,
-          "verificationMs": 4.38
+          "verificationMs": 6.38
         },
         "groth16": {
           "proofGenerationMs": 481.04,
@@ -36227,7 +36371,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1306.91,
-          "verificationMs": 4.56
+          "verificationMs": 11.04
         },
         "groth16": {
           "proofGenerationMs": 489.44,
@@ -36371,7 +36515,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1284.56,
-          "verificationMs": 8.78
+          "verificationMs": 12.08
         },
         "groth16": {
           "proofGenerationMs": 490.03,
@@ -36587,7 +36731,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1269.44,
-          "verificationMs": 9.58
+          "verificationMs": 11.95
         },
         "groth16": {
           "proofGenerationMs": 509.03,
@@ -36803,7 +36947,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1283.24,
-          "verificationMs": 8.35
+          "verificationMs": 11.25
         },
         "groth16": {
           "proofGenerationMs": 502.11,
@@ -36875,7 +37019,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1261.59,
-          "verificationMs": 8.75
+          "verificationMs": 9.96
         },
         "groth16": {
           "proofGenerationMs": 501.3,
@@ -36947,7 +37091,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1316.94,
-          "verificationMs": 8.32
+          "verificationMs": 10.27
         },
         "groth16": {
           "proofGenerationMs": 489.64,
@@ -37163,7 +37307,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1285.86,
-          "verificationMs": 8.88
+          "verificationMs": 11.39
         },
         "groth16": {
           "proofGenerationMs": 491.46,
@@ -37307,7 +37451,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1287.92,
-          "verificationMs": 7.9
+          "verificationMs": 10.61
         },
         "groth16": {
           "proofGenerationMs": 513.63,
@@ -37379,7 +37523,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1302.41,
-          "verificationMs": 8.43
+          "verificationMs": 11.24
         },
         "groth16": {
           "proofGenerationMs": 482.4,
@@ -37595,7 +37739,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1280.39,
-          "verificationMs": 3.35
+          "verificationMs": 10.59
         },
         "groth16": {
           "proofGenerationMs": 489.94,
@@ -37667,7 +37811,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1264.19,
-          "verificationMs": 8.62
+          "verificationMs": 11.54
         },
         "groth16": {
           "proofGenerationMs": 478.61,
@@ -37739,7 +37883,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1265.88,
-          "verificationMs": 8.71
+          "verificationMs": 10.75
         },
         "groth16": {
           "proofGenerationMs": 485.54,
@@ -37811,7 +37955,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1276.38,
-          "verificationMs": 9.09
+          "verificationMs": 11.88
         },
         "groth16": {
           "proofGenerationMs": 477.14,
@@ -38027,7 +38171,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1282.94,
-          "verificationMs": 8.24
+          "verificationMs": 10.54
         },
         "groth16": {
           "proofGenerationMs": 473.56,
@@ -38099,7 +38243,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1279.18,
-          "verificationMs": 3.31
+          "verificationMs": 5.38
         },
         "groth16": {
           "proofGenerationMs": 477.17,
@@ -38171,7 +38315,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1280.84,
-          "verificationMs": 8.75
+          "verificationMs": 10.26
         },
         "groth16": {
           "proofGenerationMs": 483.08,
@@ -38243,7 +38387,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1287.92,
-          "verificationMs": 8.54
+          "verificationMs": 11.12
         },
         "groth16": {
           "proofGenerationMs": 479.13,
@@ -38315,7 +38459,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1261.97,
-          "verificationMs": 7.95
+          "verificationMs": 10.71
         },
         "groth16": {
           "proofGenerationMs": 478.53,
@@ -38531,7 +38675,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1286.01,
-          "verificationMs": 8.87
+          "verificationMs": 10.45
         },
         "groth16": {
           "proofGenerationMs": 481.72,
@@ -38675,7 +38819,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1272.18,
-          "verificationMs": 8.78
+          "verificationMs": 11.22
         },
         "groth16": {
           "proofGenerationMs": 509.07,
@@ -38747,7 +38891,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1264.6,
-          "verificationMs": 9.2
+          "verificationMs": 12.24
         },
         "groth16": {
           "proofGenerationMs": 505.84,
@@ -38963,7 +39107,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1286.41,
-          "verificationMs": 8.21
+          "verificationMs": 10.88
         },
         "groth16": {
           "proofGenerationMs": 480.45,
@@ -39035,7 +39179,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1280.17,
-          "verificationMs": 9.62
+          "verificationMs": 12.26
         },
         "groth16": {
           "proofGenerationMs": 479.57,
@@ -39395,7 +39539,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1277.84,
-          "verificationMs": 8.78
+          "verificationMs": 12.32
         },
         "groth16": {
           "proofGenerationMs": 492.77,
@@ -39467,7 +39611,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1292.81,
-          "verificationMs": 8.59
+          "verificationMs": 12.2
         },
         "groth16": {
           "proofGenerationMs": 484.28,
@@ -39611,7 +39755,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1274.29,
-          "verificationMs": 9.7
+          "verificationMs": 11.83
         },
         "groth16": {
           "proofGenerationMs": 479.6,
@@ -39827,7 +39971,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1292.74,
-          "verificationMs": 8.95
+          "verificationMs": 11.56
         },
         "groth16": {
           "proofGenerationMs": 506.97,
@@ -39899,7 +40043,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1285.36,
-          "verificationMs": 4.51
+          "verificationMs": 6.6
         },
         "groth16": {
           "proofGenerationMs": 489.74,
@@ -40115,7 +40259,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1279.92,
-          "verificationMs": 7.95
+          "verificationMs": 9.69
         },
         "groth16": {
           "proofGenerationMs": 485.78,
@@ -40331,7 +40475,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1294.96,
-          "verificationMs": 4.37
+          "verificationMs": 6.04
         },
         "groth16": {
           "proofGenerationMs": 487.32,
@@ -40403,7 +40547,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1276,
-          "verificationMs": 8.58
+          "verificationMs": 11.45
         },
         "groth16": {
           "proofGenerationMs": 489.77,
@@ -40475,7 +40619,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1313.37,
-          "verificationMs": 8.14
+          "verificationMs": 10.26
         },
         "groth16": {
           "proofGenerationMs": 483.5,
@@ -40547,7 +40691,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1296.92,
-          "verificationMs": 8.78
+          "verificationMs": 11.05
         },
         "groth16": {
           "proofGenerationMs": 484.11,
@@ -40619,7 +40763,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1264.33,
-          "verificationMs": 8.84
+          "verificationMs": 11
         },
         "groth16": {
           "proofGenerationMs": 486.85,
@@ -40691,7 +40835,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1291.47,
-          "verificationMs": 8.69
+          "verificationMs": 10.65
         },
         "groth16": {
           "proofGenerationMs": 509.8,
@@ -40763,7 +40907,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1275.09,
-          "verificationMs": 3.28
+          "verificationMs": 5.54
         },
         "groth16": {
           "proofGenerationMs": 485.38,
@@ -40907,7 +41051,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1279.45,
-          "verificationMs": 7.57
+          "verificationMs": 9.76
         },
         "groth16": {
           "proofGenerationMs": 475.66,
@@ -41051,7 +41195,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1288.73,
-          "verificationMs": 8.33
+          "verificationMs": 10.83
         },
         "groth16": {
           "proofGenerationMs": 483.31,
@@ -41123,7 +41267,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1298.83,
-          "verificationMs": 8.35
+          "verificationMs": 10.67
         },
         "groth16": {
           "proofGenerationMs": 482.3,
@@ -41195,7 +41339,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1286.68,
-          "verificationMs": 9.7
+          "verificationMs": 12.27
         },
         "groth16": {
           "proofGenerationMs": 477.65,
@@ -41267,7 +41411,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1293.37,
-          "verificationMs": 4.49
+          "verificationMs": 10.75
         },
         "groth16": {
           "proofGenerationMs": 478.89,
@@ -41339,7 +41483,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1282.46,
-          "verificationMs": 3.42
+          "verificationMs": 6.06
         },
         "groth16": {
           "proofGenerationMs": 481.16,
@@ -41411,7 +41555,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1291.31,
-          "verificationMs": 3.84
+          "verificationMs": 10.22
         },
         "groth16": {
           "proofGenerationMs": 484.33,
@@ -41699,7 +41843,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1285.47,
-          "verificationMs": 4.97
+          "verificationMs": 12.35
         },
         "groth16": {
           "proofGenerationMs": 475.71,
@@ -41987,7 +42131,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1269.5,
-          "verificationMs": 7.92
+          "verificationMs": 10.73
         },
         "groth16": {
           "proofGenerationMs": 502.86,
@@ -42059,7 +42203,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1260.79,
-          "verificationMs": 7.48
+          "verificationMs": 11.4
         },
         "groth16": {
           "proofGenerationMs": 483.94,
@@ -42131,7 +42275,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1281.32,
-          "verificationMs": 8.28
+          "verificationMs": 12.1
         },
         "groth16": {
           "proofGenerationMs": 486.53,
@@ -42203,7 +42347,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1285.78,
-          "verificationMs": 8.42
+          "verificationMs": 11.35
         },
         "groth16": {
           "proofGenerationMs": 482.3,
@@ -42347,7 +42491,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1281.96,
-          "verificationMs": 4.41
+          "verificationMs": 6.4
         },
         "groth16": {
           "proofGenerationMs": 479.23,
@@ -42491,7 +42635,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1271.93,
-          "verificationMs": 8.64
+          "verificationMs": 10.41
         },
         "groth16": {
           "proofGenerationMs": 482.53,
@@ -42707,7 +42851,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1283.18,
-          "verificationMs": 9.38
+          "verificationMs": 12.48
         },
         "groth16": {
           "proofGenerationMs": 480.99,
@@ -42779,7 +42923,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1300.15,
-          "verificationMs": 8.47
+          "verificationMs": 10.2
         },
         "groth16": {
           "proofGenerationMs": 474.47,
@@ -43067,7 +43211,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1280.82,
-          "verificationMs": 8.96
+          "verificationMs": 10.87
         },
         "groth16": {
           "proofGenerationMs": 493.1,
@@ -43211,7 +43355,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1310.14,
-          "verificationMs": 8.44
+          "verificationMs": 10.64
         },
         "groth16": {
           "proofGenerationMs": 481.55,
@@ -43283,7 +43427,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1255.16,
-          "verificationMs": 8.97
+          "verificationMs": 10.73
         },
         "groth16": {
           "proofGenerationMs": 482.17,
@@ -43355,7 +43499,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1285.96,
-          "verificationMs": 7.8
+          "verificationMs": 11.04
         },
         "groth16": {
           "proofGenerationMs": 481.44,
@@ -43427,7 +43571,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1285.51,
-          "verificationMs": 7.93
+          "verificationMs": 10.76
         },
         "groth16": {
           "proofGenerationMs": 490.38,
@@ -43571,7 +43715,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1279.43,
-          "verificationMs": 8.79
+          "verificationMs": 10.47
         },
         "groth16": {
           "proofGenerationMs": 482.76,
@@ -43643,7 +43787,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1288.75,
-          "verificationMs": 7.07
+          "verificationMs": 11.24
         },
         "groth16": {
           "proofGenerationMs": 487.43,
@@ -43859,7 +44003,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1274.91,
-          "verificationMs": 5.45
+          "verificationMs": 11.45
         },
         "groth16": {
           "proofGenerationMs": 484.93,
@@ -43931,7 +44075,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1258,
-          "verificationMs": 9.01
+          "verificationMs": 10.64
         },
         "groth16": {
           "proofGenerationMs": 482.31,
@@ -44147,7 +44291,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1294.85,
-          "verificationMs": 9.3
+          "verificationMs": 11.4
         },
         "groth16": {
           "proofGenerationMs": 480.32,
@@ -44219,7 +44363,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1254.4,
-          "verificationMs": 9.38
+          "verificationMs": 10.8
         },
         "groth16": {
           "proofGenerationMs": 483.9,
@@ -44363,7 +44507,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1288.71,
-          "verificationMs": 3.4
+          "verificationMs": 10.19
         },
         "groth16": {
           "proofGenerationMs": 507.82,
@@ -44435,7 +44579,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1312.77,
-          "verificationMs": 7.18
+          "verificationMs": 10.06
         },
         "groth16": {
           "proofGenerationMs": 490.27,
@@ -44579,7 +44723,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1265.53,
-          "verificationMs": 8.11
+          "verificationMs": 11.74
         },
         "groth16": {
           "proofGenerationMs": 486.18,
@@ -44651,7 +44795,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1315.38,
-          "verificationMs": 8.82
+          "verificationMs": 10.97
         },
         "groth16": {
           "proofGenerationMs": 482.4,
@@ -44867,7 +45011,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1277.31,
-          "verificationMs": 9.3
+          "verificationMs": 10.28
         },
         "groth16": {
           "proofGenerationMs": 496,
@@ -44939,7 +45083,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1280.78,
-          "verificationMs": 8.63
+          "verificationMs": 11.42
         },
         "groth16": {
           "proofGenerationMs": 478.57,
@@ -45083,7 +45227,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1283.15,
-          "verificationMs": 3.58
+          "verificationMs": 10.23
         },
         "groth16": {
           "proofGenerationMs": 488.64,
@@ -45371,7 +45515,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1263.19,
-          "verificationMs": 4.15
+          "verificationMs": 10.97
         },
         "groth16": {
           "proofGenerationMs": 486.16,
@@ -45443,7 +45587,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1289.37,
-          "verificationMs": 7.64
+          "verificationMs": 11.41
         },
         "groth16": {
           "proofGenerationMs": 486.95,
@@ -45587,7 +45731,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1285.66,
-          "verificationMs": 7.91
+          "verificationMs": 11.32
         },
         "groth16": {
           "proofGenerationMs": 482.98,
@@ -45731,7 +45875,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1305.52,
-          "verificationMs": 7.36
+          "verificationMs": 11.67
         },
         "groth16": {
           "proofGenerationMs": 483.71,
@@ -45803,7 +45947,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1272.4,
-          "verificationMs": 8.99
+          "verificationMs": 10.67
         },
         "groth16": {
           "proofGenerationMs": 494.85,
@@ -45875,7 +46019,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1318.23,
-          "verificationMs": 8.23
+          "verificationMs": 10.33
         },
         "groth16": {
           "proofGenerationMs": 511.06,
@@ -46163,7 +46307,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1278.71,
-          "verificationMs": 8.3
+          "verificationMs": 10.57
         },
         "groth16": {
           "proofGenerationMs": 477.74,
@@ -46451,7 +46595,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1282.92,
-          "verificationMs": 8.36
+          "verificationMs": 11.57
         },
         "groth16": {
           "proofGenerationMs": 484.57,
@@ -46739,7 +46883,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1267.78,
-          "verificationMs": 7.9
+          "verificationMs": 11.14
         },
         "groth16": {
           "proofGenerationMs": 535.27,
@@ -46811,7 +46955,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1287.54,
-          "verificationMs": 8.34
+          "verificationMs": 10.03
         },
         "groth16": {
           "proofGenerationMs": 486.99,
@@ -46955,7 +47099,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1297.43,
-          "verificationMs": 3.73
+          "verificationMs": 10.25
         },
         "groth16": {
           "proofGenerationMs": 482.67,
@@ -47027,7 +47171,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1297.71,
-          "verificationMs": 7.93
+          "verificationMs": 11.17
         },
         "groth16": {
           "proofGenerationMs": 481.6,
@@ -47099,7 +47243,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1292.68,
-          "verificationMs": 4.24
+          "verificationMs": 6.03
         },
         "groth16": {
           "proofGenerationMs": 479.9,
@@ -47243,7 +47387,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1290.98,
-          "verificationMs": 8.92
+          "verificationMs": 10.83
         },
         "groth16": {
           "proofGenerationMs": 481.88,
@@ -47387,7 +47531,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1273.94,
-          "verificationMs": 7.2
+          "verificationMs": 10.5
         },
         "groth16": {
           "proofGenerationMs": 496.62,
@@ -47459,7 +47603,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1276.57,
-          "verificationMs": 3.43
+          "verificationMs": 10.38
         },
         "groth16": {
           "proofGenerationMs": 516.57,
@@ -47603,7 +47747,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1290.55,
-          "verificationMs": 8.71
+          "verificationMs": 11.38
         },
         "groth16": {
           "proofGenerationMs": 478.8,
@@ -47819,7 +47963,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1265.18,
-          "verificationMs": 4.68
+          "verificationMs": 7.07
         },
         "groth16": {
           "proofGenerationMs": 483.23,
@@ -47963,7 +48107,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1288.7,
-          "verificationMs": 7.83
+          "verificationMs": 10.64
         },
         "groth16": {
           "proofGenerationMs": 483.2,
@@ -48035,7 +48179,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1275.5,
-          "verificationMs": 7.62
+          "verificationMs": 11.68
         },
         "groth16": {
           "proofGenerationMs": 484.15,
@@ -48107,7 +48251,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1283.56,
-          "verificationMs": 8.82
+          "verificationMs": 11.46
         },
         "groth16": {
           "proofGenerationMs": 480.96,
@@ -48251,7 +48395,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1274.84,
-          "verificationMs": 4.66
+          "verificationMs": 6.99
         },
         "groth16": {
           "proofGenerationMs": 476.78,
@@ -48323,7 +48467,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1314.88,
-          "verificationMs": 8.74
+          "verificationMs": 10.37
         },
         "groth16": {
           "proofGenerationMs": 502.27,
@@ -48395,7 +48539,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1303.09,
-          "verificationMs": 8.01
+          "verificationMs": 10.77
         },
         "groth16": {
           "proofGenerationMs": 490.78,
@@ -48467,7 +48611,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1284.2,
-          "verificationMs": 8.74
+          "verificationMs": 11.69
         },
         "groth16": {
           "proofGenerationMs": 490.27,
@@ -48755,7 +48899,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1295.9,
-          "verificationMs": 4.03
+          "verificationMs": 10.14
         },
         "groth16": {
           "proofGenerationMs": 477.62,
@@ -48827,7 +48971,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1263.93,
-          "verificationMs": 8.54
+          "verificationMs": 10.44
         },
         "groth16": {
           "proofGenerationMs": 483.68,
@@ -49043,7 +49187,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1267.58,
-          "verificationMs": 7.95
+          "verificationMs": 10.61
         },
         "groth16": {
           "proofGenerationMs": 484.16,
@@ -49331,7 +49475,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1298.7,
-          "verificationMs": 9.01
+          "verificationMs": 12
         },
         "groth16": {
           "proofGenerationMs": 485.45,
@@ -49403,7 +49547,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1321.93,
-          "verificationMs": 3.34
+          "verificationMs": 6.03
         },
         "groth16": {
           "proofGenerationMs": 477.11,
@@ -49475,7 +49619,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1267.15,
-          "verificationMs": 3.73
+          "verificationMs": 10.65
         },
         "groth16": {
           "proofGenerationMs": 476.18,
@@ -49619,7 +49763,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1303.59,
-          "verificationMs": 8.74
+          "verificationMs": 10.3
         },
         "groth16": {
           "proofGenerationMs": 486.96,
@@ -49907,7 +50051,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1278.9,
-          "verificationMs": 4.95
+          "verificationMs": 6.14
         },
         "groth16": {
           "proofGenerationMs": 478.58,
@@ -49979,7 +50123,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1310.45,
-          "verificationMs": 7.89
+          "verificationMs": 11.56
         },
         "groth16": {
           "proofGenerationMs": 487.66,
@@ -50051,7 +50195,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1290.88,
-          "verificationMs": 8.23
+          "verificationMs": 11.88
         },
         "groth16": {
           "proofGenerationMs": 497.4,
@@ -50411,7 +50555,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1292.8,
-          "verificationMs": 8.15
+          "verificationMs": 11.71
         },
         "groth16": {
           "proofGenerationMs": 489.02,
@@ -50483,7 +50627,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1344.7,
-          "verificationMs": 8.44
+          "verificationMs": 10.84
         },
         "groth16": {
           "proofGenerationMs": 487.17,
@@ -50555,7 +50699,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1310.94,
-          "verificationMs": 4.3
+          "verificationMs": 10.45
         },
         "groth16": {
           "proofGenerationMs": 481.02,
@@ -50627,7 +50771,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1326.43,
-          "verificationMs": 4.32
+          "verificationMs": 6.71
         },
         "groth16": {
           "proofGenerationMs": 480.57,
@@ -50699,7 +50843,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1301.15,
-          "verificationMs": 8.8
+          "verificationMs": 10.23
         },
         "groth16": {
           "proofGenerationMs": 485.99,
@@ -50843,7 +50987,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1274.59,
-          "verificationMs": 8.49
+          "verificationMs": 11.86
         },
         "groth16": {
           "proofGenerationMs": 479.62,
@@ -50987,7 +51131,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1269.88,
-          "verificationMs": 8.15
+          "verificationMs": 10.85
         },
         "groth16": {
           "proofGenerationMs": 481.87,
@@ -51131,7 +51275,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1285.48,
-          "verificationMs": 8.4
+          "verificationMs": 10.88
         },
         "groth16": {
           "proofGenerationMs": 487.57,
@@ -51419,7 +51563,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1319.72,
-          "verificationMs": 8.44
+          "verificationMs": 11
         },
         "groth16": {
           "proofGenerationMs": 481.91,
@@ -51491,7 +51635,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1295.14,
-          "verificationMs": 3.34
+          "verificationMs": 11.67
         },
         "groth16": {
           "proofGenerationMs": 484.7,
@@ -51635,7 +51779,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1285.85,
-          "verificationMs": 3.53
+          "verificationMs": 11.4
         },
         "groth16": {
           "proofGenerationMs": 481.54,
@@ -51923,7 +52067,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1333.34,
-          "verificationMs": 8.02
+          "verificationMs": 10.72
         },
         "groth16": {
           "proofGenerationMs": 511.1,
@@ -51995,7 +52139,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1295.67,
-          "verificationMs": 8.29
+          "verificationMs": 10.76
         },
         "groth16": {
           "proofGenerationMs": 480.17,
@@ -52139,7 +52283,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1277.2,
-          "verificationMs": 8.92
+          "verificationMs": 11.27
         },
         "groth16": {
           "proofGenerationMs": 478.99,
@@ -52427,7 +52571,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1285.07,
-          "verificationMs": 3.23
+          "verificationMs": 8.61
         },
         "groth16": {
           "proofGenerationMs": 482.3,
@@ -52499,7 +52643,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1290.39,
-          "verificationMs": 8.41
+          "verificationMs": 9.6
         },
         "groth16": {
           "proofGenerationMs": 483.84,
@@ -52643,7 +52787,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1318.15,
-          "verificationMs": 8.86
+          "verificationMs": 10.97
         },
         "groth16": {
           "proofGenerationMs": 514.03,
@@ -52931,7 +53075,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1268.97,
-          "verificationMs": 9.54
+          "verificationMs": 10.55
         },
         "groth16": {
           "proofGenerationMs": 483.47,
@@ -53003,7 +53147,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1299.79,
-          "verificationMs": 7.23
+          "verificationMs": 9.72
         },
         "groth16": {
           "proofGenerationMs": 490.75,
@@ -53075,7 +53219,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1273.85,
-          "verificationMs": 4.03
+          "verificationMs": 5.66
         },
         "groth16": {
           "proofGenerationMs": 481,
@@ -53147,7 +53291,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1295.33,
-          "verificationMs": 10.0
+          "verificationMs": 12.14
         },
         "groth16": {
           "proofGenerationMs": 484.12,
@@ -53291,7 +53435,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1278.59,
-          "verificationMs": 8.76
+          "verificationMs": 10.05
         },
         "groth16": {
           "proofGenerationMs": 485.01,
@@ -53435,7 +53579,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1280.48,
-          "verificationMs": 8.97
+          "verificationMs": 10.71
         },
         "groth16": {
           "proofGenerationMs": 487,
@@ -53651,7 +53795,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1279.12,
-          "verificationMs": 8.35
+          "verificationMs": 10.78
         },
         "groth16": {
           "proofGenerationMs": 481.42,
@@ -53723,7 +53867,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1288.24,
-          "verificationMs": 8.12
+          "verificationMs": 11.13
         },
         "groth16": {
           "proofGenerationMs": 484.9,
@@ -53867,7 +54011,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1289.65,
-          "verificationMs": 9.81
+          "verificationMs": 11.02
         },
         "groth16": {
           "proofGenerationMs": 485.2,
@@ -54011,7 +54155,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1265.4,
-          "verificationMs": 9.1
+          "verificationMs": 11.65
         },
         "groth16": {
           "proofGenerationMs": 495.29,
@@ -54155,7 +54299,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1312.04,
-          "verificationMs": 8.27
+          "verificationMs": 10.97
         },
         "groth16": {
           "proofGenerationMs": 490.89,
@@ -54371,7 +54515,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1267.44,
-          "verificationMs": 8.51
+          "verificationMs": 10.57
         },
         "groth16": {
           "proofGenerationMs": 485.39,
@@ -54587,7 +54731,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1323.26,
-          "verificationMs": 9.13
+          "verificationMs": 11.15
         },
         "groth16": {
           "proofGenerationMs": 480.73,
@@ -54659,7 +54803,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1283.8,
-          "verificationMs": 8.34
+          "verificationMs": 10.83
         },
         "groth16": {
           "proofGenerationMs": 504.84,
@@ -54875,7 +55019,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1310.83,
-          "verificationMs": 8.03
+          "verificationMs": 9.93
         },
         "groth16": {
           "proofGenerationMs": 482.57,
@@ -54947,7 +55091,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1292.29,
-          "verificationMs": 8.46
+          "verificationMs": 10.2
         },
         "groth16": {
           "proofGenerationMs": 483.21,
@@ -55019,7 +55163,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1315.27,
-          "verificationMs": 3.86
+          "verificationMs": 6.17
         },
         "groth16": {
           "proofGenerationMs": 485.79,
@@ -55091,7 +55235,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1277.15,
-          "verificationMs": 9.29
+          "verificationMs": 10.37
         },
         "groth16": {
           "proofGenerationMs": 487.18,
@@ -55235,7 +55379,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1281.42,
-          "verificationMs": 8.19
+          "verificationMs": 10.75
         },
         "groth16": {
           "proofGenerationMs": 486.15,
@@ -55379,7 +55523,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1304.69,
-          "verificationMs": 4.27
+          "verificationMs": 7.08
         },
         "groth16": {
           "proofGenerationMs": 480.59,
@@ -55739,7 +55883,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1268.36,
-          "verificationMs": 7.96
+          "verificationMs": 11.22
         },
         "groth16": {
           "proofGenerationMs": 481.5,
@@ -55955,7 +56099,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1294.74,
-          "verificationMs": 4.54
+          "verificationMs": 11.77
         },
         "groth16": {
           "proofGenerationMs": 495.45,
@@ -56099,7 +56243,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1290.09,
-          "verificationMs": 9.39
+          "verificationMs": 11.17
         },
         "groth16": {
           "proofGenerationMs": 477.69,
@@ -56243,7 +56387,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1281.1,
-          "verificationMs": 3.7
+          "verificationMs": 7.66
         },
         "groth16": {
           "proofGenerationMs": 479.26,
@@ -56459,7 +56603,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1263.44,
-          "verificationMs": 3.41
+          "verificationMs": 10.93
         },
         "groth16": {
           "proofGenerationMs": 481.57,
@@ -56603,7 +56747,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1292.57,
-          "verificationMs": 8.03
+          "verificationMs": 10.87
         },
         "groth16": {
           "proofGenerationMs": 482.07,
@@ -56675,7 +56819,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1294.02,
-          "verificationMs": 8.64
+          "verificationMs": 10.39
         },
         "groth16": {
           "proofGenerationMs": 484.39,
@@ -56891,7 +57035,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1265.18,
-          "verificationMs": 8.2
+          "verificationMs": 11.61
         },
         "groth16": {
           "proofGenerationMs": 484.36,
@@ -56963,7 +57107,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1300.62,
-          "verificationMs": 7.91
+          "verificationMs": 10.86
         },
         "groth16": {
           "proofGenerationMs": 486.9,
@@ -57035,7 +57179,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1296.26,
-          "verificationMs": 8.45
+          "verificationMs": 11.59
         },
         "groth16": {
           "proofGenerationMs": 497,
@@ -57179,7 +57323,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1262.8,
-          "verificationMs": 3.82
+          "verificationMs": 7.16
         },
         "groth16": {
           "proofGenerationMs": 484.44,
@@ -57251,7 +57395,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1286.42,
-          "verificationMs": 4.04
+          "verificationMs": 11.6
         },
         "groth16": {
           "proofGenerationMs": 497.73,
@@ -57683,7 +57827,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1270.91,
-          "verificationMs": 8.46
+          "verificationMs": 11.06
         },
         "groth16": {
           "proofGenerationMs": 483.14,
@@ -57971,7 +58115,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1268.49,
-          "verificationMs": 8.13
+          "verificationMs": 10.48
         },
         "groth16": {
           "proofGenerationMs": 489.85,
@@ -58259,7 +58403,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1283.14,
-          "verificationMs": 8.25
+          "verificationMs": 10.85
         },
         "groth16": {
           "proofGenerationMs": 483.99,
@@ -58331,7 +58475,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1271.26,
-          "verificationMs": 8.58
+          "verificationMs": 11.04
         },
         "groth16": {
           "proofGenerationMs": 490.02,
@@ -58475,7 +58619,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1281.49,
-          "verificationMs": 8.37
+          "verificationMs": 10.14
         },
         "groth16": {
           "proofGenerationMs": 483.91,
@@ -58691,7 +58835,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1280.65,
-          "verificationMs": 9.58
+          "verificationMs": 12.26
         },
         "groth16": {
           "proofGenerationMs": 490.29,
@@ -58835,7 +58979,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1308.11,
-          "verificationMs": 3.71
+          "verificationMs": 10.73
         },
         "groth16": {
           "proofGenerationMs": 485.95,
@@ -58907,7 +59051,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1305.12,
-          "verificationMs": 8.56
+          "verificationMs": 11.01
         },
         "groth16": {
           "proofGenerationMs": 478.87,
@@ -59195,7 +59339,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1301.07,
-          "verificationMs": 7.78
+          "verificationMs": 9.14
         },
         "groth16": {
           "proofGenerationMs": 504.95,
@@ -59483,7 +59627,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1281.84,
-          "verificationMs": 8.69
+          "verificationMs": 10.02
         },
         "groth16": {
           "proofGenerationMs": 485.09,
@@ -59771,7 +59915,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1261.68,
-          "verificationMs": 4.59
+          "verificationMs": 6.19
         },
         "groth16": {
           "proofGenerationMs": 476.44,
@@ -59843,7 +59987,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1303.24,
-          "verificationMs": 7.66
+          "verificationMs": 11.57
         },
         "groth16": {
           "proofGenerationMs": 484.07,
@@ -59915,7 +60059,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1280.36,
-          "verificationMs": 8.55
+          "verificationMs": 11.13
         },
         "groth16": {
           "proofGenerationMs": 490.18,
@@ -60203,7 +60347,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1287.06,
-          "verificationMs": 8.33
+          "verificationMs": 10.44
         },
         "groth16": {
           "proofGenerationMs": 475.06,
@@ -60419,7 +60563,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1292.55,
-          "verificationMs": 7.4
+          "verificationMs": 9.91
         },
         "groth16": {
           "proofGenerationMs": 478.39,
@@ -60563,7 +60707,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1283.39,
-          "verificationMs": 8.66
+          "verificationMs": 10.86
         },
         "groth16": {
           "proofGenerationMs": 477.35,
@@ -60707,7 +60851,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1270.61,
-          "verificationMs": 5.35
+          "verificationMs": 10.96
         },
         "groth16": {
           "proofGenerationMs": 501.61,
@@ -60851,7 +60995,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1283.25,
-          "verificationMs": 8.71
+          "verificationMs": 10.76
         },
         "groth16": {
           "proofGenerationMs": 488.08,
@@ -61139,7 +61283,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1283.61,
-          "verificationMs": 9.11
+          "verificationMs": 11.17
         },
         "groth16": {
           "proofGenerationMs": 476.45,
@@ -61283,7 +61427,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1285.68,
-          "verificationMs": 8.12
+          "verificationMs": 10.74
         },
         "groth16": {
           "proofGenerationMs": 484.55,
@@ -61355,7 +61499,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1287.33,
-          "verificationMs": 8.9
+          "verificationMs": 11.31
         },
         "groth16": {
           "proofGenerationMs": 480.1,
@@ -61427,7 +61571,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1301.06,
-          "verificationMs": 8.45
+          "verificationMs": 10.9
         },
         "groth16": {
           "proofGenerationMs": 475.43,
@@ -61499,7 +61643,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1287.84,
-          "verificationMs": 8.27
+          "verificationMs": 10.39
         },
         "groth16": {
           "proofGenerationMs": 478.01,
@@ -61571,7 +61715,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1272.56,
-          "verificationMs": 8.99
+          "verificationMs": 10.9
         },
         "groth16": {
           "proofGenerationMs": 480.05,
@@ -61715,7 +61859,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1283.58,
-          "verificationMs": 8.35
+          "verificationMs": 12.32
         },
         "groth16": {
           "proofGenerationMs": 479.61,
@@ -61787,7 +61931,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1280.48,
-          "verificationMs": 8.38
+          "verificationMs": 10.53
         },
         "groth16": {
           "proofGenerationMs": 485.69,
@@ -61859,7 +62003,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1275.21,
-          "verificationMs": 3.41
+          "verificationMs": 5.56
         },
         "groth16": {
           "proofGenerationMs": 484.39,
@@ -62435,7 +62579,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1279.77,
-          "verificationMs": 7.54
+          "verificationMs": 10.57
         },
         "groth16": {
           "proofGenerationMs": 505.61,
@@ -62651,7 +62795,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1259.91,
-          "verificationMs": 7.9
+          "verificationMs": 10.39
         },
         "groth16": {
           "proofGenerationMs": 513.14,
@@ -62723,7 +62867,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1299.71,
-          "verificationMs": 3.78
+          "verificationMs": 6.23
         },
         "groth16": {
           "proofGenerationMs": 476.21,
@@ -63011,7 +63155,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1308.45,
-          "verificationMs": 8.92
+          "verificationMs": 10.75
         },
         "groth16": {
           "proofGenerationMs": 479.46,
@@ -63083,7 +63227,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1314.59,
-          "verificationMs": 8.08
+          "verificationMs": 10.65
         },
         "groth16": {
           "proofGenerationMs": 480.84,
@@ -63155,7 +63299,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1300.05,
-          "verificationMs": 8.79
+          "verificationMs": 11.39
         },
         "groth16": {
           "proofGenerationMs": 498.83,
@@ -63227,7 +63371,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1297.71,
-          "verificationMs": 8.62
+          "verificationMs": 11.91
         },
         "groth16": {
           "proofGenerationMs": 480.66,
@@ -63371,7 +63515,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1279.11,
-          "verificationMs": 8.36
+          "verificationMs": 10.67
         },
         "groth16": {
           "proofGenerationMs": 485.58,
@@ -63587,7 +63731,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1278.26,
-          "verificationMs": 4.02
+          "verificationMs": 10.95
         },
         "groth16": {
           "proofGenerationMs": 490.53,
@@ -63659,7 +63803,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1291.88,
-          "verificationMs": 7.98
+          "verificationMs": 12.23
         },
         "groth16": {
           "proofGenerationMs": 483.97,
@@ -63803,7 +63947,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1290.96,
-          "verificationMs": 7.82
+          "verificationMs": 10.17
         },
         "groth16": {
           "proofGenerationMs": 481.14,
@@ -64019,7 +64163,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1276.4,
-          "verificationMs": 7.13
+          "verificationMs": 10.48
         },
         "groth16": {
           "proofGenerationMs": 479.28,
@@ -64163,7 +64307,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1299.12,
-          "verificationMs": 8.05
+          "verificationMs": 10.44
         },
         "groth16": {
           "proofGenerationMs": 481.61,
@@ -64307,7 +64451,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1297.9,
-          "verificationMs": 7.6
+          "verificationMs": 11
         },
         "groth16": {
           "proofGenerationMs": 480.51,
@@ -64739,7 +64883,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1311.35,
-          "verificationMs": 8.23
+          "verificationMs": 11.01
         },
         "groth16": {
           "proofGenerationMs": 483.01,
@@ -64811,7 +64955,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1271.9,
-          "verificationMs": 3.88
+          "verificationMs": 11.05
         },
         "groth16": {
           "proofGenerationMs": 476.39,
@@ -64883,7 +65027,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1260.49,
-          "verificationMs": 7.24
+          "verificationMs": 11.24
         },
         "groth16": {
           "proofGenerationMs": 492.03,
@@ -65387,7 +65531,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1271.56,
-          "verificationMs": 8.43
+          "verificationMs": 10.54
         },
         "groth16": {
           "proofGenerationMs": 472.65,
@@ -65459,7 +65603,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1262.82,
-          "verificationMs": 8.22
+          "verificationMs": 10.32
         },
         "groth16": {
           "proofGenerationMs": 491.92,
@@ -65819,7 +65963,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1281.3,
-          "verificationMs": 8.47
+          "verificationMs": 10.8
         },
         "groth16": {
           "proofGenerationMs": 484.42,
@@ -65963,7 +66107,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1273.3,
-          "verificationMs": 8.8
+          "verificationMs": 10.13
         },
         "groth16": {
           "proofGenerationMs": 487.85,
@@ -66035,7 +66179,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1302.81,
-          "verificationMs": 7.14
+          "verificationMs": 12.02
         },
         "groth16": {
           "proofGenerationMs": 496.28,
@@ -66179,7 +66323,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1285.98,
-          "verificationMs": 7.94
+          "verificationMs": 10.62
         },
         "groth16": {
           "proofGenerationMs": 486.08,
@@ -66323,7 +66467,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1281.89,
-          "verificationMs": 9.29
+          "verificationMs": 11.11
         },
         "groth16": {
           "proofGenerationMs": 481.05,
@@ -66467,7 +66611,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1276.89,
-          "verificationMs": 7.73
+          "verificationMs": 12.34
         },
         "groth16": {
           "proofGenerationMs": 483.35,
@@ -66611,7 +66755,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1271.77,
-          "verificationMs": 9.02
+          "verificationMs": 10.13
         },
         "groth16": {
           "proofGenerationMs": 494.23,
@@ -67043,7 +67187,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1314.36,
-          "verificationMs": 9.12
+          "verificationMs": 11.52
         },
         "groth16": {
           "proofGenerationMs": 487.27,
@@ -67115,7 +67259,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1258.6,
-          "verificationMs": 9.11
+          "verificationMs": 10.85
         },
         "groth16": {
           "proofGenerationMs": 481.18,
@@ -67259,7 +67403,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1306.53,
-          "verificationMs": 8.99
+          "verificationMs": 11.52
         },
         "groth16": {
           "proofGenerationMs": 483.82,
@@ -67331,7 +67475,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1275.56,
-          "verificationMs": 8.5
+          "verificationMs": 10.6
         },
         "groth16": {
           "proofGenerationMs": 479.69,
@@ -67403,7 +67547,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1297.71,
-          "verificationMs": 8.07
+          "verificationMs": 10.93
         },
         "groth16": {
           "proofGenerationMs": 476.64,
@@ -67475,7 +67619,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1305.39,
-          "verificationMs": 8.47
+          "verificationMs": 10.57
         },
         "groth16": {
           "proofGenerationMs": 483.33,
@@ -67547,7 +67691,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1280.04,
-          "verificationMs": 9.47
+          "verificationMs": 11.03
         },
         "groth16": {
           "proofGenerationMs": 475.43,
@@ -67619,7 +67763,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1309.9,
-          "verificationMs": 8.76
+          "verificationMs": 10.98
         },
         "groth16": {
           "proofGenerationMs": 483.95,
@@ -67691,7 +67835,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1264.94,
-          "verificationMs": 4.85
+          "verificationMs": 10.82
         },
         "groth16": {
           "proofGenerationMs": 479.55,
@@ -67979,7 +68123,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1277.5,
-          "verificationMs": 8.13
+          "verificationMs": 11.06
         },
         "groth16": {
           "proofGenerationMs": 482.93,
@@ -68123,7 +68267,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1284.17,
-          "verificationMs": 9.62
+          "verificationMs": 10.53
         },
         "groth16": {
           "proofGenerationMs": 503.35,
@@ -68195,7 +68339,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1270.84,
-          "verificationMs": 3.7
+          "verificationMs": 11.41
         },
         "groth16": {
           "proofGenerationMs": 489.03,
@@ -68339,7 +68483,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1285.72,
-          "verificationMs": 3.18
+          "verificationMs": 6.28
         },
         "groth16": {
           "proofGenerationMs": 482.89,
@@ -68555,7 +68699,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1322.94,
-          "verificationMs": 8.48
+          "verificationMs": 10.4
         },
         "groth16": {
           "proofGenerationMs": 474.98,
@@ -68627,7 +68771,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1272.17,
-          "verificationMs": 9.3
+          "verificationMs": 11.8
         },
         "groth16": {
           "proofGenerationMs": 481.04,
@@ -68771,7 +68915,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1274.39,
-          "verificationMs": 7.82
+          "verificationMs": 10.45
         },
         "groth16": {
           "proofGenerationMs": 495.28,
@@ -68915,7 +69059,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1291.51,
-          "verificationMs": 8.46
+          "verificationMs": 10.42
         },
         "groth16": {
           "proofGenerationMs": 491.85,
@@ -68987,7 +69131,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1306.99,
-          "verificationMs": 8.62
+          "verificationMs": 12.05
         },
         "groth16": {
           "proofGenerationMs": 490.42,
@@ -69347,7 +69491,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1295.28,
-          "verificationMs": 8.72
+          "verificationMs": 11.05
         },
         "groth16": {
           "proofGenerationMs": 487.75,
@@ -69419,7 +69563,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1294.05,
-          "verificationMs": 4.5
+          "verificationMs": 11.63
         },
         "groth16": {
           "proofGenerationMs": 502.16,
@@ -69707,7 +69851,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1280.25,
-          "verificationMs": 8.51
+          "verificationMs": 10.63
         },
         "groth16": {
           "proofGenerationMs": 489.03,
@@ -69851,7 +69995,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1281.5,
-          "verificationMs": 8.77
+          "verificationMs": 10.02
         },
         "groth16": {
           "proofGenerationMs": 483.52,
@@ -70139,7 +70283,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1313.27,
-          "verificationMs": 3.45
+          "verificationMs": 5.88
         },
         "groth16": {
           "proofGenerationMs": 497.46,
@@ -70211,7 +70355,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1293.34,
-          "verificationMs": 8.69
+          "verificationMs": 10.58
         },
         "groth16": {
           "proofGenerationMs": 490.05,
@@ -70283,7 +70427,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1282.63,
-          "verificationMs": 5.11
+          "verificationMs": 11.11
         },
         "groth16": {
           "proofGenerationMs": 482.12,
@@ -70499,7 +70643,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1287.02,
-          "verificationMs": 9.12
+          "verificationMs": 10.96
         },
         "groth16": {
           "proofGenerationMs": 475.59,
@@ -70787,7 +70931,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1268.3,
-          "verificationMs": 5.09
+          "verificationMs": 6.52
         },
         "groth16": {
           "proofGenerationMs": 481.7,
@@ -70931,7 +71075,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1305.3,
-          "verificationMs": 9.0
+          "verificationMs": 11.63
         },
         "groth16": {
           "proofGenerationMs": 484.08,
@@ -71147,7 +71291,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1296.98,
-          "verificationMs": 9.22
+          "verificationMs": 11.99
         },
         "groth16": {
           "proofGenerationMs": 483.63,
@@ -71219,7 +71363,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1274.73,
-          "verificationMs": 8.5
+          "verificationMs": 11.08
         },
         "groth16": {
           "proofGenerationMs": 513.44,
@@ -71291,7 +71435,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1287.63,
-          "verificationMs": 5.21
+          "verificationMs": 6.8
         },
         "groth16": {
           "proofGenerationMs": 477.86,
@@ -71363,7 +71507,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1293.25,
-          "verificationMs": 8.53
+          "verificationMs": 11.78
         },
         "groth16": {
           "proofGenerationMs": 483.45,
@@ -71435,7 +71579,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1299.15,
-          "verificationMs": 8.28
+          "verificationMs": 10.03
         },
         "groth16": {
           "proofGenerationMs": 510.4,
@@ -71507,7 +71651,7 @@
         },
         "fflonk": {
           "proofGenerationMs": 1270.22,
-          "verificationMs": 8.84
+          "verificationMs": 11.83
         },
         "groth16": {
           "proofGenerationMs": 480.55,

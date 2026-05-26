@@ -172,12 +172,20 @@ echo "NFT contract deployed and NFTs minted"
 echo ""
 
 echo "4: Deploying KYC Compliance Contracts..."
-# Copy the PlonkVerifier to nfts contracts if it exists
-if [ -f "zeroid-entity/Verifier.sol" ]; then
-    echo "Copying PlonkVerifier from zeroid-entity..."
-    cp zeroid-entity/Verifier.sol nfts/contracts/PlonkVerifier.sol
+# Copy the Fflonk verifier and adapter to nfts contracts if they exist in zeroid-entity
+if [ -f "zeroid-entity/verifier.sol" ]; then
+    echo "Copying fflonk verifier from zeroid-entity..."
+    cp zeroid-entity/verifier.sol nfts/contracts/verifier.sol
+elif [ -f "zeroid-entity/Verifier.sol" ]; then
+    echo "Copying Verifier.sol from zeroid-entity as verifier.sol..."
+    cp zeroid-entity/Verifier.sol nfts/contracts/verifier.sol
 else
-    echo "Warning: Verifier.sol not found in zeroid-entity. Using placeholder."
+    echo "Warning: verifier.sol not found in zeroid-entity. Using placeholder."
+fi
+
+if [ -f "zeroid-entity/FflonkVerifierAdapter.sol" ]; then
+    echo "Copying FflonkVerifierAdapter from zeroid-entity..."
+    cp zeroid-entity/FflonkVerifierAdapter.sol nfts/contracts/FflonkVerifierAdapter.sol
 fi
 
 cd nfts

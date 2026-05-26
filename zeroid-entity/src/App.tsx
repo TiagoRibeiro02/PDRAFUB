@@ -311,7 +311,7 @@ function ZKPIssuer() {
             try {
               setError(null);
               setSubmitSuccess(false);
-              const proof = await generatePlonkZKP(did);
+              const proof = await generateFflonkZKP(did);
               setZkProof(proof);
             } catch (err) {
               setError(err instanceof Error ? err.message : "Unknown error");
@@ -320,7 +320,7 @@ function ZKPIssuer() {
           disabled={!did}
           className={`zkp-btn ui-btn ${did ? 'zkp-btn-gold ui-btn-gold' : 'zkp-btn-disabled ui-btn-disabled'}`}
         >
-          Generate PLONK ZK Proof
+          Generate FFLONK ZK Proof
         </button>
 
         {zkProof && kycContractAddress && account && (
@@ -445,7 +445,7 @@ async function didToBigInt(did: string): Promise<bigint> {
   return BigInt("0x" + hashHex.substring(0, 32));
 }
 
-async function generatePlonkZKP(userDid: string) {
+async function generateFflonkZKP(userDid: string) {
   const snarkjs = await import("snarkjs");
   const { buildPoseidon } = await import("circomlibjs");
   const verificationKey = await import("../zkp/verification_key.json");
@@ -462,13 +462,13 @@ async function generatePlonkZKP(userDid: string) {
   const commitmentHash = poseidon([DID, status, r]);
   const commitment = poseidon.F.toString(commitmentHash);
   
-  const { proof, publicSignals } = await snarkjs.plonk.fullProve(
+  const { proof, publicSignals } = await snarkjs.fflonk.fullProve(
     { DID: DID.toString(), status: status.toString(), commitment, r: r.toString() },
     "/zkp/circuit_js/circuit.wasm",
     "/zkp/circuit_final.zkey"
   );
 
-  const res = await snarkjs.plonk.verify(verificationKey, publicSignals, proof);
+  const res = await snarkjs.fflonk.verify(verificationKey, publicSignals, proof);
 
   if (res === true) {
     console.log("Verification OK");
@@ -503,23 +503,39 @@ async function submitProofToContract(
 
   // Convert proof to bytes
   // The proof structure from snarkjs needs to be flattened
-  const proofArray = [
-    zkProof.proof.A[0], zkProof.proof.A[1],
-    zkProof.proof.B[0], zkProof.proof.B[1],
-    zkProof.proof.C[0], zkProof.proof.C[1],
-    zkProof.proof.Z[0], zkProof.proof.Z[1],
-    zkProof.proof.T1[0], zkProof.proof.T1[1],
-    zkProof.proof.T2[0], zkProof.proof.T2[1],
-    zkProof.proof.T3[0], zkProof.proof.T3[1],
-    zkProof.proof.Wxi[0], zkProof.proof.Wxi[1],
-    zkProof.proof.Wxiw[0], zkProof.proof.Wxiw[1],
-    zkProof.proof.eval_a,
-    zkProof.proof.eval_b,
-    zkProof.proof.eval_c,
-    zkProof.proof.eval_s1,
-    zkProof.proof.eval_s2,
-    zkProof.proof.eval_zw
-  ];
+  let proofArray: Array<string | number> = [];
+  const p = zkProof.proof;
+  if (p && p.polynomials && p.evaluations) {
+    const polys = p.polynomials;
+    const e = p.evaluations;
+    proofArray = [
+      polys.C1[0], polys.C1[1],
+      polys.C2[0], polys.C2[1],
+      polys.W1[0], polys.W1[1],
+      polys.W2[0], polys.W2[1],
+      e.ql, e.qr, e.qm, e.qo, e.qc, e.s1, e.s2, e.s3,
+      e.a, e.b, e.c, e.z, e.zw, e.t1w, e.t2w, e.inv
+    ];
+  } else if (p && p.A && p.B && p.C) {
+    proofArray = [
+      p.A[0], p.A[1],
+      p.B[0], p.B[1],
+      p.C[0], p.C[1],
+      (p.Z && p.Z[0]) || 0, (p.Z && p.Z[1]) || 0,
+      (p.T1 && p.T1[0]) || 0, (p.T1 && p.T1[1]) || 0,
+      (p.T2 && p.T2[0]) || 0, (p.T2 && p.T2[1]) || 0,
+      (p.T3 && p.T3[0]) || 0, (p.T3 && p.T3[1]) || 0,
+      (p.Wxi && p.Wxi[0]) || 0, (p.Wxi && p.Wxi[1]) || 0,
+      (p.Wxiw && p.Wxiw[0]) || 0, (p.Wxiw && p.Wxiw[1]) || 0,
+      p.eval_a || p.evalA || 0,
+      p.eval_b || p.evalB || 0,
+      p.eval_c || p.evalC || 0,
+      p.eval_s1 || p.evalS1 || 0,
+      p.eval_zw || p.evalZW || 0
+    ];
+  } else {
+    throw new Error('Unrecognized proof format — cannot submit to contract');
+  }
 
   // Encode as bytes
   const proofBytes = ethers.AbiCoder.defaultAbiCoder().encode(

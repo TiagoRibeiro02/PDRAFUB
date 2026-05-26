@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-interface IPlonkVerifier {
+interface IVerifier {
     function verifyProof(bytes memory proof, uint[] memory pubSignals) external view returns (bool);
 }
 
@@ -13,7 +13,7 @@ interface IPlonkVerifier {
  *      x-coordinate (bytes32) in a dedicated slot — minimising gas cost.
  */
 contract KYCCompliance {
-    IPlonkVerifier public verifier;
+    IVerifier public verifier;
     address public admin;
     address public issuer;
     mapping(address => bool) public authorizedIssuers;
@@ -74,7 +74,7 @@ contract KYCCompliance {
     }
     
     constructor(address _verifierAddress) {
-        verifier = IPlonkVerifier(_verifierAddress);
+        verifier = IVerifier(_verifierAddress);
         admin = msg.sender;
         issuer = msg.sender;
         authorizedIssuers[msg.sender] = true;

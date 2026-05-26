@@ -16,13 +16,13 @@ async function main() {
   console.log("Deploying with account:", deployer.address);
   console.log("Account balance:", ethers.formatEther(await ethers.provider.getBalance(deployer.address)), "ETH\n");
 
-  // 1. Deploy PlonkVerifierAdapter
-  console.log("Deploying PlonkVerifierAdapter...");
-  const PlonkVerifierAdapter = await ethers.getContractFactory("PlonkVerifierAdapter");
-  const adapter = await PlonkVerifierAdapter.deploy();
+  // 1. Deploy FflonkVerifierAdapter
+  console.log("Deploying FflonkVerifierAdapter...");
+  const FflonkVerifierAdapter = await ethers.getContractFactory("FflonkVerifierAdapter");
+  const adapter = await FflonkVerifierAdapter.deploy();
   await adapter.waitForDeployment();
   const adapterAddress = await adapter.getAddress();
-  console.log("PlonkVerifierAdapter deployed to:", adapterAddress);
+  console.log("FflonkVerifierAdapter deployed to:", adapterAddress);
 
   // 2. Deploy KYCCompliance
   console.log("\n Deploying KYCCompliance...");
@@ -44,7 +44,7 @@ async function main() {
 
   // Save deployment info
   const deploymentInfo = {
-    PlonkVerifierAdapter: adapterAddress,
+    FflonkVerifierAdapter: adapterAddress,
     KYCCompliance: kycAddress,
     network: "localhost",
     chainId: 1337,
@@ -66,11 +66,11 @@ async function main() {
   fs.writeFileSync(entityPath, JSON.stringify(deploymentInfo, null, 2));
 
   // Copy ABIs to zeroid-entity
-  const adapterArtifact = await hre.artifacts.readArtifact("PlonkVerifierAdapter");
+  const adapterArtifact = await hre.artifacts.readArtifact("FflonkVerifierAdapter");
   const kycArtifact = await hre.artifacts.readArtifact("KYCCompliance");
 
   fs.writeFileSync(
-    path.join(entityDir, "PlonkVerifierAdapter.json"),
+    path.join(entityDir, "FflonkVerifierAdapter.json"),
     JSON.stringify(adapterArtifact, null, 2)
   );
   fs.writeFileSync(
@@ -83,7 +83,7 @@ async function main() {
   console.log("   -", nftsPath);
   console.log("   -", entityPath);
   console.log("\n Contract Addresses:");
-  console.log("   PlonkVerifierAdapter:", adapterAddress);
+  console.log("   FflonkVerifierAdapter:", adapterAddress);
   console.log("   KYCCompliance:", kycAddress);
   console.log("\n Use these addresses in your frontend to interact with the contracts");
 }

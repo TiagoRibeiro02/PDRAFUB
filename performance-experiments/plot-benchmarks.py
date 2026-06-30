@@ -25,13 +25,22 @@ import matplotlib.pyplot as plt
     #"halo2": "HALO2",
 #}
 
-PROTOCOLS = ["plonk", "fflonk", "groth16", "noir", "halo2"]
+PROTOCOLS = ["plonk", "fflonk", "groth16", "halo2"]
 PROTOCOL_LABELS = {
     "plonk": "PLONK",
     "fflonk": "FFLONK",
     "groth16": "GROTH16",
-    "noir": "NOIR",
+    #"noir": "NOIR",
     "halo2": "HALO2",
+}
+
+# Centralized protocol color mapping — change colors here to affect all plots
+PROTOCOL_COLORS = {
+    "plonk": "#59B230",
+    "fflonk": "#2FB69F",
+    "groth16": "#AF2C2C",
+    #"noir": "#B2BE27",
+    "halo2": "#8D3892",
 }
 
 
@@ -183,6 +192,7 @@ def plot_time_series(zkp_runs: list[dict], out_dir: Path) -> None:
                     markevery=marker_step,
                     linewidth=1.1,
                     alpha=0.95,
+                    color=PROTOCOL_COLORS.get(protocol),
                     label=PROTOCOL_LABELS[protocol],
                 )
             ax.set_title("Cumulative Gas Sum Over Runs by Protocol")
@@ -194,9 +204,9 @@ def plot_time_series(zkp_runs: list[dict], out_dir: Path) -> None:
             ax.legend(loc="upper left", ncol=3, frameon=False)
         else:
             series = extract_time_series(zkp_runs, metric_key)
-            colors = ["#4682B4","#DAA520","#6B8E23", "#CD853F", "#8B4513"]
             window = max(10, len(run_ids) // 40)
-            for protocol, color in zip(PROTOCOLS, colors):
+            for protocol in PROTOCOLS:
+                color = PROTOCOL_COLORS.get(protocol)
                 values = series[protocol]
                 ax.plot(run_ids, values, color=color, alpha=0.04, linewidth=0.8)
                 ax.plot(
@@ -232,7 +242,7 @@ def plot_grouped_means_with_error(zkp_runs: list[dict], out_dir: Path) -> None:
     labels = [PROTOCOL_LABELS[p] for p in PROTOCOLS]
     verify_means = [safe_mean(verify_vals[p]) for p in PROTOCOLS]
     verify_err = [safe_pstdev(verify_vals[p]) for p in PROTOCOLS]
-    colors = ["#6B8E23", "#4682B4", "#DAA520", "#CD853F", "#8B4513"]
+    colors = [PROTOCOL_COLORS.get(p) for p in PROTOCOLS]
 
     x = list(range(len(PROTOCOLS)))
     fig, ax = plt.subplots(figsize=(10, 5))
@@ -281,7 +291,7 @@ def plot_gas_grouped(zkp_runs: list[dict], out_dir: Path) -> None:
 
     labels = [PROTOCOL_LABELS[p] for p in PROTOCOLS]
     gas_means = [safe_mean(gas_vals[p]) for p in PROTOCOLS]
-    colors = ["#6B8E23", "#4682B4", "#DAA520", "#CD853F", "#8B4513"]
+    colors = [PROTOCOL_COLORS.get(p) for p in PROTOCOLS]
 
     x = list(range(len(PROTOCOLS)))
     fig, ax = plt.subplots(figsize=(10, 5))
@@ -304,7 +314,7 @@ def plot_speed_vs_gas(zkp_runs: list[dict], out_dir: Path) -> None:
     for protocol in PROTOCOLS:
         x = safe_mean(proof_vals[protocol])
         y = safe_mean(submit_vals[protocol])
-        plt.scatter([x], [y], s=130, label=PROTOCOL_LABELS[protocol])
+        plt.scatter([x], [y], s=130, label=PROTOCOL_LABELS[protocol], color=PROTOCOL_COLORS.get(protocol))
         plt.text(x + 10, y + 60, PROTOCOL_LABELS[protocol], fontsize=9)
 
     plt.xlabel("Average Proof Generation (ms)")

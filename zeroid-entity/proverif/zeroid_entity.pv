@@ -1,0 +1,103 @@
+(* Abstract ProVerif model for zeroid-entity *)
+
+free scram: channel.
+free relay: channel.
+free qr: channel [private].
+
+free username: bitstring [private].
+free password: bitstring [private].
+free did: bitstring [private].
+free wallet_sk: bitstring [private].
+
+fun scram_proof(bitstring, bitstring, bitstring, bitstring, bitstring): bitstring.
+fun scram_server_sig(bitstring, bitstring, bitstring, bitstring, bitstring): bitstring.
+fun sign(bitstring, bitstring): bitstring.
+fun pk(bitstring): bitstring.
+fun aenc(bitstring, bitstring): bitstring.
+fun registered_addr(bitstring): bitstring.
+
+const ok: bitstring.
+
+event scram_client_start(bitstring, bitstring).
+event scram_client_ok(bitstring).
+event scram_server_ok(bitstring).
+event qr_session_start(bitstring, bitstring, bitstring).
+event qr_scanned(bitstring, bitstring, bitstring).
+event qr_wallet_sent(bitstring, bitstring).
+event qr_entity_accepted(bitstring, bitstring).
+
+free u: bitstring [private].
+free cnonce: bitstring [private].
+free d: bitstring [private].
+free a: bitstring [private].
+free s: bitstring [private].
+
+query event(scram_client_ok(u)) ==> event(scram_client_start(u, cnonce)).
+query event(scram_server_ok(u)) ==> event(scram_client_start(u, cnonce)).
+query inj-event(scram_client_ok(u)) ==> inj-event(scram_client_start(u, cnonce)).
+query inj-event(scram_server_ok(u)) ==> inj-event(scram_client_start(u, cnonce)).
+query event(qr_entity_accepted(d, a)) ==> event(qr_wallet_sent(s, d)).
+query attacker(password).
+query attacker(wallet_sk).
+
+process
+  new cnonce: bitstring;
+  event scram_client_start(username, cnonce);
+  out(scram, (username, cnonce));
+  in(scram, salt: bitstring);
+  in(scram, iterations: bitstring);
+  in(scram, snonce: bitstring);
+  out(scram, scram_proof(password, username, cnonce, snonce, salt));
+  in(scram, server_sig: bitstring);
+  if server_sig = scram_server_sig(password, username, cnonce, snonce, salt) then
+    (event scram_client_ok(username); 0)
+  else
+    0
+|
+  in(scram, client_first: bitstring);
+  let (u: bitstring, cnonce: bitstring) = client_first in
+  new salt: bitstring;
+  new iterations: bitstring;
+  new snonce: bitstring;
+  out(scram, salt);
+  out(scram, iterations);
+  out(scram, snonce);
+  in(scram, client_proof: bitstring);
+  if client_proof = scram_proof(password, u, cnonce, snonce, salt) then
+    (event scram_server_ok(u); out(scram, scram_server_sig(password, u, cnonce, snonce, salt)))
+  else
+    0
+|
+  new sessionId: bitstring;
+  new challenge: bitstring;
+  new qr_secret: bitstring;
+  event qr_session_start(sessionId, challenge, qr_secret);
+  out(qr, sessionId);
+  out(qr, challenge);
+  out(qr, qr_secret);
+  in(relay, payload: bitstring);
+  let (did_p: bitstring, rest_payload1: bitstring) = payload in
+  let (eth_p: bitstring, rest_payload2: bitstring) = rest_payload1 in
+  let (pub_p: bitstring, rest_payload3: bitstring) = rest_payload2 in
+  let (sig_p: bitstring, rest_payload4: bitstring) = rest_payload3 in
+  let (challenge_p: bitstring, rest_payload5: bitstring) = rest_payload4 in
+  let (session_p: bitstring, timestamp_p: bitstring) = rest_payload5 in
+  if session_p = sessionId && challenge_p = challenge && eth_p = registered_addr(did_p) then
+    let expected_sig = sign((did_p, (challenge_p, (session_p, timestamp_p))), wallet_sk) in
+    if sig_p = expected_sig then
+      (event qr_entity_accepted(did_p, eth_p); 0)
+    else
+      0
+  else
+    0
+|
+  in(qr, sessionId: bitstring);
+  in(qr, challenge: bitstring);
+  in(qr, qr_secret: bitstring);
+  event qr_scanned(sessionId, challenge, qr_secret);
+  new walletTimestamp: bitstring;
+  let canonical = (did, (challenge, (sessionId, walletTimestamp))) in
+  let signature = sign(canonical, wallet_sk) in
+  let payload = (did, (registered_addr(did), (pk(wallet_sk), (signature, (challenge, (sessionId, walletTimestamp)))))) in
+  event qr_wallet_sent(sessionId, did);
+  out(relay, aenc(payload, qr_secret))

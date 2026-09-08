@@ -13,9 +13,11 @@
     "test": "hardhat test",
     "dev": "cd frontend && npm run dev",
     "benchmark:zkp": "hardhat run --no-compile --network sepolia scripts/benchmark-zkp.js",
+    "benchmark:signed-credential": "hardhat run --no-compile --network sepolia scripts/benchmark-signed-credential.js",
     "benchmark:nft-gas": "hardhat run --no-compile --network sepolia scripts/benchmark-nft-gas.js",
     "benchmark:halo2-gas": "hardhat run --no-compile --network sepolia scripts/benchmark-halo2-gas.js",
     "benchmark:zkp:local": "hardhat run --no-compile scripts/benchmark-zkp.js",
+    "benchmark:signed-credential:local": "hardhat run --no-compile scripts/benchmark-signed-credential.js",
     "benchmark:nft-gas:local": "hardhat run --no-compile scripts/benchmark-nft-gas.js",
     "benchmark:halo2-gas:local": "hardhat run --no-compile scripts/benchmark-halo2-gas.js"
   },

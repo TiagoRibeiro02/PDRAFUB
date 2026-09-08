@@ -6,6 +6,7 @@ Run from the performance-experiments directory:
 
 Optional custom paths:
   python3 plot-benchmarks.py --zkp benchmark-results.json --nft benchmark-nft-results.json --out charts
+    python3 plot-benchmarks.py --signed benchmark-signed-results.json
 """
 
 from __future__ import annotations
@@ -17,6 +18,17 @@ from statistics import mean, pstdev
 
 import matplotlib.pyplot as plt
 
+plt.rcParams.update(
+    {
+        "font.size": 14,
+        "axes.titlesize": 18,
+        "axes.labelsize": 16,
+        "xtick.labelsize": 13,
+        "ytick.labelsize": 13,
+        "legend.fontsize": 13,
+    }
+)
+
 #PROTOCOLS = ["plonk", "fflonk", "groth16", "halo2"]
 #PROTOCOL_LABELS = {
     #"plonk": "PLONK",
@@ -25,22 +37,23 @@ import matplotlib.pyplot as plt
     #"halo2": "HALO2",
 #}
 
-PROTOCOLS = ["plonk", "fflonk", "groth16", "halo2"]
+PROTOCOLS = ["plonk", "fflonk", "groth16", "noir", "halo2"]
 PROTOCOL_LABELS = {
     "plonk": "PLONK",
     "fflonk": "FFLONK",
     "groth16": "GROTH16",
-    #"noir": "NOIR",
+    "noir": "NOIR",
     "halo2": "HALO2",
 }
 
 # Centralized protocol color mapping — change colors here to affect all plots
 PROTOCOL_COLORS = {
-    "plonk": "#59B230",
-    "fflonk": "#2FB69F",
-    "groth16": "#AF2C2C",
-    #"noir": "#B2BE27",
-    "halo2": "#8D3892",
+    "plonk": "#229ACE",
+    "fflonk": "#E4C218",
+    "groth16": "#56CB20",
+    "noir": "#926512",
+    "halo2": "#C52020"
+    ,
 }
 
 
@@ -105,7 +118,7 @@ def add_bar_labels(ax: plt.Axes, bars: list[plt.Axes], fmt: str = "{:.2f}", offs
             fmt.format(height),
             ha="center",
             va="bottom",
-            fontsize=8,
+            fontsize=12,
         )
 
 
@@ -174,7 +187,7 @@ def plot_time_series(zkp_runs: list[dict], out_dir: Path) -> None:
         protocol: [value / scale for value in values]
         for protocol, values in cumulative_protocol_gas_sums.items()
     }
-    run_ticks = spaced_run_ticks(len(zkp_runs), step=50)
+    run_ticks = spaced_run_ticks(len(zkp_runs), step=100)
     marker_step = max(1, len(zkp_runs) // 20)
 
     for metric_key, title, y_label, filename in [
@@ -205,6 +218,7 @@ def plot_time_series(zkp_runs: list[dict], out_dir: Path) -> None:
         else:
             series = extract_time_series(zkp_runs, metric_key)
             window = max(10, len(run_ids) // 40)
+            verification_ticks = spaced_run_ticks(len(zkp_runs), step=max(100, len(zkp_runs) // 8))
             for protocol in PROTOCOLS:
                 color = PROTOCOL_COLORS.get(protocol)
                 values = series[protocol]
@@ -219,7 +233,7 @@ def plot_time_series(zkp_runs: list[dict], out_dir: Path) -> None:
             ax.set_title(f"Verification Time Over Runs ({window}-Run Moving Average)")
             ax.set_xlabel("Run / User #")
             ax.set_ylabel(y_label)
-            ax.set_xticks(run_ticks)
+            ax.set_xticks(verification_ticks)
             ax.grid(axis="y", linestyle="--", linewidth=0.45, alpha=0.55)
             ax.grid(axis="x", linestyle=":", linewidth=0.35, alpha=0.2)
             ax.legend(loc="upper left", ncol=3, frameon=False)
@@ -254,6 +268,86 @@ def plot_grouped_means_with_error(zkp_runs: list[dict], out_dir: Path) -> None:
     add_bar_labels(ax, bars, fmt="{:.2f}")
     plt.grid(axis="y", linestyle="--", linewidth=0.5, alpha=0.6)
     save_fig(out_dir, "03-grouped-means-errorbars.png")
+
+
+def print_gas_averages(zkp_runs: list[dict]) -> None:
+    gas_vals = get_total_gas_values(zkp_runs)
+    averages = {protocol: safe_mean(gas_vals[protocol]) for protocol in PROTOCOLS}
+
+    print("\nAverage gas by protocol:")
+    for protocol in PROTOCOLS:
+        print(f"  {PROTOCOL_LABELS[protocol]}: {averages[protocol]:.2f}")
+
+
+def print_proof_generation_averages(zkp_runs: list[dict]) -> None:
+    proof_vals = protocol_metric_values(zkp_runs, "proofGenerationMs")
+    averages = {protocol: safe_mean(proof_vals[protocol]) for protocol in PROTOCOLS}
+
+    print("\nAverage proof generation time by protocol:")
+    for protocol in PROTOCOLS:
+        print(f"  {PROTOCOL_LABELS[protocol]}: {averages[protocol]:.2f} ms")
+
+
+def signed_protocol_metric_values(signed_runs: list[dict], metric_key: str) -> list[float]:
+    values: list[float] = []
+    for run in signed_runs:
+        timings = run.get("timings", {}).get("signed", {})
+        values.append(safe_float(timings.get(metric_key), 0.0))
+    return values
+
+
+def signed_total_gas_values(signed_runs: list[dict]) -> list[int]:
+    values: list[int] = []
+    for run in signed_runs:
+        gas_results = run.get("gas", {}).get("results", [])
+        total = 0
+        for row in gas_results:
+            if str(row.get("protocol", "")).strip().lower() != "signed":
+                continue
+            total += safe_int(row.get("verifyProofTxGas"), 0)
+            total += safe_int(row.get("submitComplianceProofGas"), 0)
+        values.append(total)
+    return values
+
+
+def print_signed_benchmark_summary(signed_runs: list[dict]) -> None:
+    if not signed_runs:
+        return
+
+    gas_vals = signed_total_gas_values(signed_runs)
+    proof_vals = signed_protocol_metric_values(signed_runs, "proofGenerationMs")
+    verify_vals = signed_protocol_metric_values(signed_runs, "verificationMs")
+
+    avg_gas = safe_mean(gas_vals)
+    avg_proof_ms = safe_mean(proof_vals)
+    total_verify_ms = sum(verify_vals)
+    throughput = 1000.0 / total_verify_ms if total_verify_ms > 0 else 0.0
+
+    print("\nBenchmark summary by protocol:")
+    print("  SIGNED:")
+    print(f"    avg gas: {avg_gas:.2f}")
+    print(f"    avg proof generation time: {avg_proof_ms:.2f} ms")
+    print(f"    total verification time: {total_verify_ms:.2f} ms")
+    print(f"    throughput: {throughput:.6f} proofs/s")
+
+
+def print_benchmark_summary(zkp_runs: list[dict]) -> None:
+    gas_vals = get_total_gas_values(zkp_runs)
+    proof_vals = protocol_metric_values(zkp_runs, "proofGenerationMs")
+    verify_vals = protocol_metric_values(zkp_runs, "verificationMs")
+
+    print("\nBenchmark summary by protocol:")
+    for protocol in PROTOCOLS:
+        avg_gas = safe_mean(gas_vals[protocol])
+        avg_proof_ms = safe_mean(proof_vals[protocol])
+        total_verify_ms = sum(verify_vals[protocol])
+        throughput = 1000.0 / total_verify_ms if total_verify_ms > 0 else 0.0
+
+        print(f"  {PROTOCOL_LABELS[protocol]}:")
+        print(f"    avg gas: {avg_gas:.2f}")
+        print(f"    avg proof generation time: {avg_proof_ms:.2f} ms")
+        print(f"    total verification time: {total_verify_ms:.2f} ms")
+        print(f"    throughput: {throughput:.6f} proofs/s")
 
 
 def get_gas_values(zkp_runs: list[dict], field: str) -> dict[str, list[int]]:
@@ -315,7 +409,7 @@ def plot_speed_vs_gas(zkp_runs: list[dict], out_dir: Path) -> None:
         x = safe_mean(proof_vals[protocol])
         y = safe_mean(submit_vals[protocol])
         plt.scatter([x], [y], s=130, label=PROTOCOL_LABELS[protocol], color=PROTOCOL_COLORS.get(protocol))
-        plt.text(x + 10, y + 60, PROTOCOL_LABELS[protocol], fontsize=9)
+        plt.text(x + 10, y + 60, PROTOCOL_LABELS[protocol], fontsize=13)
 
     plt.xlabel("Average Proof Generation (ms)")
     plt.ylabel("Average submitComplianceProofGas")
@@ -385,19 +479,22 @@ def plot_nft_purchase_composition(nft_runs: list[dict], out_dir: Path) -> None:
     fig, ax = plt.subplots(figsize=(11, 6))
     bars = ax.bar(range(len(labels)), heights, bottom=starts, color=colors, edgecolor="none", alpha=0.9)
     ax.set_xticks(range(len(labels)))
-    ax.set_xticklabels(labels, rotation=25, ha="right", fontsize=9)
-    fig.subplots_adjust(bottom=0.25)
+    ax.set_xticklabels(labels, rotation=25, ha="right", fontsize=16)
+    fig.subplots_adjust(bottom=0.32, top=0.90)
     ax.set_ylabel("Gas")
     ax.grid(axis="y", linestyle="--", linewidth=0.5, alpha=0.6)
+    max_height = max((start + height) for start, height in zip(starts, heights)) if heights else 0.0
+    if max_height > 0:
+        ax.set_ylim(0, max_height * 1.2)
 
     # Annotate values and totals
     for i, (label, value, kind) in enumerate(steps):
         if kind == "increase":
-            ax.text(i, starts[i] + heights[i] + max(heights) * 0.01, f"+{int(value)}", ha="center", va="bottom", fontsize=8)
+            ax.text(i, starts[i] + heights[i] + max(heights) * 0.01, f"+{int(value)}", ha="center", va="bottom", fontsize=13)
         elif kind == "decrease":
-            ax.text(i, starts[i] + heights[i] + max(heights) * 0.01, f"-{int(value)}", ha="center", va="bottom", fontsize=8)
+            ax.text(i, starts[i] + heights[i] + max(heights) * 0.01, f"-{int(value)}", ha="center", va="bottom", fontsize=13)
         else:  # total
-            ax.text(i, heights[i] + max(heights) * 0.02, f"{int(heights[i])}", ha="center", va="bottom", fontsize=9, fontweight="bold")
+            ax.text(i, heights[i] + max(heights) * 0.03, f"{int(heights[i])}", ha="center", va="bottom", fontsize=15, fontweight="bold")
 
     save_fig(out_dir, "10-nft-purchase-composition.png")
 
@@ -411,6 +508,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate benchmark plots from benchmark JSON files.")
     parser.add_argument("--zkp", default="benchmark-results.json", help="Path to ZKP benchmark JSON")
     parser.add_argument("--nft", default="benchmark-nft-results.json", help="Path to NFT benchmark JSON")
+    parser.add_argument("--signed", default="benchmark-signed-results.json", help="Path to signed credential benchmark JSON")
     parser.add_argument("--out", default="charts", help="Output directory for generated charts")
     return parser.parse_args()
 
@@ -420,6 +518,7 @@ def main() -> None:
 
     zkp_path = Path(args.zkp).resolve()
     nft_path = Path(args.nft).resolve()
+    signed_path = Path(args.signed).resolve()
     out_dir = Path(args.out).resolve()
 
     if not zkp_path.exists():
@@ -429,6 +528,7 @@ def main() -> None:
 
     zkp_payload = load_json(zkp_path)
     nft_payload = load_json(nft_path)
+    signed_payload = load_json(signed_path) if signed_path.exists() else None
 
     zkp_runs = get_runs(zkp_payload)
     nft_runs = get_runs(nft_payload)
@@ -440,6 +540,10 @@ def main() -> None:
 
     plot_time_series(zkp_runs, out_dir)
     plot_grouped_means_with_error(zkp_runs, out_dir)
+    print_benchmark_summary(zkp_runs)
+    if signed_payload is not None:
+        signed_runs = get_runs(signed_payload)
+        print_signed_benchmark_summary(signed_runs)
     plot_gas_grouped(zkp_runs, out_dir)
     plot_speed_vs_gas(zkp_runs, out_dir)
     plot_nft_purchase_composition(nft_runs, out_dir)

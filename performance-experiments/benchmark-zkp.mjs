@@ -9,7 +9,6 @@ const fflonkDir = resolve(perfRoot, "fflonk");
 const grothDir = resolve(perfRoot, "groth16");
 const noirDir = resolve(perfRoot, "noir");
 const halo2Dir = resolve(perfRoot, "halo2", "circuit");
-const risc0Dir = resolve(perfRoot, "RiskZero");
 const nftsDir = resolve(repoRoot, "nfts");
 const localTmpDir = resolve(perfRoot, ".tmp");
 const RUN_COUNT = 1;
@@ -168,22 +167,6 @@ function benchmarkNoirProtocol() {
   );
 
   return { proofGenerationMs, verificationMs };
-}
-
-function benchmarkRiscZeroProtocol() {
-  const proofDir = resolve(risc0Dir, "proofs");
-
-  const timings = benchmarkRustProtocol({
-    name: "RISC0",
-    cwd: risc0Dir,
-    bin: "host",
-    mainFile: "host/src/main.rs",
-  });
-
-  ensureFile(resolve(proofDir, "proof.bench.json"), "RISC0 generated proof");
-  ensureFile(resolve(proofDir, "public.bench.json"), "RISC0 generated public inputs");
-
-  return timings;
 }
 
 function appendUnsupportedGasEntries(gas) {

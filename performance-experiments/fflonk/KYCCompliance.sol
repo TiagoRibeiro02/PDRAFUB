@@ -110,17 +110,15 @@ contract KYCCompliance {
         uint[] memory publicSignals
     ) external onlyAuthorizedIssuer {
         require(bytes(did).length > 0, "DID cannot be empty");
+        require(bytes(kycIssuer).length > 0, "Issuer cannot be empty");
         require(expiryDate > block.timestamp, "Expiry date must be in the future");
         require(publicSignals.length == 5, "Invalid number of public signals");
 
         bytes32 didHash = keccak256(abi.encodePacked(did));
-        require(_didFieldValue(did) == publicSignals[0], "DID does not match proof");
+        require(_parseDecimal(did) == publicSignals[0], "DID does not match proof");
         require(publicSignals[1] == 1, "Proof status must be compliant");
         require(publicSignals[2] == commitment, "Commitment does not match proof");
-        require(
-            publicSignals[3] == uint256(uint160(msg.sender)),
-            "Issuer does not match proof"
-        );
+        require(_parseDecimal(kycIssuer) == publicSignals[3], "Issuer does not match proof");
         require(publicSignals[4] == expiryDate, "Expiry does not match proof");
 
         bool isValid = verifier.verifyProof(proof, publicSignals);
@@ -189,7 +187,17 @@ contract KYCCompliance {
         emit ComplianceVerified(didHash, did, false, 0, block.timestamp, 0);
     }
 
-    function _didFieldValue(string memory did) private pure returns (uint256) {
-        return uint256(keccak256(abi.encodePacked(did))) % SNARK_FIELD_MODULUS;
+    function _parseDecimal(string memory value) private pure returns (uint256 result) {
+        bytes memory data = bytes(value);
+        require(data.length > 0, "Numeric value cannot be empty");
+
+        for (uint256 i = 0; i < data.length; i++) {
+            require(data[i] >= 0x30 && data[i] <= 0x39, "Value must be decimal");
+            uint256 digit = uint256(uint8(data[i]) - 0x30);
+            require(result <= (type(uint256).max - digit) / 10, "Decimal value overflow");
+            result = result * 10 + digit;
+        }
+
+        require(result < SNARK_FIELD_MODULUS, "Value exceeds SNARK field");
     }
 }

@@ -6,6 +6,9 @@ interface IProofVerifier {
 }
 
 contract KYCCompliance {
+    uint256 private constant SNARK_FIELD_MODULUS =
+        21888242871839275222246405745257275088548364400416034343698204186575808495617;
+
     IProofVerifier public verifier;
     address public admin;
     address public issuer;
@@ -18,7 +21,7 @@ contract KYCCompliance {
         uint256 timestamp;
         uint256 expiryDate;
         bytes32 pkX;
-        string commitment;
+        uint256 commitment;
         string kycIssuer;
     }
 
@@ -28,7 +31,7 @@ contract KYCCompliance {
         bytes32 indexed didHash,
         string did,
         bool isCompliant,
-        string commitment,
+        uint256 commitment,
         uint256 timestamp,
         uint256 expiryDate
     );
@@ -98,7 +101,7 @@ contract KYCCompliance {
 
     function submitComplianceProof(
         string memory did,
-        string memory commitment,
+        uint256 commitment,
         string memory kycIssuer,
         uint256 expiryDate,
         bytes32 pkX,
@@ -108,11 +111,20 @@ contract KYCCompliance {
     ) external onlyAuthorizedIssuer {
         require(bytes(did).length > 0, "DID cannot be empty");
         require(expiryDate > block.timestamp, "Expiry date must be in the future");
+        require(publicSignals.length == 5, "Invalid number of public signals");
+
+        bytes32 didHash = keccak256(abi.encodePacked(did));
+        require(_didFieldValue(did) == publicSignals[0], "DID does not match proof");
+        require(publicSignals[1] == 1, "Proof status must be compliant");
+        require(publicSignals[2] == commitment, "Commitment does not match proof");
+        require(
+            publicSignals[3] == uint256(uint160(msg.sender)),
+            "Issuer does not match proof"
+        );
+        require(publicSignals[4] == expiryDate, "Expiry does not match proof");
 
         bool isValid = verifier.verifyProof(proof, publicSignals);
         require(isValid, "Invalid zero-knowledge proof");
-
-        bytes32 didHash = keccak256(abi.encodePacked(did));
 
         complianceStatuses[didHash] = ComplianceStatus({
             isCompliant: true,
@@ -135,13 +147,13 @@ contract KYCCompliance {
     function checkCompliance(string memory did)
         external
         view
-        returns (bool isCompliant, uint256 timestamp, uint256 expiryDate, string memory commitment, string memory kycIssuer)
+        returns (bool isCompliant, uint256 timestamp, uint256 expiryDate, uint256 commitment, string memory kycIssuer)
     {
         bytes32 didHash = keccak256(abi.encodePacked(did));
         ComplianceStatus memory status = complianceStatuses[didHash];
 
         if (!status.exists) {
-            return (false, 0, 0, "", "");
+            return (false, 0, 0, 0, "");
         }
 
         return (status.isCompliant, status.timestamp, status.expiryDate, status.commitment, status.kycIssuer);
@@ -174,6 +186,10 @@ contract KYCCompliance {
 
         delete complianceStatuses[didHash];
 
-        emit ComplianceVerified(didHash, did, false, "", block.timestamp, 0);
+        emit ComplianceVerified(didHash, did, false, 0, block.timestamp, 0);
+    }
+
+    function _didFieldValue(string memory did) private pure returns (uint256) {
+        return uint256(keccak256(abi.encodePacked(did))) % SNARK_FIELD_MODULUS;
     }
 }

@@ -17,7 +17,7 @@ contract Groth16VerifierAdapter {
         view
         returns (bool)
     {
-        require(pubSignals.length == 3, "Invalid number of public signals");
+        require(pubSignals.length == 5, "Invalid number of public signals");
         require(proof.length == 256, "Invalid proof length");
 
         uint256[8] memory words;
@@ -32,7 +32,7 @@ contract Groth16VerifierAdapter {
         uint256[2] memory pA;
         uint256[2][2] memory pB;
         uint256[2] memory pC;
-        uint256[3] memory pSignals;
+        uint256[5] memory pSignals;
 
         pA[0] = words[0];
         pA[1] = words[1];
@@ -45,9 +45,9 @@ contract Groth16VerifierAdapter {
         pC[0] = words[6];
         pC[1] = words[7];
 
-        pSignals[0] = pubSignals[0];
-        pSignals[1] = pubSignals[1];
-        pSignals[2] = pubSignals[2];
+        for (uint256 i = 0; i < 5; i++) {
+            pSignals[i] = pubSignals[i];
+        }
 
         return grothVerifier.verifyProof(pA, pB, pC, pSignals);
     }

@@ -581,7 +581,7 @@ async function benchmarkProtocol({
   kycArtifact,
   proofHex,
   publicSignals,
-  expectedPublicSignals = 3,
+  expectedPublicSignals = 5,
   bindComplianceSignals = false,
   chainId,
   networkName,
@@ -652,19 +652,40 @@ async function benchmarkProtocol({
 
 function readNoirProofAndPublicInputs(noirDir) {
   // Use bb prove outputs so proof and public inputs are guaranteed to be paired.
-  const proofBinary = fs.readFileSync(path.join(noirDir, "target", "proof.bench", "proof"));
+  const proofBinary = fs.readFileSync(
+    path.join(noirDir, "target", "proof")
+  );
   const proofHex = "0x" + proofBinary.toString("hex");
 
   const publicInputsBinary = fs.readFileSync(
-    path.join(noirDir, "target", "proof.bench", "public_inputs")
+    path.join(noirDir, "target", "public_inputs")
   );
+
+  // Current Noir KYC circuit has 5 public inputs:
+  // DID, status, commitment, issuer, expiry.
+  const NUM_PUBLIC_INPUTS = 5;
+  const FIELD_SIZE = 32;
+
+  if (publicInputsBinary.length !== NUM_PUBLIC_INPUTS * FIELD_SIZE) {
+    throw new Error(
+      `Unexpected Noir public_inputs size: ` +
+      `${publicInputsBinary.length} bytes. ` +
+      `Expected ${NUM_PUBLIC_INPUTS * FIELD_SIZE} bytes.`
+    );
+  }
 
   // bb writes field elements as 32-byte big-endian values.
   const publicSignals = [];
-  for (let i = 0; i < 3; i++) {
-    const fieldBytes = publicInputsBinary.slice(i * 32, (i + 1) * 32);
-    const fieldHex = fieldBytes.toString("hex") || "0";
+
+  for (let i = 0; i < NUM_PUBLIC_INPUTS; i++) {
+    const fieldBytes = publicInputsBinary.slice(
+      i * FIELD_SIZE,
+      (i + 1) * FIELD_SIZE
+    );
+
+    const fieldHex = fieldBytes.toString("hex");
     const fieldValue = BigInt(`0x${fieldHex}`);
+
     publicSignals.push(fieldValue.toString());
   }
 
@@ -684,8 +705,8 @@ async function main() {
     return fallback;
   };
 
-  const plonkProofFile = chooseExisting(plonkDir, "proof.bench.json", "proof2.json");
-  const plonkPublicFile = chooseExisting(plonkDir, "public.bench.json", "public2.json");
+  const plonkProofFile = chooseExisting(plonkDir, "proof.bench.json", "proof.json");
+  const plonkPublicFile = chooseExisting(plonkDir, "public.bench.json", "public.json");
   const fflonkProofFile = chooseExisting(fflonkDir, "proof.bench.json", "proof.json");
   const fflonkPublicFile = chooseExisting(fflonkDir, "public.bench.json", "public.json");
   const grothProofFile = chooseExisting(grothDir, "proof.bench.json", "proof.json");

@@ -125,6 +125,7 @@ function benchmarkRustProtocol({ name, cwd, bin, mainFile = "src/main.rs" }) {
 function benchmarkNoirProtocol() {
   const proofPath = resolve(noirDir, "target", "proof");
   const publicInputsPath = resolve(noirDir, "target", "public_inputs");
+  const vkPath = resolve(noirDir, "target", "vk", "vk");
 
   ensureFile(
     resolve(noirDir, "target", "kyc_circuit.json"),
@@ -136,6 +137,11 @@ function benchmarkNoirProtocol() {
     "NOIR witness"
   );
 
+  ensureFile(
+    vkPath,
+    "NOIR verification key"
+  );
+
   const proofGenerationMs = runWithTimer(
     "bb",
     [
@@ -144,9 +150,12 @@ function benchmarkNoirProtocol() {
       "./target/kyc_circuit.json",
       "-w",
       "./target/kyc_circuit.gz",
-      "--write_vk",
+      "-k",
+      "./target/vk/vk",
       "-o",
       "./target",
+      "-t",
+      "evm",
     ],
     noirDir
   );
@@ -161,12 +170,17 @@ function benchmarkNoirProtocol() {
       "-p",
       "./target/proof",
       "-k",
-      "./target/vk",
+      "./target/vk/vk",
+      "-t",
+      "evm",
     ],
     noirDir
   );
 
-  return { proofGenerationMs, verificationMs };
+  return {
+    proofGenerationMs,
+    verificationMs,
+  };
 }
 
 function appendUnsupportedGasEntries(gas) {
@@ -395,14 +409,14 @@ function benchmarkOneRun() {
       cwd: plonkDir,
       requiredFiles: [
         { path: "circuit_final.zkey", label: "zkey" },
-        { path: "witness.test.wtns", label: "witness" },
+        { path: "witness.wtns", label: "witness" },
         { path: "verification_key.json", label: "verification key" },
       ],
       proveArgs: [
         "plonk",
         "prove",
         "circuit_final.zkey",
-        "witness.test.wtns",
+        "witness.wtns",
         "proof.bench.json",
         "public.bench.json",
       ],
@@ -421,15 +435,15 @@ function benchmarkOneRun() {
       name: "FFLONK",
       cwd: fflonkDir,
       requiredFiles: [
-        { path: "circuit_final.zkey", label: "zkey" },
-        { path: "witness.test.wtns", label: "witness" },
+        { path: "circuit.zkey", label: "zkey" },
+        { path: "witness.wtns", label: "witness" },
         { path: "verification_key.json", label: "verification key" },
       ],
       proveArgs: [
         "fflonk",
         "prove",
-        "circuit_final.zkey",
-        "witness.test.wtns",
+        "circuit.zkey",
+        "witness.wtns",
         "proof.bench.json",
         "public.bench.json",
       ],
@@ -449,14 +463,14 @@ function benchmarkOneRun() {
       cwd: grothDir,
       requiredFiles: [
         { path: "circuit_final.zkey", label: "zkey" },
-        { path: "witness.test.wtns", label: "witness" },
+        { path: "witness.wtns", label: "witness" },
         { path: "verification_key.json", label: "verification key" },
       ],
       proveArgs: [
         "groth16",
         "prove",
         "circuit_final.zkey",
-        "witness.test.wtns",
+        "witness.wtns",
         "proof.bench.json",
         "public.bench.json",
       ],

@@ -3,10 +3,9 @@ const { ethers } = hre;
 const fs = require("fs");
 const path = require("path");
 const { execFileSync } = require("child_process");
-const crypto = require("crypto");
 const solc = require("solc");
 
-const DEPLOYMENTS_CACHE_VERSION = 2;
+const DEPLOYMENTS_CACHE_VERSION = 3;
 
 function loadDeploymentsCache(cachePath) {
   if (!fs.existsSync(cachePath)) {
@@ -34,30 +33,6 @@ function loadDeploymentsCache(cachePath) {
 function saveDeploymentsCache(cachePath, cache) {
   fs.mkdirSync(path.dirname(cachePath), { recursive: true });
   fs.writeFileSync(cachePath, JSON.stringify(cache, null, 2));
-}
-
-function resolveRisc0VerifierAddress() {
-  const fromEnv = process.env.RISC0_VERIFIER_ADDRESS;
-  if (fromEnv && ethers.isAddress(fromEnv)) {
-    return fromEnv;
-  }
-
-  const deploymentPath = path.join(__dirname, "..", "artifacts", "risc0-verifier-deployment.json");
-  if (!fs.existsSync(deploymentPath)) {
-    return null;
-  }
-
-  try {
-    const parsed = JSON.parse(fs.readFileSync(deploymentPath, "utf8"));
-    const fromDeployment = parsed?.verifier;
-    if (typeof fromDeployment === "string" && ethers.isAddress(fromDeployment)) {
-      return fromDeployment;
-    }
-  } catch {
-    // Ignore malformed deployment file and surface a unified error to caller.
-  }
-
-  return null;
 }
 
 function buildDeploymentKey(chainId, protocolName) {
@@ -422,7 +397,7 @@ function normalizePublicSignals(publicNode) {
     return null;
   }
 
-  if (publicSignals.length !== 3) {
+  if (publicSignals.length !== 5) {
     return null;
   }
   return publicSignals;
@@ -456,7 +431,7 @@ function parseByRegexFallback(text) {
   const publicSignals = (lastArray.match(/"(\d+)"|\b\d+\b/g) || [])
     .map((token) => token.replaceAll('"', ""));
 
-  if (publicSignals.length !== 3) {
+  if (publicSignals.length !== 5) {
     return null;
   }
 
@@ -499,7 +474,7 @@ function readGrothProofAndSignals(protocolDir, publicFile, proofFile) {
   const cTokens = readTokens(arrays[2]);
   const signalTokens = readTokens(arrays[3]);
 
-  if (aTokens.length < 2 || bTokens.length < 4 || cTokens.length < 2 || signalTokens.length < 3) {
+  if (aTokens.length < 2 || bTokens.length < 4 || cTokens.length < 2 || signalTokens.length < 5) {
     throw new Error(`GROTH16: could not parse calldata arrays: ${output.trim()}`);
   }
 
@@ -515,7 +490,7 @@ function readGrothProofAndSignals(protocolDir, publicFile, proofFile) {
   ].map(toPaddedHexWord);
 
   const proofHex = `0x${proofWords.join("")}`;
-  const publicSignals = signalTokens.slice(0, 3).map((x) => BigInt(x).toString());
+  const publicSignals = signalTokens.slice(0, 5).map((x) => BigInt(x).toString());
 
   return { proofHex, publicSignals };
 }
@@ -606,15 +581,17 @@ async function benchmarkProtocol({
   kycArtifact,
   proofHex,
   publicSignals,
+  expectedPublicSignals = 3,
+  bindComplianceSignals = false,
   chainId,
   networkName,
   forceRedeploy,
   cache,
   cachePath,
 }) {
-  if (!Array.isArray(publicSignals) || publicSignals.length !== 3) {
+  if (!Array.isArray(publicSignals) || publicSignals.length !== expectedPublicSignals) {
     throw new Error(
-      `${protocolName}: expected exactly 3 public signals, got ${JSON.stringify(publicSignals)}`
+      `${protocolName}: expected exactly ${expectedPublicSignals} public signals, got ${JSON.stringify(publicSignals)}`
     );
   }
 
@@ -638,14 +615,21 @@ async function benchmarkProtocol({
   const verifyEnd = process.hrtime.bigint();
   const verificationMs = Number((Number(verifyEnd - verifyStart) / 1_000_000).toFixed(2));
 
-  const did = `did:zeroid:${protocolName.toLowerCase()}-bench`;
   const commitment = publicSignals[2].toString();
-  const expiryDate = Math.floor(Date.now() / 1000) + 86400;
+  const did = bindComplianceSignals
+    ? publicSignals[0].toString()
+    : `did:zeroid:${protocolName.toLowerCase()}-bench`;
+  const kycIssuer = bindComplianceSignals
+    ? publicSignals[3].toString()
+    : "did:zeroid:issuer-benchmark";
+  const expiryDate = bindComplianceSignals
+    ? BigInt(publicSignals[4])
+    : BigInt(Math.floor(Date.now() / 1000) + 86400);
 
   const txKyc = await kyc.submitComplianceProof(
     did,
     commitment,
-    "did:zeroid:issuer-benchmark",
+    kycIssuer,
     expiryDate,
     ethers.ZeroHash,
     false,
@@ -687,155 +671,6 @@ function readNoirProofAndPublicInputs(noirDir) {
   return { proofHex, publicSignals };
 }
 
-function toBytes32FromWordsLE(words) {
-  if (!Array.isArray(words) || words.length !== 8) {
-    throw new Error(`RISC0: imageId must contain exactly 8 words, got ${JSON.stringify(words)}`);
-  }
-
-  const bytes = Buffer.alloc(32);
-  for (let i = 0; i < 8; i++) {
-    const v = Number(words[i]);
-    if (!Number.isInteger(v) || v < 0 || v > 0xffffffff) {
-      throw new Error(`RISC0: invalid imageId word at index ${i}: ${words[i]}`);
-    }
-    bytes.writeUInt32LE(v, i * 4);
-  }
-  return `0x${bytes.toString("hex")}`;
-}
-
-function toBytes32FromWordsBE(words) {
-  if (!Array.isArray(words) || words.length !== 8) {
-    throw new Error(`RISC0: imageId must contain exactly 8 words, got ${JSON.stringify(words)}`);
-  }
-
-  const bytes = Buffer.alloc(32);
-  for (let i = 0; i < 8; i++) {
-    const v = Number(words[i]);
-    if (!Number.isInteger(v) || v < 0 || v > 0xffffffff) {
-      throw new Error(`RISC0: invalid imageId word at index ${i}: ${words[i]}`);
-    }
-    bytes.writeUInt32BE(v, i * 4);
-  }
-  return `0x${bytes.toString("hex")}`;
-}
-
-function sealWordsToBytesHex(words) {
-  if (!Array.isArray(words) || words.length === 0) {
-    throw new Error("RISC0: missing seal words array");
-  }
-
-  const bytes = Buffer.alloc(words.length * 4);
-  for (let i = 0; i < words.length; i++) {
-    const v = Number(words[i]);
-    if (!Number.isInteger(v) || v < 0 || v > 0xffffffff) {
-      throw new Error(`RISC0: invalid seal word at index ${i}: ${words[i]}`);
-    }
-    bytes.writeUInt32LE(v, i * 4);
-  }
-  return `0x${bytes.toString("hex")}`;
-}
-
-function parseImageIdWords(imageIdValue) {
-  if (Array.isArray(imageIdValue)) {
-    return imageIdValue;
-  }
-
-  if (typeof imageIdValue === "string") {
-    return JSON.parse(imageIdValue);
-  }
-
-  throw new Error(`RISC0: unsupported imageId format: ${JSON.stringify(imageIdValue)}`);
-}
-
-function readRisc0ProofAndSignals(risc0Dir) {
-  const proofPath = path.join(risc0Dir, "proofs", "proof.bench.json");
-  const publicPath = path.join(risc0Dir, "proofs", "public.bench.json");
-
-  if (!fs.existsSync(proofPath) || !fs.existsSync(publicPath)) {
-    throw new Error(
-      `RISC0: missing proof artifacts. Expected ${proofPath} and ${publicPath}. Run RiskZero host benchmark first.`
-    );
-  }
-
-  const proofJson = JSON.parse(fs.readFileSync(proofPath, "utf8"));
-  const publicJson = JSON.parse(fs.readFileSync(publicPath, "utf8"));
-
-  let sealHex = proofJson?.sealHex;
-  if (typeof sealHex !== "string" || !sealHex.startsWith("0x")) {
-    const sealWords = proofJson?.inner?.Composite?.segments?.[0]?.seal;
-    sealHex = sealWordsToBytesHex(sealWords);
-  }
-
-  const imageIdWords = parseImageIdWords(publicJson.imageIdWords ?? publicJson.imageId);
-
-  const journalHex = publicJson.journalBytesHex;
-  if (typeof journalHex !== "string" || !journalHex.startsWith("0x")) {
-    throw new Error(`RISC0: invalid journalBytesHex in ${publicPath}`);
-  }
-
-  const journalDigestHex = `0x${crypto
-    .createHash("sha256")
-    .update(Buffer.from(journalHex.slice(2), "hex"))
-    .digest("hex")}`;
-
-  const outputSignal = BigInt(publicJson.output ?? 0).toString();
-  const okSignal = "1";
-  const commitmentSignal = BigInt(publicJson.sealSize ?? 0).toString();
-  const publicSignals = [outputSignal, okSignal, commitmentSignal];
-
-  return { sealHex, imageIdWords, journalDigestHex, publicSignals };
-}
-
-async function resolveRisc0ProofHex(verifierAddress, proofData) {
-  const verifier = new ethers.Contract(
-    verifierAddress,
-    [
-      "function verify(bytes calldata seal, bytes32 imageId, bytes32 journalDigest) external view",
-      "function SELECTOR() external view returns (bytes4)",
-    ],
-    ethers.provider
-  );
-
-  const imageIdLE = toBytes32FromWordsLE(proofData.imageIdWords);
-  const imageIdBE = toBytes32FromWordsBE(proofData.imageIdWords);
-  const coder = ethers.AbiCoder.defaultAbiCoder();
-
-  const candidates = [
-    { endian: "LE", imageId: imageIdLE, seal: proofData.sealHex, sealForm: "raw" },
-    { endian: "BE", imageId: imageIdBE, seal: proofData.sealHex, sealForm: "raw" },
-  ];
-
-  try {
-    const selector = await verifier.SELECTOR();
-    const selectorHex = selector.toLowerCase().replace(/^0x/, "");
-    const rawHex = proofData.sealHex.toLowerCase().replace(/^0x/, "");
-    if (rawHex.length === 512) {
-      const prefixedSeal = `0x${selectorHex}${rawHex}`;
-      candidates.push({ endian: "LE", imageId: imageIdLE, seal: prefixedSeal, sealForm: "selector+raw" });
-      candidates.push({ endian: "BE", imageId: imageIdBE, seal: prefixedSeal, sealForm: "selector+raw" });
-    }
-  } catch {
-    // Not all verifier contracts expose SELECTOR(); keep raw candidates only.
-  }
-
-  for (const candidate of candidates) {
-    try {
-      await verifier.verify(candidate.seal, candidate.imageId, proofData.journalDigestHex);
-      console.log(
-        `RISC0: verifier accepted imageId encoding ${candidate.endian} with ${candidate.sealForm} seal.`
-      );
-      return coder.encode(
-        ["bytes", "bytes32", "bytes32"],
-        [candidate.seal, candidate.imageId, proofData.journalDigestHex]
-      );
-    } catch {
-      // Try next candidate.
-    }
-  }
-
-  throw new Error("RISC0: verifier rejected all candidate encodings (LE/BE, raw/prefixed seal).");
-}
-
 async function main() {
   const root = path.resolve(__dirname, "../../");
   const perfRoot = path.join(root, "performance-experiments");
@@ -843,9 +678,6 @@ async function main() {
   const fflonkDir = path.join(perfRoot, "fflonk");
   const grothDir = path.join(perfRoot, "groth16");
   const noirDir = path.join(perfRoot, "noir");
-  const risc0Dir = path.join(perfRoot, "RiskZero");
-  const skipRisc0 = process.env.ZKP_SKIP_RISC0 === "1";
-
   const chooseExisting = (dir, preferred, fallback) => {
     const preferredPath = path.join(dir, preferred);
     if (fs.existsSync(preferredPath)) return preferred;
@@ -863,10 +695,10 @@ async function main() {
   const grothCalldata = readGrothProofAndSignals(grothDir, grothPublicFile, grothProofFile);
 
   const plonkSources = {
-    "Verifier.sol": fs.readFileSync(path.join(plonkDir, "Verifier.sol"), "utf8"),
+    "verifier.sol": fs.readFileSync(path.join(plonkDir, "verifier.sol"), "utf8"),
     "PlonkVerifierAdapter.sol": fs
       .readFileSync(path.join(plonkDir, "PlonkVerifierAdapter.sol"), "utf8")
-      .replace('./Verifier.sol', 'Verifier.sol'),
+      .replace('./Verifier.sol', 'verifier.sol'),
     "KYCCompliance.sol": fs.readFileSync(path.join(plonkDir, "KYCCompliance.sol"), "utf8"),
   };
 
@@ -892,20 +724,6 @@ async function main() {
       .readFileSync(path.join(noirDir, "target", "NoirVerifierAdapter.sol"), "utf8"),
     "KYCCompliance.sol": fs.readFileSync(path.join(noirDir, "target", "KYCCompliance.sol"), "utf8"),
   };
-
-  const risc0Sources = skipRisc0
-    ? null
-    : {
-        "Risc0VerifierAdapter.sol": fs.readFileSync(
-          path.join(root, "nfts", "contracts", "Risc0VerifierAdapter.sol"),
-          "utf8"
-        ),
-        "KYCCompliance.sol": fs.readFileSync(
-          path.join(root, "nfts", "contracts", "KYCCompliance.sol"),
-          "utf8"
-        ),
-      };
-
 
   const plonkAdapterArtifact = compileFromSources(
     plonkSources,
@@ -936,13 +754,6 @@ async function main() {
   const noirVerifierArtifact = compileFromSources(noirSources, "Verifier.sol", "HonkVerifier");
   const noirKycArtifact = compileFromSources(noirSources, "KYCCompliance.sol", "KYCCompliance");
 
-  const risc0AdapterArtifact = skipRisc0
-    ? null
-    : compileFromSources(risc0Sources, "Risc0VerifierAdapter.sol", "Risc0VerifierAdapter");
-  const risc0KycArtifact = skipRisc0
-    ? null
-    : compileFromSources(risc0Sources, "KYCCompliance.sol", "KYCCompliance");
-
   const [signer] = await ethers.getSigners();
   const network = await ethers.provider.getNetwork();
   const chainId = Number(network.chainId);
@@ -954,13 +765,6 @@ async function main() {
   const noirVerifier = await deployFromCompiled(noirVerifierArtifact, signer);
   const noirVerifierAddress = await noirVerifier.getAddress();
 
-  const risc0VerifierAddress = skipRisc0 ? null : resolveRisc0VerifierAddress();
-  if (!skipRisc0 && !risc0VerifierAddress) {
-    throw new Error(
-      "Missing RISC0 verifier address. Set RISC0_VERIFIER_ADDRESS or run deploy:risc0-verifier to generate artifacts/risc0-verifier-deployment.json."
-    );
-  }
-
   const plonkResult = await benchmarkProtocol({
     signer,
     protocolName: "PLONK",
@@ -968,6 +772,8 @@ async function main() {
     kycArtifact: plonkKycArtifact,
     proofHex: plonkCalldata.proofHex,
     publicSignals: plonkCalldata.publicSignals,
+    expectedPublicSignals: 5,
+    bindComplianceSignals: true,
     chainId,
     networkName,
     forceRedeploy,
@@ -982,6 +788,8 @@ async function main() {
     kycArtifact: fflonkKycArtifact,
     proofHex: fflonkCalldata.proofHex,
     publicSignals: fflonkCalldata.publicSignals,
+    expectedPublicSignals: 5,
+    bindComplianceSignals: true,
     chainId,
     networkName,
     forceRedeploy,
@@ -996,6 +804,8 @@ async function main() {
     kycArtifact: grothKycArtifact,
     proofHex: grothCalldata.proofHex,
     publicSignals: grothCalldata.publicSignals,
+    expectedPublicSignals: 5,
+    bindComplianceSignals: true,
     chainId,
     networkName,
     forceRedeploy,
@@ -1035,28 +845,6 @@ async function main() {
       { protocol: "NOIR", verificationMs: noirResult.verificationMs },
     ],
   };
-
-  if (!skipRisc0) {
-    const risc0ProofData = readRisc0ProofAndSignals(risc0Dir);
-    const risc0ProofHex = await resolveRisc0ProofHex(risc0VerifierAddress, risc0ProofData);
-    const risc0Result = await benchmarkProtocol({
-      signer,
-      protocolName: "RISC0",
-      adapterArtifact: risc0AdapterArtifact,
-      adapterDeployArgs: [risc0VerifierAddress],
-      kycArtifact: risc0KycArtifact,
-      proofHex: risc0ProofHex,
-      publicSignals: risc0ProofData.publicSignals,
-      chainId,
-      networkName,
-      forceRedeploy,
-      cache,
-      cachePath,
-    });
-
-    results.push(risc0Result.gasResult);
-    timings.results.push({ protocol: "RISC0", verificationMs: risc0Result.verificationMs });
-  }
 
   const output = {
     generatedAt: new Date().toISOString(),

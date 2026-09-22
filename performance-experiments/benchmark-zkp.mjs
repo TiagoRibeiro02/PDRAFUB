@@ -263,10 +263,7 @@ function runGasBenchmark() {
   const output = execFileSync("npm", ["run", "benchmark:zkp:local"], {
     cwd: nftsDir,
     encoding: "utf8",
-    env: {
-      ...process.env,
-      ZKP_SKIP_RISC0: "1",
-    },
+    env: process.env,
   });
 
   const marker = "BENCHMARK_GAS_JSON=";

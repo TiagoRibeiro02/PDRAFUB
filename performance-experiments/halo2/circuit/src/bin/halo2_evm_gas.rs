@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 use halo2_base::utils::fs::gen_srs;
 use snark_verifier_sdk::evm::{encode_calldata, gen_evm_proof_shplonk, gen_evm_verifier_sol_code};
 use halo2_base::halo2_proofs::{
@@ -12,7 +14,7 @@ use std::path::Path;
 
 #[derive(Clone, Debug)]
 struct ComplianceConfig {
-    advice: [Column<Advice>; 4],
+    advice: [Column<Advice>; 10],
     instance: Column<Instance>,
     s_row: Selector,
 }
@@ -21,15 +23,38 @@ struct ComplianceConfig {
 struct ComplianceEvmCircuit {
     did: Fr,
     status: Fr,
+    issuer: Fr,
+    expiry: Fr,
+    age: Fr,
+    pep_status: Fr,
+    sanctions_status: Fr,
+    risk_level: Fr,
     r: Fr,
     commitment: Fr,
 }
 
 impl ComplianceEvmCircuit {
-    fn with_values(did: Fr, status: Fr, r: Fr, commitment: Fr) -> Self {
+    fn with_values(
+        did: Fr,
+        status: Fr,
+        issuer: Fr,
+        expiry: Fr,
+        age: Fr,
+        pep_status: Fr,
+        sanctions_status: Fr,
+        risk_level: Fr,
+        r: Fr,
+        commitment: Fr,
+    ) -> Self {
         Self {
             did,
             status,
+            issuer,
+            expiry,
+            age,
+            pep_status,
+            sanctions_status,
+            risk_level,
             r,
             commitment,
         }
@@ -45,18 +70,23 @@ impl Circuit<Fr> for ComplianceEvmCircuit {
         Self {
             did: Fr::from(0),
             status: Fr::from(0),
+            issuer: Fr::from(0),
+            expiry: Fr::from(0),
+            age: Fr::from(0),
+            pep_status: Fr::from(0),
+            sanctions_status: Fr::from(0),
+            risk_level: Fr::from(0),
             r: Fr::from(0),
             commitment: Fr::from(0),
         }
     }
 
     fn configure(meta: &mut ConstraintSystem<Fr>) -> Self::Config {
-        let advice = [
-            meta.advice_column(),
-            meta.advice_column(),
-            meta.advice_column(),
-            meta.advice_column(),
-        ];
+        let advice: [Column<Advice>; 10] = (0..10)
+            .map(|_| meta.advice_column())
+            .collect::<Vec<_>>()
+            .try_into()
+            .expect("advice width");
         let instance = meta.instance_column();
         let s_row = meta.selector();
 
@@ -65,19 +95,26 @@ impl Circuit<Fr> for ComplianceEvmCircuit {
         }
         meta.enable_equality(instance);
 
-        // Enforce:
-        // 1) status == 1
-        // 2) did + status + r - commitment == 0
+        // The BN254 EVM backend currently uses an additive commitment.
         meta.create_gate("compliance constraints", |meta| {
             let s = meta.query_selector(s_row);
             let did = meta.query_advice(advice[0], Rotation::cur());
             let status = meta.query_advice(advice[1], Rotation::cur());
-            let r = meta.query_advice(advice[2], Rotation::cur());
-            let commitment = meta.query_advice(advice[3], Rotation::cur());
+            let issuer = meta.query_advice(advice[2], Rotation::cur());
+            let expiry = meta.query_advice(advice[3], Rotation::cur());
+            let age = meta.query_advice(advice[4], Rotation::cur());
+            let pep_status = meta.query_advice(advice[5], Rotation::cur());
+            let sanctions_status = meta.query_advice(advice[6], Rotation::cur());
+            let risk_level = meta.query_advice(advice[7], Rotation::cur());
+            let r = meta.query_advice(advice[8], Rotation::cur());
+            let commitment = meta.query_advice(advice[9], Rotation::cur());
 
             vec![
                 s.clone() * (status.clone() - Expression::Constant(Fr::from(1))),
-                s * (did + status + r - commitment),
+                s.clone() * pep_status.clone(),
+                s.clone() * sanctions_status.clone(),
+                s * (did + status + issuer + expiry + age + pep_status + sanctions_status + risk_level + r
+                    - commitment),
             ]
         });
 
@@ -93,7 +130,7 @@ impl Circuit<Fr> for ComplianceEvmCircuit {
         config: Self::Config,
         mut layouter: impl Layouter<Fr>,
     ) -> Result<(), Error> {
-        let (did_cell, status_cell, commitment_cell) = layouter.assign_region(
+        let (did_cell, status_cell, issuer_cell, expiry_cell, commitment_cell) = layouter.assign_region(
             || "assign compliance row",
             |mut region| {
                 config.s_row.enable(&mut region, 0)?;
@@ -101,31 +138,41 @@ impl Circuit<Fr> for ComplianceEvmCircuit {
                 let did_cell = region.assign_advice(config.advice[0], 0, Value::known(self.did));
                 let status_cell =
                     region.assign_advice(config.advice[1], 0, Value::known(self.status));
-                region.assign_advice(config.advice[2], 0, Value::known(self.r));
+                let issuer_cell =
+                    region.assign_advice(config.advice[2], 0, Value::known(self.issuer));
+                let expiry_cell =
+                    region.assign_advice(config.advice[3], 0, Value::known(self.expiry));
+                region.assign_advice(config.advice[4], 0, Value::known(self.age));
+                region.assign_advice(config.advice[5], 0, Value::known(self.pep_status));
+                region.assign_advice(config.advice[6], 0, Value::known(self.sanctions_status));
+                region.assign_advice(config.advice[7], 0, Value::known(self.risk_level));
+                region.assign_advice(config.advice[8], 0, Value::known(self.r));
                 let commitment_cell = region.assign_advice(
-                    config.advice[3],
+                    config.advice[9],
                     0,
                     Value::known(self.commitment),
                 );
 
-                Ok((did_cell, status_cell, commitment_cell))
+                Ok((did_cell, status_cell, issuer_cell, expiry_cell, commitment_cell))
             },
         )?;
 
         layouter.constrain_instance(did_cell.cell(), config.instance, 0);
         layouter.constrain_instance(status_cell.cell(), config.instance, 1);
         layouter.constrain_instance(commitment_cell.cell(), config.instance, 2);
+        layouter.constrain_instance(issuer_cell.cell(), config.instance, 3);
+        layouter.constrain_instance(expiry_cell.cell(), config.instance, 4);
         Ok(())
     }
 }
 
 impl CircuitExt<Fr> for ComplianceEvmCircuit {
     fn num_instance(&self) -> Vec<usize> {
-        vec![3]
+        vec![5]
     }
 
     fn instances(&self) -> Vec<Vec<Fr>> {
-        vec![vec![self.did, self.status, self.commitment]]
+        vec![vec![self.did, self.status, self.commitment, self.issuer, self.expiry]]
     }
 }
 
@@ -134,15 +181,46 @@ fn main() {
 
     let did_u64 = 12_345u64;
     let status_u64 = 1u64;
+    let issuer_u64 = 111u64;
+    let expiry_u64 = 1_893_456_000u64;
+    let age_u64 = 25u64;
+    let pep_status_u64 = 0u64;
+    let sanctions_status_u64 = 0u64;
+    let risk_level_u64 = 50u64;
     let r_u64 = 6_789u64;
-    let commitment_u64 = did_u64 + status_u64 + r_u64;
+    let commitment_u64 = did_u64
+        + status_u64
+        + issuer_u64
+        + expiry_u64
+        + age_u64
+        + pep_status_u64
+        + sanctions_status_u64
+        + risk_level_u64
+        + r_u64;
 
     let did = Fr::from(did_u64);
     let status = Fr::from(status_u64);
+    let issuer = Fr::from(issuer_u64);
+    let expiry = Fr::from(expiry_u64);
+    let age = Fr::from(age_u64);
+    let pep_status = Fr::from(pep_status_u64);
+    let sanctions_status = Fr::from(sanctions_status_u64);
+    let risk_level = Fr::from(risk_level_u64);
     let r = Fr::from(r_u64);
     let commitment = Fr::from(commitment_u64);
 
-    let circuit = ComplianceEvmCircuit::with_values(did, status, r, commitment);
+    let circuit = ComplianceEvmCircuit::with_values(
+        did,
+        status,
+        issuer,
+        expiry,
+        age,
+        pep_status,
+        sanctions_status,
+        risk_level,
+        r,
+        commitment,
+    );
     let instances = circuit.instances();
 
     // Keep k modest so benchmark runs in practical time.
@@ -153,7 +231,7 @@ fn main() {
     let verifier_sol = gen_evm_verifier_sol_code::<ComplianceEvmCircuit, snark_verifier_sdk::SHPLONK>(
         &params,
         pk.get_vk(),
-        vec![3],
+        vec![5],
     );
     let calldata = encode_calldata(&instances, &proof);
 
@@ -169,11 +247,13 @@ fn main() {
         .to_string();
 
     let bench_payload = format!(
-        "{{\n  \"protocol\": \"HALO2\",\n  \"verifierSolidityPath\": \"{}\",\n  \"publicSignals\": [\"{}\", \"{}\", \"{}\"],\n  \"proofHex\": \"0x{}\",\n  \"calldataHex\": \"0x{}\"\n}}",
+        "{{\n  \"protocol\": \"HALO2\",\n  \"verifierSolidityPath\": \"{}\",\n  \"publicSignals\": [\"{}\", \"{}\", \"{}\", \"{}\", \"{}\"],\n  \"proofHex\": \"0x{}\",\n  \"calldataHex\": \"0x{}\"\n}}",
         sol_abs,
         did_u64,
         status_u64,
         commitment_u64,
+        issuer_u64,
+        expiry_u64,
         hex::encode(&proof),
         hex::encode(&calldata)
     );

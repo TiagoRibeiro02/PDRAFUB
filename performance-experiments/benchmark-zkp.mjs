@@ -123,11 +123,18 @@ function benchmarkRustProtocol({ name, cwd, bin, mainFile = "src/main.rs" }) {
 }
 
 function benchmarkNoirProtocol() {
-  const proofOutputDir = resolve(noirDir, "target", "proof.bench");
+  const proofPath = resolve(noirDir, "target", "proof");
+  const publicInputsPath = resolve(noirDir, "target", "public_inputs");
 
-  ensureFile(resolve(noirDir, "target", "kyc_circuit.json"), "NOIR bytecode");
-  ensureFile(resolve(noirDir, "target", "witness.gz"), "NOIR witness");
-  ensureFile(resolve(noirDir, "target", "vk", "vk"), "NOIR verification key");
+  ensureFile(
+    resolve(noirDir, "target", "kyc_circuit.json"),
+    "NOIR bytecode"
+  );
+
+  ensureFile(
+    resolve(noirDir, "target", "kyc_circuit.gz"),
+    "NOIR witness"
+  );
 
   const proofGenerationMs = runWithTimer(
     "bb",
@@ -136,32 +143,25 @@ function benchmarkNoirProtocol() {
       "-b",
       "./target/kyc_circuit.json",
       "-w",
-      "./target/witness.gz",
-      "-k",
-      "./target/vk/vk",
+      "./target/kyc_circuit.gz",
+      "--write_vk",
       "-o",
-      "./target/proof.bench",
-      "-t",
-      "evm",
+      "./target",
     ],
     noirDir
   );
 
-  ensureFile(resolve(proofOutputDir, "proof"), "NOIR generated proof");
-  ensureFile(resolve(proofOutputDir, "public_inputs"), "NOIR generated public inputs");
+  ensureFile(proofPath, "NOIR generated proof");
+  ensureFile(publicInputsPath, "NOIR generated public inputs");
 
   const verificationMs = runWithTimer(
     "bb",
     [
       "verify",
-      "-k",
-      "./target/vk/vk",
       "-p",
-      "./target/proof.bench/proof",
-      "-i",
-      "./target/proof.bench/public_inputs",
-      "-t",
-      "evm",
+      "./target/proof",
+      "-k",
+      "./target/vk",
     ],
     noirDir
   );
@@ -540,7 +540,7 @@ function main() {
     runResults.push(benchmarkOneRun());
   }
 
-  const outPath = resolve(perfRoot, "benchmark-results.json");
+  const outPath = resolve(perfRoot, "benchmark-results-new.json");
   const previousRuns = loadExistingRuns(outPath);
   const report = {
     updatedAt: new Date().toISOString(),

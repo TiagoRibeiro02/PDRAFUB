@@ -409,6 +409,7 @@ function ZKPIssuer() {
                 await submitProofToContract(
                   did,
                   zkProof,
+                  account,
                   new Date(kycExpiryDate).getTime() / 1000,
                   compressedPk?.pkX,
                   compressedPk?.pkParity,
@@ -558,7 +559,7 @@ async function generateFflonkZKP(params: {
   const poseidon = await buildPoseidon();
   const DID = await didToBigInt(did);
   const status = BigInt(1);
-  const issuer = BigInt(1111111111111111111111111111111111111111);
+  const issuer = BigInt(issuerAddress);
   const expiryBig = BigInt(expiry);
   const ageBig = BigInt(age);
   const pepBig = BigInt(pepStatus);
@@ -613,6 +614,7 @@ async function generateFflonkZKP(params: {
 async function submitProofToContract(
   userDid: string,
   zkProof: any,
+  issuerAddress: string,
   expiryTimestamp: number,
   pkX?: string,
   pkParity?: boolean,
@@ -621,7 +623,7 @@ async function submitProofToContract(
     throw new Error("KYC contract not deployed. Please deploy it first.");
   }
 
-  const kycIssuer = "1111111111111111111111111111111111111111";
+  const kycIssuer = BigInt(issuerAddress).toString();
   const { ethers } = await import("ethers");
   const provider = new ethers.BrowserProvider(window.ethereum);
   const signer = await provider.getSigner();

@@ -1,8 +1,15 @@
 import { useState, useEffect } from "react";
 import BankNFTManager from "./BankNFTManager";
 import { QRCodeSVG } from "qrcode.react";
-import { generateEntityQRSession, registerEntitySession, verifyWalletResponse, jwkToCompressed, getOnChainPublicKey, type EntityQRSession } from "./utils/qrAuth";
-import UserPicker, { type BankUser } from './components/UserPicker';
+import {
+  generateEntityQRSession,
+  registerEntitySession,
+  verifyWalletResponse,
+  jwkToCompressed,
+  getOnChainPublicKey,
+  type EntityQRSession,
+} from "./utils/qrAuth";
+import UserPicker, { type BankUser } from "./components/UserPicker";
 import "./App.css";
 
 // Import contract address and ABI
@@ -12,46 +19,48 @@ let kycContractAddress: string | undefined;
 let KYCComplianceABI: any;
 
 try {
-  const addressData = await import('./contracts/contract-address.json');
-  const abiData = await import('./contracts/MyNFT.json');
+  const addressData = await import("./contracts/contract-address.json");
+  const abiData = await import("./contracts/MyNFT.json");
   contractAddress = addressData.MyNFT;
   MyNFTABI = abiData.abi;
 } catch (error) {
-  console.warn('Contract files not found. Please deploy the contract first.');
+  console.warn("Contract files not found. Please deploy the contract first.");
 }
 
 try {
-  const kycDeployment = await import('./contracts/kyc-deployment.json');
-  const kycAbi = await import('./contracts/KYCCompliance.json');
+  const kycDeployment = await import("./contracts/kyc-deployment.json");
+  const kycAbi = await import("./contracts/KYCCompliance.json");
   kycContractAddress = kycDeployment.KYCCompliance;
   KYCComplianceABI = kycAbi.abi;
 } catch (error) {
-  console.warn('KYC contract files not found. Please deploy the KYC contract first.');
+  console.warn(
+    "KYC contract files not found. Please deploy the KYC contract first.",
+  );
 }
 
-type TabType = 'nft-bank' | 'zkp-issuer';
+type TabType = "nft-bank" | "zkp-issuer";
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<TabType>('nft-bank');
+  const [activeTab, setActiveTab] = useState<TabType>("nft-bank");
   const [entityUser, setEntityUser] = useState<any>(
-    JSON.parse(localStorage.getItem('entity_user') || 'null')
+    JSON.parse(localStorage.getItem("entity_user") || "null"),
   );
 
   const handleLogout = () => {
-    localStorage.removeItem('entity_user');
-    window.location.href = '/login';
+    localStorage.removeItem("entity_user");
+    window.location.href = "/login";
   };
 
   useEffect(() => {
     // Fetch fresh entity data from the DB
-    const stored = JSON.parse(localStorage.getItem('entity_user') || 'null');
+    const stored = JSON.parse(localStorage.getItem("entity_user") || "null");
     if (stored?.id) {
       fetch(`http://localhost:8001/me.php?user_id=${stored.id}`)
-        .then(r => r.json())
-        .then(res => {
+        .then((r) => r.json())
+        .then((res) => {
           if (res.success) {
             const updated = { ...stored, ...res.data };
-            localStorage.setItem('entity_user', JSON.stringify(updated));
+            localStorage.setItem("entity_user", JSON.stringify(updated));
             setEntityUser(updated);
           }
         })
@@ -63,16 +72,15 @@ export default function App() {
     <div className="entity-app">
       <div className="entity-header">
         <div className="entity-header-top">
-          <h1 className="entity-title">{entityUser.entity_name} - ZeroID System</h1>
+          <h1 className="entity-title">
+            {entityUser.entity_name} - ZeroID System
+          </h1>
           {entityUser && (
             <div className="entity-user-info">
               <span className="entity-logged-in">
                 Logged in as <strong>{entityUser.username}</strong>
               </span>
-              <button
-                onClick={handleLogout}
-                className="entity-logout-btn"
-              >
+              <button onClick={handleLogout} className="entity-logout-btn">
                 Logout
               </button>
             </div>
@@ -80,25 +88,24 @@ export default function App() {
         </div>
 
         <div className="entity-tabs">
-          <button 
-            className={`entity-tab-btn ${activeTab === 'nft-bank' ? 'active' : ''}`}
-            onClick={() => setActiveTab('nft-bank')}
+          <button
+            className={`entity-tab-btn ${activeTab === "nft-bank" ? "active" : ""}`}
+            onClick={() => setActiveTab("nft-bank")}
           >
             NFT Bank
           </button>
-          <button 
-            className={`entity-tab-btn ${activeTab === 'zkp-issuer' ? 'active' : ''}`}
-            onClick={() => setActiveTab('zkp-issuer')}
+          <button
+            className={`entity-tab-btn ${activeTab === "zkp-issuer" ? "active" : ""}`}
+            onClick={() => setActiveTab("zkp-issuer")}
           >
             ZK Proof Issuer
           </button>
         </div>
-
       </div>
 
-      {activeTab === 'nft-bank' && (
-        contractAddress && MyNFTABI ? (
-          <BankNFTManager 
+      {activeTab === "nft-bank" &&
+        (contractAddress && MyNFTABI ? (
+          <BankNFTManager
             contractAddress={contractAddress}
             contractABI={MyNFTABI}
           />
@@ -109,27 +116,31 @@ export default function App() {
               Please deploy the NFT contract first.
             </p>
           </div>
-        )
-      )}
+        ))}
 
-      {activeTab === 'zkp-issuer' && (
-        <ZKPIssuer />
-      )}
+      {activeTab === "zkp-issuer" && <ZKPIssuer />}
     </div>
   );
 }
 
 // Original ZKP Issuer component
 function ZKPIssuer() {
-  const entityUser = JSON.parse(localStorage.getItem('entity_user') || 'null');
-  const bankApiUrl: string = entityUser?.entity_api ?? 'http://localhost:8002/bank1_api.php';
-  const kycIssuer: string = entityUser?.entity_name || entityUser?.entity_did || 'did:zeroid:unknown';
+  const entityUser = JSON.parse(localStorage.getItem("entity_user") || "null");
+  const bankApiUrl: string =
+    entityUser?.entity_api ?? "http://localhost:8002/bank1_api.php";
+  const kycIssuer: string =
+    entityUser?.entity_name || entityUser?.entity_did || "did:zeroid:unknown";
 
   const [did, setDid] = useState("");
+  const [age, setAge] = useState<string>("");
+  const [pepStatus, setPepStatus] = useState<boolean>(false);
+  const [sanctionsStatus, setSanctionsStatus] = useState<boolean>(false);
+  const [riskLevel, setRiskLevel] = useState<string>("0");
+  const [issuerField, setIssuerField] = useState<string>(""); // endereço/valor numérico do issuer
   const [kycExpiryDate, setKycExpiryDate] = useState<string>(() => {
     const d = new Date();
     d.setFullYear(d.getFullYear() + 2);
-    return d.toISOString().split('T')[0];
+    return d.toISOString().split("T")[0];
   });
   const [zkProof, setZkProof] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -137,10 +148,17 @@ function ZKPIssuer() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [account, setAccount] = useState("");
   const [showQRRequest, setShowQRRequest] = useState(false);
-  const [entitySession, setEntitySession] = useState<EntityQRSession | null>(null);
-  const [selectedBankUser, setSelectedBankUser] = useState<BankUser | null>(null);
+  const [entitySession, setEntitySession] = useState<EntityQRSession | null>(
+    null,
+  );
+  const [selectedBankUser, setSelectedBankUser] = useState<BankUser | null>(
+    null,
+  );
   // Compressed 33-byte secp256k1/P-256 public key stored on-chain: { pkX (bytes32 hex), pkParity (bool) }
-  const [compressedPk, setCompressedPk] = useState<{ pkX: string; pkParity: boolean } | null>(null);
+  const [compressedPk, setCompressedPk] = useState<{
+    pkX: string;
+    pkParity: boolean;
+  } | null>(null);
 
   useEffect(() => {
     checkWallet();
@@ -153,60 +171,77 @@ function ZKPIssuer() {
 
     const interval = setInterval(async () => {
       try {
-        const response = await fetch(`http://localhost:8000/qr-relay.php?sessionId=${sessionId}`);
-        const result   = await response.json();
+        const response = await fetch(
+          `http://localhost:8000/qr-relay.php?sessionId=${sessionId}`,
+        );
+        const result = await response.json();
 
         if (result.success && result.data) {
           try {
             const { did, ethAddress, publicKey } = await verifyWalletResponse(
-              result.data, sessionId, challenge, entitySession.secretKey
+              result.data,
+              sessionId,
+              challenge,
+              entitySession.secretKey,
             );
 
             // ── Blockchain public-key check ──────────────────────────────
             let compressed: { pkX: string; pkParity: boolean } | null = null;
             if (publicKey) {
               try {
-                compressed = jwkToCompressed(JSON.parse(publicKey) as JsonWebKey);
-                const onChainHex = await getOnChainPublicKey(did, kycContractAddress!, KYCComplianceABI);
-                if (onChainHex && onChainHex !== '0x') {
+                compressed = jwkToCompressed(
+                  JSON.parse(publicKey) as JsonWebKey,
+                );
+                const onChainHex = await getOnChainPublicKey(
+                  did,
+                  kycContractAddress!,
+                  KYCComplianceABI,
+                );
+                if (onChainHex && onChainHex !== "0x") {
                   // Key already registered — compare x and parity
-                  const onChainParity = onChainHex.slice(2, 4) === '03';
-                  const onChainX     = onChainHex.slice(4).toLowerCase();
+                  const onChainParity = onChainHex.slice(2, 4) === "03";
+                  const onChainX = onChainHex.slice(4).toLowerCase();
                   if (
                     onChainX !== compressed.pkX.slice(2).toLowerCase() ||
                     onChainParity !== compressed.pkParity
                   ) {
                     alert(
-                      'Security error: the public key presented by the wallet does not match ' +
-                      'the key registered on the blockchain for this DID.\n\n' +
-                      'Possible key substitution attack — request rejected.'
+                      "Security error: the public key presented by the wallet does not match " +
+                        "the key registered on the blockchain for this DID.\n\n" +
+                        "Possible key substitution attack — request rejected.",
                     );
                     setShowQRRequest(false);
                     setEntitySession(null);
                     return;
                   }
-                  console.log('On-chain PK verified ✓');
+                  console.log("On-chain PK verified ✓");
                 } else {
-                  console.log('No on-chain PK yet — will be registered on first submission.');
+                  console.log(
+                    "No on-chain PK yet — will be registered on first submission.",
+                  );
                 }
               } catch (pkErr: any) {
-                console.warn('Blockchain PK check skipped:', pkErr.message);
+                console.warn("Blockchain PK check skipped:", pkErr.message);
               }
             }
 
             setDid(did);
-            if (ethAddress) console.log('Received eth address:', ethAddress);
-            if (publicKey)  { /* raw JWK kept in payload only — compressed form is in compressedPk */ }
+            if (ethAddress) console.log("Received eth address:", ethAddress);
+            if (publicKey) {
+              /* raw JWK kept in payload only — compressed form is in compressedPk */
+            }
             if (compressed) setCompressedPk(compressed);
             setShowQRRequest(false);
             setEntitySession(null);
           } catch (verifyErr: any) {
-            console.error('QR mutual-auth verification failed:', verifyErr);
-            alert(`Security error: ${verifyErr.message}\n\nPossible man-in-the-middle attack — request rejected.`);
+            console.error("QR mutual-auth verification failed:", verifyErr);
+            alert(
+              `Security error: ${verifyErr.message}\n\nPossible man-in-the-middle attack — request rejected.`,
+            );
           }
         }
       } catch (err) {
-        console.error('Error polling for response:', err);
+        console.error("Error polling for response:", err);
       }
     }, 1000);
 
@@ -222,30 +257,34 @@ function ZKPIssuer() {
       setCompressedPk(null);
       setShowQRRequest(true);
     } catch (err: any) {
-      alert('Failed to create QR session: ' + (err?.message ?? err));
+      alert("Failed to create QR session: " + (err?.message ?? err));
     }
   };
 
   const checkWallet = async () => {
-    if (typeof window.ethereum === 'undefined') return;
+    if (typeof window.ethereum === "undefined") return;
     try {
-      const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+      const accounts = await window.ethereum.request({
+        method: "eth_accounts",
+      });
       if (accounts.length > 0) setAccount(accounts[0]);
     } catch (err) {
-      console.error('Error checking wallet:', err);
+      console.error("Error checking wallet:", err);
     }
   };
 
   const connectWallet = async () => {
-    if (typeof window.ethereum === 'undefined') {
-      alert('Please install MetaMask!');
+    if (typeof window.ethereum === "undefined") {
+      alert("Please install MetaMask!");
       return;
     }
     try {
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const accounts = await window.ethereum.request({
+        method: "eth_requestAccounts",
+      });
       setAccount(accounts[0]);
     } catch (err: any) {
-      console.error('Failed to connect wallet:', err);
+      console.error("Failed to connect wallet:", err);
     }
   };
 
@@ -265,9 +304,39 @@ function ZKPIssuer() {
 
       <div className="zkp-form-row">
         <input
+          type="number"
+          placeholder="Idade"
+          value={age}
+          onChange={(e) => setAge(e.target.value)}
+          className="zkp-did-input ui-input-dark"
+        />
+        <input
+          type="number"
+          placeholder="Risk level (0-100)"
+          value={riskLevel}
+          onChange={(e) => setRiskLevel(e.target.value)}
+          className="zkp-did-input ui-input-dark"
+        />
+        <label className="zkp-expiry-label">
+          <input
+            type="checkbox"
+            checked={pepStatus}
+            onChange={(e) => setPepStatus(e.target.checked)}
+          />
+          PEP?
+        </label>
+        <label className="zkp-expiry-label">
+          <input
+            type="checkbox"
+            checked={sanctionsStatus}
+            onChange={(e) => setSanctionsStatus(e.target.checked)}
+          />
+          Sanções?
+        </label>
+        <input
           placeholder="User DID (e.g., did:zeroid:...)"
           value={did}
-          onChange={e => {
+          onChange={(e) => {
             setDid(e.target.value);
             setError(null);
           }}
@@ -278,7 +347,7 @@ function ZKPIssuer() {
           <input
             type="date"
             value={kycExpiryDate}
-            onChange={e => setKycExpiryDate(e.target.value)}
+            onChange={(e) => setKycExpiryDate(e.target.value)}
             className="zkp-expiry-input ui-input-dark"
           />
         </div>
@@ -311,14 +380,22 @@ function ZKPIssuer() {
             try {
               setError(null);
               setSubmitSuccess(false);
-              const proof = await generateFflonkZKP(did);
+              const proof = await generateFflonkZKP({
+                did,
+                issuerAddress: account, // ou issuerField, se preferires um campo manual
+                expiry: Math.floor(new Date(kycExpiryDate).getTime() / 1000),
+                age: Number(age),
+                pepStatus: pepStatus ? 1 : 0,
+                sanctionsStatus: sanctionsStatus ? 1 : 0,
+                riskLevel: Number(riskLevel),
+              });
               setZkProof(proof);
             } catch (err) {
               setError(err instanceof Error ? err.message : "Unknown error");
             }
           }}
-          disabled={!did}
-          className={`zkp-btn ui-btn ${did ? 'zkp-btn-gold ui-btn-gold' : 'zkp-btn-disabled ui-btn-disabled'}`}
+          disabled={!did || !age || !account}
+          className={`zkp-btn ui-btn ${did ? "zkp-btn-gold ui-btn-gold" : "zkp-btn-disabled ui-btn-disabled"}`}
         >
           Generate FFLONK ZK Proof
         </button>
@@ -343,19 +420,25 @@ function ZKPIssuer() {
                 if (selectedBankUser) {
                   try {
                     const res = await fetch(bankApiUrl, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ action: 'set_kyc', userId: selectedBankUser.id }),
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        action: "set_kyc",
+                        userId: selectedBankUser.id,
+                      }),
                     });
                     const data = await res.json();
-                    if (!data.success) console.warn('set_kyc failed:', data.message);
+                    if (!data.success)
+                      console.warn("set_kyc failed:", data.message);
                   } catch (kycErr) {
-                    console.warn('Failed to set KYC in bank DB:', kycErr);
+                    console.warn("Failed to set KYC in bank DB:", kycErr);
                   }
                 }
                 setSubmitSuccess(true);
               } catch (err) {
-                setError(err instanceof Error ? err.message : "Failed to submit proof");
+                setError(
+                  err instanceof Error ? err.message : "Failed to submit proof",
+                );
               } finally {
                 setSubmitting(false);
               }
@@ -363,20 +446,17 @@ function ZKPIssuer() {
             disabled={submitting}
             className="zkp-btn zkp-btn-gold ui-btn ui-btn-gold"
           >
-            {submitting ? 'Submitting...' : 'Submit to Blockchain'}
+            {submitting ? "Submitting..." : "Submit to Blockchain"}
           </button>
         )}
       </div>
 
-      {error && (
-        <p className="zkp-error">
-          Error: {error}
-        </p>
-      )}
+      {error && <p className="zkp-error">Error: {error}</p>}
 
       {submitSuccess && (
         <div className="zkp-success">
-          Proof successfully submitted to blockchain! The DID is now marked as KYC/AML compliant.
+          Proof successfully submitted to blockchain! The DID is now marked as
+          KYC/AML compliant.
         </div>
       )}
 
@@ -399,14 +479,14 @@ function ZKPIssuer() {
               Open your ZeroID Wallet and scan this QR code to share your DID
             </p>
             <div className="zkp-modal-qr-box">
-              <QRCodeSVG 
-                value={entitySession ? JSON.stringify(entitySession.qrPayload) : ''}
+              <QRCodeSVG
+                value={
+                  entitySession ? JSON.stringify(entitySession.qrPayload) : ""
+                }
                 size={256}
               />
             </div>
-            <p className="zkp-modal-wait">
-              Waiting for wallet response...
-            </p>
+            <p className="zkp-modal-wait">Waiting for wallet response...</p>
           </div>
         </div>
       )}
@@ -426,9 +506,7 @@ function ZKPIssuer() {
             </pre>
 
             <h4 className="zkp-proof-subtitle">Commitment:</h4>
-            <pre className="zkp-proof-pre">
-              {zkProof.commitment}
-            </pre>
+            <pre className="zkp-proof-pre">{zkProof.commitment}</pre>
           </div>
         </div>
       )}
@@ -441,42 +519,98 @@ async function didToBigInt(did: string): Promise<bigint> {
   const data = new TextEncoder().encode(did);
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  const hashHex = hashArray
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
   return BigInt("0x" + hashHex.substring(0, 32));
 }
 
-async function generateFflonkZKP(userDid: string) {
+async function generateFflonkZKP(params: {
+  did: string;
+  issuerAddress: string; // "0x..."
+  expiry: number; // unix timestamp
+  age: number;
+  pepStatus: number; // 0 ou 1
+  sanctionsStatus: number; // 0 ou 1
+  riskLevel: number; // 0-100
+}) {
   const snarkjs = await import("snarkjs");
   const { buildPoseidon } = await import("circomlibjs");
   const verificationKey = await import("../zkp/verification_key.json");
 
-  if (!userDid.startsWith("did:")) {
+  const {
+    did,
+    issuerAddress,
+    expiry,
+    age,
+    pepStatus,
+    sanctionsStatus,
+    riskLevel,
+  } = params;
+
+  if (!did.startsWith("did:")) {
     throw new Error("Invalid DID format. Expected format: did:zeroid:xxxx");
+  }
+  if (age < 18) {
+    throw new Error("Idade insuficiente (circuito exige >= 18)");
+  }
+  if (riskLevel < 0 || riskLevel > 100) {
+    throw new Error("riskLevel tem de estar entre 0 e 100");
   }
 
   const poseidon = await buildPoseidon();
-  const DID = await didToBigInt(userDid);
+  const DID = await didToBigInt(did);
   const status = BigInt(1);
-  const r = BigInt(999888777);
-  
-  const commitmentHash = poseidon([DID, status, r]);
+  const issuer = BigInt(1111111111111111111111111111111111111111);
+  const expiryBig = BigInt(expiry);
+  const ageBig = BigInt(age);
+  const pepBig = BigInt(pepStatus);
+  const sanctionsBig = BigInt(sanctionsStatus);
+  const riskBig = BigInt(riskLevel);
+  const r = BigInt(987654321); // ou usa um gerador criptográfico
+
+  // Ordem tem de ser EXATAMENTE igual à do hash.inputs[0..8] no circom:
+  // DID, status, issuer, expiry, age, pepStatus, sanctionsStatus, riskLevel, r
+  const commitmentHash = poseidon([
+    DID,
+    status,
+    issuer,
+    expiryBig,
+    ageBig,
+    pepBig,
+    sanctionsBig,
+    riskBig,
+    r,
+  ]);
   const commitment = poseidon.F.toString(commitmentHash);
-  
+
+  const input = {
+    DID: DID.toString(),
+    status: status.toString(),
+    commitment,
+    issuer: issuer.toString(),
+    expiry: expiryBig.toString(),
+    age: ageBig.toString(),
+    pepStatus: pepBig.toString(),
+    sanctionsStatus: sanctionsBig.toString(),
+    riskLevel: riskBig.toString(),
+    r: r.toString(),
+  };
+
   const { proof, publicSignals } = await snarkjs.fflonk.fullProve(
-    { DID: DID.toString(), status: status.toString(), commitment, r: r.toString() },
+    input,
     "/zkp/circuit_js/circuit.wasm",
-    "/zkp/circuit_final.zkey"
+    "/zkp/circuit_final.zkey",
   );
 
-  const res = await snarkjs.fflonk.verify(verificationKey, publicSignals, proof);
+  const res = await snarkjs.fflonk.verify(
+    verificationKey,
+    publicSignals,
+    proof,
+  );
+  console.log(res === true ? "Verification OK" : "Invalid proof");
 
-  if (res === true) {
-    console.log("Verification OK");
-  } else {
-    console.log("Invalid proof");
-  }
-
-  return { proof, publicSignals, commitment };
+  return { proof, publicSignals, commitment, issuer, expiry: expiryBig };
 }
 
 async function submitProofToContract(
@@ -494,11 +628,11 @@ async function submitProofToContract(
   const { ethers } = await import("ethers");
   const provider = new ethers.BrowserProvider(window.ethereum);
   const signer = await provider.getSigner();
-  
+
   const kycContract = new ethers.Contract(
     kycContractAddress,
     KYCComplianceABI,
-    signer
+    signer,
   );
 
   // Convert proof to bytes
@@ -509,52 +643,79 @@ async function submitProofToContract(
     const polys = p.polynomials;
     const e = p.evaluations;
     proofArray = [
-      polys.C1[0], polys.C1[1],
-      polys.C2[0], polys.C2[1],
-      polys.W1[0], polys.W1[1],
-      polys.W2[0], polys.W2[1],
-      e.ql, e.qr, e.qm, e.qo, e.qc, e.s1, e.s2, e.s3,
-      e.a, e.b, e.c, e.z, e.zw, e.t1w, e.t2w, e.inv
+      polys.C1[0],
+      polys.C1[1],
+      polys.C2[0],
+      polys.C2[1],
+      polys.W1[0],
+      polys.W1[1],
+      polys.W2[0],
+      polys.W2[1],
+      e.ql,
+      e.qr,
+      e.qm,
+      e.qo,
+      e.qc,
+      e.s1,
+      e.s2,
+      e.s3,
+      e.a,
+      e.b,
+      e.c,
+      e.z,
+      e.zw,
+      e.t1w,
+      e.t2w,
+      e.inv,
     ];
   } else if (p && p.A && p.B && p.C) {
     proofArray = [
-      p.A[0], p.A[1],
-      p.B[0], p.B[1],
-      p.C[0], p.C[1],
-      (p.Z && p.Z[0]) || 0, (p.Z && p.Z[1]) || 0,
-      (p.T1 && p.T1[0]) || 0, (p.T1 && p.T1[1]) || 0,
-      (p.T2 && p.T2[0]) || 0, (p.T2 && p.T2[1]) || 0,
-      (p.T3 && p.T3[0]) || 0, (p.T3 && p.T3[1]) || 0,
-      (p.Wxi && p.Wxi[0]) || 0, (p.Wxi && p.Wxi[1]) || 0,
-      (p.Wxiw && p.Wxiw[0]) || 0, (p.Wxiw && p.Wxiw[1]) || 0,
+      p.A[0],
+      p.A[1],
+      p.B[0],
+      p.B[1],
+      p.C[0],
+      p.C[1],
+      (p.Z && p.Z[0]) || 0,
+      (p.Z && p.Z[1]) || 0,
+      (p.T1 && p.T1[0]) || 0,
+      (p.T1 && p.T1[1]) || 0,
+      (p.T2 && p.T2[0]) || 0,
+      (p.T2 && p.T2[1]) || 0,
+      (p.T3 && p.T3[0]) || 0,
+      (p.T3 && p.T3[1]) || 0,
+      (p.Wxi && p.Wxi[0]) || 0,
+      (p.Wxi && p.Wxi[1]) || 0,
+      (p.Wxiw && p.Wxiw[0]) || 0,
+      (p.Wxiw && p.Wxiw[1]) || 0,
       p.eval_a || p.evalA || 0,
       p.eval_b || p.evalB || 0,
       p.eval_c || p.evalC || 0,
       p.eval_s1 || p.evalS1 || 0,
-      p.eval_zw || p.evalZW || 0
+      p.eval_zw || p.evalZW || 0,
     ];
   } else {
-    throw new Error('Unrecognized proof format — cannot submit to contract');
+    throw new Error("Unrecognized proof format — cannot submit to contract");
   }
 
   // Encode as bytes
   const proofBytes = ethers.AbiCoder.defaultAbiCoder().encode(
     ["uint256[24]"],
-    [proofArray]
+    [proofArray],
   );
 
   // Submit to contract — pkX/pkParity register the compressed public key on-chain.
   // Pass ZeroHash on subsequent calls (key already on chain from first submission).
-  const { ZeroHash } = await import('ethers');
+  const { ZeroHash } = await import("ethers");
   const tx = await kycContract.submitComplianceProof(
     userDid,
     zkProof.commitment,
     kycIssuer,
     Math.floor(expiryTimestamp),
-    pkX  ?? ZeroHash,   // bytes32 x-coordinate (0x00…00 = skip)
-    pkParity ?? false,  // parity prefix: true → 0x03, false → 0x02
+    pkX ?? ZeroHash, // bytes32 x-coordinate (0x00…00 = skip)
+    pkParity ?? false, // parity prefix: true → 0x03, false → 0x02
     proofBytes,
-    zkProof.publicSignals
+    zkProof.publicSignals,
   );
 
   console.log("Transaction sent:", tx.hash);

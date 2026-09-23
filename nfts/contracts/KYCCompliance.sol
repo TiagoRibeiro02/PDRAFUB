@@ -99,6 +99,11 @@ contract KYCCompliance {
         emit PublicKeyRegistered(didHash, did, pkX, pkParity);
     }
 
+    function _didToFieldElement(string memory did) private pure returns (uint256) {
+        bytes32 h = sha256(bytes(did));
+        return uint256(uint128(bytes16(h))); // primeiros 16 bytes, igual ao didToBigInt() do JS
+    }
+
     function submitComplianceProof(
         string memory did,
         uint256 commitment,
@@ -115,7 +120,7 @@ contract KYCCompliance {
         require(publicSignals.length == 5, "Invalid number of public signals");
 
         bytes32 didHash = keccak256(abi.encodePacked(did));
-        require(_parseDecimal(did) == publicSignals[0], "DID does not match proof");
+        require(_didToFieldElement(did) == publicSignals[0], "DID does not match proof");
         require(publicSignals[1] == 1, "Proof status must be compliant");
         require(publicSignals[2] == commitment, "Commitment does not match proof");
         require(_parseDecimal(kycIssuer) == publicSignals[3], "Issuer does not match proof");

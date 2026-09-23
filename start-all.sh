@@ -173,19 +173,19 @@ echo ""
 
 echo "4: Deploying KYC Compliance Contracts..."
 # Copy the Fflonk verifier and adapter to nfts contracts if they exist in zeroid-entity
-if [ -f "zeroid-entity/verifier.sol" ]; then
+if [ -f "zeroid-entity/zkp/verifier.sol" ]; then
     echo "Copying fflonk verifier from zeroid-entity..."
-    cp zeroid-entity/verifier.sol nfts/contracts/verifier.sol
-elif [ -f "zeroid-entity/Verifier.sol" ]; then
+    cp zeroid-entity/zkp/verifier.sol nfts/contracts/verifier.sol
+elif [ -f "zeroid-entity/zkp/Verifier.sol" ]; then
     echo "Copying Verifier.sol from zeroid-entity as verifier.sol..."
-    cp zeroid-entity/Verifier.sol nfts/contracts/verifier.sol
+    cp zeroid-entity/zkp/Verifier.sol nfts/contracts/verifier.sol
 else
     echo "Warning: verifier.sol not found in zeroid-entity. Using placeholder."
 fi
 
-if [ -f "zeroid-entity/FflonkVerifierAdapter.sol" ]; then
+if [ -f "zeroid-entity/zkp/FflonkVerifierAdapter.sol" ]; then
     echo "Copying FflonkVerifierAdapter from zeroid-entity..."
-    cp zeroid-entity/FflonkVerifierAdapter.sol nfts/contracts/FflonkVerifierAdapter.sol
+    cp zeroid-entity/zkp/FflonkVerifierAdapter.sol nfts/contracts/FflonkVerifierAdapter.sol
 fi
 
 cd nfts

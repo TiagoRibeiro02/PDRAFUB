@@ -128,8 +128,6 @@ function ZKPIssuer() {
   const entityUser = JSON.parse(localStorage.getItem("entity_user") || "null");
   const bankApiUrl: string =
     entityUser?.entity_api ?? "http://localhost:8002/bank1_api.php";
-  const kycIssuer: string =
-    entityUser?.entity_name || entityUser?.entity_did || "did:zeroid:unknown";
 
   const [did, setDid] = useState("");
   const [age, setAge] = useState<string>("");
@@ -411,7 +409,6 @@ function ZKPIssuer() {
                 await submitProofToContract(
                   did,
                   zkProof,
-                  kycIssuer,
                   new Date(kycExpiryDate).getTime() / 1000,
                   compressedPk?.pkX,
                   compressedPk?.pkParity,
@@ -616,7 +613,6 @@ async function generateFflonkZKP(params: {
 async function submitProofToContract(
   userDid: string,
   zkProof: any,
-  kycIssuer: string,
   expiryTimestamp: number,
   pkX?: string,
   pkParity?: boolean,
@@ -625,6 +621,7 @@ async function submitProofToContract(
     throw new Error("KYC contract not deployed. Please deploy it first.");
   }
 
+  const kycIssuer = "1111111111111111111111111111111111111111";
   const { ethers } = await import("ethers");
   const provider = new ethers.BrowserProvider(window.ethereum);
   const signer = await provider.getSigner();

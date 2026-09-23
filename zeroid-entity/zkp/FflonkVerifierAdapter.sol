@@ -17,7 +17,7 @@ contract FflonkVerifierAdapter {
         view
         returns (bool)
     {
-        require(pubSignals.length == 3, "Invalid number of public signals");
+        require(pubSignals.length == 5, "Invalid number of public signals");
         require(proof.length == 768, "Invalid proof length");
 
         bytes32[24] memory decodedProof;
@@ -29,10 +29,10 @@ contract FflonkVerifierAdapter {
             decodedProof[i] = part;
         }
 
-        uint256[3] memory convertedPubSignals;
-        convertedPubSignals[0] = pubSignals[0];
-        convertedPubSignals[1] = pubSignals[1];
-        convertedPubSignals[2] = pubSignals[2];
+        uint256[5] memory convertedPubSignals;
+        for (uint256 i = 0; i < 5; i++) {
+            convertedPubSignals[i] = pubSignals[i];
+        }
 
         return fflonkVerifier.verifyProof(decodedProof, convertedPubSignals);
     }

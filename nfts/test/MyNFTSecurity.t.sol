@@ -545,8 +545,86 @@ contract MyNFTSecurityTest is Test {
 
         return tokenId;
     }
+
+    function test_PurchaseAndTransferNFTCannotBeReentered() public {
+        uint256 tokenId = _mintNFT();
+
+        ReentrantEntity maliciousEntity = new ReentrantEntity(
+            address(nft), tokenId, didAlice, user
+        );
+
+        vm.prank(bank);
+        nft.setEntityAuthorization(address(maliciousEntity), true);
+
+        vm.deal(address(maliciousEntity), PRICE + 0.1 ether);
+
+        // A tentativa de reentrância faz a transação inteira reverter
+        // (o refund de 2300-gas não chega para a chamada reentrante nem
+        // para o catch{} a seguir) — confirma atomicidade, não sucesso.
+        vm.expectRevert();
+        maliciousEntity.attack{value: PRICE + 0.1 ether}(0.1 ether);
+
+        // Estado tem de ficar inalterado: nada foi vendido, nada foi
+        // duplicado, o NFT continua disponível e por atribuir.
+        assertEq(nft.getPrice(tokenId), PRICE);
+        assertEq(nft.getDidOwner(tokenId), "");
+        assertEq(nft.ownerOf(tokenId), bank);
+    }
+
+    function test_PurchaseAndTransferNFT_SucceedsWithExactPayment() public {
+        // Confirma que o fluxo normal (sem overpayment, logo sem chamar
+        // receive() da entity) continua a funcionar mesmo com uma entity
+        // que seria maliciosa SE fosse acionada.
+        uint256 tokenId = _mintNFT();
+
+        ReentrantEntity maliciousEntity = new ReentrantEntity(
+            address(nft), tokenId, didAlice, user
+        );
+
+        vm.prank(bank);
+        nft.setEntityAuthorization(address(maliciousEntity), true);
+
+        vm.deal(address(maliciousEntity), PRICE);
+
+        maliciousEntity.attack{value: PRICE}(0); // sem overpayment -> sem refund -> sem receive()
+
+        assertEq(nft.getPrice(tokenId), 0);
+        assertEq(nft.getDidOwner(tokenId), didAlice);
+        assertEq(nft.ownerOf(tokenId), user);
+    }
 }
 
+/**
+ * @dev Simula uma entity comprometida cujo endereço é um contrato
+ * malicioso, para testar reentrancy no caminho de reembolso de
+ * purchaseAndTransferNFT (o único caminho pago realmente usado).
+ */
+contract ReentrantEntity {
+    MyNFT public nft;
+    uint256 public tokenId;
+    string public did;
+    address public recipient;
+    bool public entered;
+
+    constructor(address nftAddress, uint256 _tokenId, string memory _did, address _recipient) {
+        nft = MyNFT(nftAddress);
+        tokenId = _tokenId;
+        did = _did;
+        recipient = _recipient;
+    }
+
+    function attack(uint256 overpay) external payable {
+        nft.purchaseAndTransferNFT{value: msg.value}(tokenId, did, recipient);
+    }
+
+    receive() external payable {
+        if (!entered) {
+            entered = true;
+            // Tentativa de reentrar antes de _didOwners/_prices serem atualizados
+            try nft.purchaseAndTransferNFT{value: 0}(tokenId, did, recipient) {} catch {}
+        }
+    }
+}
 
 /**
  * @dev Malicious buyer used to test reentrancy.

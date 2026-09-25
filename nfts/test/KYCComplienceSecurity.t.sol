@@ -35,6 +35,9 @@ contract KYCComplianceSecurityTest is Test {
 
         vm.prank(admin);
         kyc = new KYCCompliance(address(verifier));
+
+        vm.prank(admin);
+        kyc.setIssuerAuthorization(issuer, true);
     }
 
     // ============================================================
@@ -123,6 +126,22 @@ contract KYCComplianceSecurityTest is Test {
      */
 
     function test_CompromisedIssuerCanRevokeCompliance() public {
+
+        // Setup: o issuer legítimo submete um compliance proof válido primeiro
+        uint256 expiry = block.timestamp + 7 days;
+        uint256[] memory publicSignals = new uint256[](5);
+        publicSignals[0] = _didField(did);
+        publicSignals[1] = 1;
+        publicSignals[2] = 1;
+        publicSignals[3] = 123;
+        publicSignals[4] = expiry;
+
+        vm.prank(issuer);
+        kyc.submitComplianceProof(
+            did, 1, "123", expiry, bytes32(uint256(1)), false, hex"1234", publicSignals
+        );
+        assertTrue(kyc.compliant(did)); // confirma que o setup funcionou
+
 
         // Simulate issuer key compromise
         vm.prank(admin);
@@ -219,15 +238,24 @@ contract KYCComplianceSecurityTest is Test {
         );
     }
 
+    // Helper — replica exatamente _didToFieldElement() do contrato
+    function _didField(string memory did_) internal pure returns (uint256) {
+        bytes32 h = sha256(bytes(did_));
+        return uint256(uint128(bytes16(h)));
+    }
+
     function test_InvalidVerifierResultIsRejected() public {
 
         verifier.setVerificationResult(false);
 
-        uint256 expiry =
-            block.timestamp + 7 days;
+        uint256 expiry = block.timestamp + 7 days;
 
-        uint256[] memory publicSignals =
-            new uint256[](5);
+        uint256[] memory publicSignals = new uint256[](5);
+        publicSignals[0] = _didField(did);   // bate com o DID
+        publicSignals[1] = 1;                // status = compliant
+        publicSignals[2] = 1;                // == commitment passado abaixo
+        publicSignals[3] = 123;              // == _parseDecimal("123")
+        publicSignals[4] = expiry;           // == expiryDate passado abaixo
 
         vm.prank(issuer);
 

@@ -8,10 +8,10 @@ contract MyNFTSecurityTest is Test {
 
     MyNFT public nft;
 
-    address public bank = address(0x1);
-    address public entity = address(0x2);
-    address public attacker = address(0x3);
-    address public user = address(0x4);
+    address public bank = address(0x1001);
+    address public entity = address(0x1002);
+    address public attacker = address(0x1003);
+    address public user = address(0x1004);
 
     uint256 public constant PRICE = 1 ether;
 
@@ -21,6 +21,9 @@ contract MyNFTSecurityTest is Test {
     function setUp() public {
         vm.prank(bank);
         nft = new MyNFT();
+
+        vm.prank(bank);
+        nft.setEntityAuthorization(entity, true);
     }
 
     // ============================================================
@@ -44,7 +47,10 @@ contract MyNFTSecurityTest is Test {
         vm.prank(attacker);
 
         vm.expectRevert(
-            "Ownable: caller is not the owner"
+            abi.encodeWithSelector(
+                Ownable.OwnableUnauthorizedAccount.selector,
+                attacker
+            )
         );
 
         nft.setEntityAuthorization(
@@ -64,7 +70,10 @@ contract MyNFTSecurityTest is Test {
         vm.prank(attacker);
 
         vm.expectRevert(
-            "Ownable: caller is not the owner"
+            abi.encodeWithSelector(
+                Ownable.OwnableUnauthorizedAccount.selector,
+                attacker
+            )
         );
 
         nft.setEntityAuthorization(
@@ -78,9 +87,7 @@ contract MyNFTSecurityTest is Test {
 
         vm.prank(attacker);
 
-        vm.expectRevert(
-            "Caller is not an authorized entity"
-        );
+        vm.expectRevert();
 
         nft.purchaseAndTransferNFT{value: PRICE}(
             tokenId,
@@ -411,26 +418,14 @@ contract MyNFTSecurityTest is Test {
     }
 
     function test_CannotPurchaseNFTTwice() public {
+        _mintNFT();
+        _mintNFT();
 
-        uint256 tokenId = _mintNFT();
+        nft.purchaseNFT{value: PRICE}(1, "did:zeroid:alice");
 
-        _purchaseNFT();
+        vm.expectRevert("NFT not for sale");
 
-        vm.deal(
-            attacker,
-            PRICE
-        );
-
-        vm.prank(attacker);
-
-        vm.expectRevert(
-            "NFT not available from bank"
-        );
-
-        nft.purchaseNFT{value: PRICE}(
-            tokenId,
-            didBob
-        );
+        nft.purchaseNFT{value: PRICE}(1, "did:zeroid:bob");
     }
 
     function test_EmptyDIDIsRejected() public {

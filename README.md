@@ -24,7 +24,7 @@ This project explores a real-world problem: how to make asset ownership traceabl
 
 The platform combines:
 
-- 🏷️ asset tracking through blockchain-backed NFTs
+- 🏷️ asset traceability through blockchain-backed NFTs
 - 🧾 regulatory compliance through KYC/AML processes
 - 🔒 privacy protection through zero-knowledge proofs
 - 🆔 identity management using DIDs
@@ -36,7 +36,7 @@ The result is a prototype that shows how blockchain can support trust and tracea
 
 ## Platform overview
 
-### 🧩 Core idea
+### 💡 Core idea
 
 Different actors in the ecosystem interact with the same system in different ways:
 
@@ -155,14 +155,3 @@ This script helps install dependencies, prepare the databases, start the blockch
 - 📊 benchmarking tools for gas and proof evaluation
 
 ---
-
-## In one sentence
-
-PDRAFUB is a decentralised traceability and identity platform that connects real-world asset ownership, regulatory compliance, and privacy-preserving verification within a blockchain ecosystem.
-
----
-
-## Next step
-
-If you want to explore the project, start with the startup script and then navigate to the area that matches your interest: contracts, wallet, issuer, entity, or third-party verification.
-

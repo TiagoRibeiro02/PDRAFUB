@@ -1,10 +1,10 @@
+<h1 align="center">Decentralised Platform for the Traceability of Physical Assets Using Blockchain</h1>
+
 <div align="center">
   <img src="https://img.shields.io/badge/Blockchain-Traceability-0D9488?style=for-the-badge&logo=ethereum&logoColor=white" alt="Blockchain Traceability" />
   <img src="https://img.shields.io/badge/Identity-KYC%2FAML-8B5CF6?style=for-the-badge" alt="KYC AML" />
   <img src="https://img.shields.io/badge/Privacy-ZK%20Proofs-F59E0B?style=for-the-badge" alt="Zero knowledge proofs" />
 </div>
-
-<h2 align="center">Decentralised Platform for the Traceability of Physical Assets Using Blockchain</h2>
 
 <p align="center">
   <strong>Decentralised Platform for the Traceability of Physical Assets Using Blockchain</strong> is a decentralised platform for tracking high-value physical assets while preserving privacy and supporting regulatory compliance.

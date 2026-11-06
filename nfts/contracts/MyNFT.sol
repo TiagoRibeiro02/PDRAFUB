@@ -3,13 +3,15 @@ pragma solidity ^0.8.28;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+
 
 /**
  * @title MyNFT
  * @dev NFT contract with DID-based ownership tracking and marketplace functionality
  * The contract owner (bank) mints NFTs and users purchase them with their DID
  */
-contract MyNFT is ERC721URIStorage, Ownable {
+contract MyNFT is ERC721URIStorage, Ownable, ReentrancyGuard {
     uint256 private _tokenIdCounter;
 
     // Addresses that are allowed to execute bank/entity operations
@@ -82,7 +84,7 @@ contract MyNFT is ERC721URIStorage, Ownable {
      * @param tokenId The ID of the NFT to purchase
      * @param buyerDID The DID of the buyer (e.g., "did:zeroid:...")
      */
-    function purchaseNFT(uint256 tokenId, string memory buyerDID) public payable {
+    function purchaseNFT(uint256 tokenId, string memory buyerDID) public payable nonReentrant {
         require(_ownerOf(tokenId) == owner(), "NFT not available from bank");
         require(_prices[tokenId] > 0, "NFT not for sale");
         require(msg.value >= _prices[tokenId], "Insufficient payment");
@@ -158,7 +160,7 @@ contract MyNFT is ERC721URIStorage, Ownable {
      * @param recipientAddress The Ethereum address to transfer the NFT to
      * Links the DID to the address if not already linked (bank pays gas)
      */
-    function purchaseAndTransferNFT(uint256 tokenId, string memory buyerDID, address recipientAddress) public payable onlyAuthorizedEntity {
+    function purchaseAndTransferNFT(uint256 tokenId, string memory buyerDID, address recipientAddress) public payable onlyAuthorizedEntity nonReentrant {
         require(_ownerOf(tokenId) == owner(), "NFT not available from bank");
         require(_prices[tokenId] > 0, "NFT not for sale");
         require(msg.value >= _prices[tokenId], "Insufficient payment");
